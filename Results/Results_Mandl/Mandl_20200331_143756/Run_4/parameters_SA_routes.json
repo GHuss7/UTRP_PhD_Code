@@ -1,0 +1,1 @@
+{"max_iterations_t": 10, "max_accepts": 1, "max_attempts": 1, "max_reheating_times": 1, "max_poor_epochs": 3, "Temp": 40, "Cooling_rate": 0.998, "Reheating_rate": 1.01, "Number_of_initial_solutions": 1000, "Feasibility_repair_attempts": 1}

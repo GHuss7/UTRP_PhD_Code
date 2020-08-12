@@ -1,0 +1,45 @@
+\documentclass[10pt]{article}
+\usepackage{tikz,pgfplots}
+
+\usepackage[active,tightpage,psfixbb]{preview}
+
+\pgfplotsset{width=10cm,compat=1.9}
+
+\PreviewEnvironment{pgfpicture}
+\usepgfplotslibrary{external}
+
+\tikzexternalize
+
+\setlength\PreviewBorder{0pt}
+\begin{document}
+	
+	\begin{tikzpicture}
+	\begin{axis}[
+	title={Attainment front for 6 routes},
+	xlabel={Total route length [min]},
+	ylabel={Average travel time [min]},
+	xmin=60, xmax=800,
+	ymin=10, ymax=30,
+	xtick={60,100,140,180,220,260,300},
+	ytick={10,10.5,11,11.5,12},
+	legend pos=north east,
+	ymajorgrids=false,
+	grid style=dashed,
+	]
+	
+	\addplot[
+	only marks,
+	color=red,
+	mark=asterisk, % *, x , +, |, o, asterisk, star
+	mark size = 4pt
+	]
+	%coordinates {
+		%(0,23.1)(10,27.5)(20,32)(30,37.8)(40,44.6)(60,61.8)(80,83.8)(100,114)
+	%};
+	table {Data_files/6routes/attainment1/plotData.dat}; % use a table of data instead of coordinates NB 
+	\legend{Attainment front}
+	
+	\end{axis}
+	\end{tikzpicture}
+	
+\end{document}

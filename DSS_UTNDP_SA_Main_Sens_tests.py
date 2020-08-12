@@ -43,12 +43,12 @@ del name_input_data
 
 # %% Set variables
 Decisions = {
-"Choice_generate_initial_set" : False, # the alternative loads a set that is prespecified
+"Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
 "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
 "Choice_normal_run" : True, # choose this for a normal run without Sensitivity Analysis
-"Choice_import_saved_set" : True, # import the prespecified set
+"Choice_import_saved_set" : False, # import the prespecified set
 "Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
 }
 
@@ -66,8 +66,8 @@ parameters_input = {
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
 'Problem_name' : "Mandl_UTRP", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 15.1304, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 10.3301, # min f1_ATT for the Hypervolume calculations
+'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
+'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
 'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
 'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
 }
@@ -75,19 +75,26 @@ parameters_input = {
 parameters_SA_routes={
 "method" : "SA",
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-"max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+"max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 15000, # the total number of accepts that are allowed
-"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"min_accepts" : 50, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
 "max_reheating_times" : 3, # the maximum number of times that reheating can take place
 "max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
 "Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
 "Cooling_rate" : 0.99, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+<<<<<<< Updated upstream
 "Reheating_rate" : 1.1, # the geometric reheating rate
 "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
 "number_of_runs" : 2, # number of runs to complete John 2016 set 20
+=======
+"Reheating_rate" : 1.5, # the geometric reheating rate
+"number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
+"Feasibility_repair_attempts" : 5, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+"number_of_runs" : 1, # number of runs to complete John 2016 set 20
+>>>>>>> Stashed changes
 }
 
 '''Set the reference point for the Hypervolume calculations'''
@@ -176,6 +183,7 @@ def main(UTNDP_problem_1):
     
     if Decisions["Choice_normal_run"]:
         run_nr_counter = range(len(routes_R_initial_set)) # sets the tests ito for loops to run
+        UTNDP_problem_1.add_text = f"Normal_run_{UTNDP_problem_1.problem_SA_parameters.number_of_runs}_routes_{len(df_routes_R_initial_set)}"
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # sets the tests ito for loops to run
         
@@ -425,6 +433,7 @@ def main(UTNDP_problem_1):
     '''Save the summarised results'''
     df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs(path_results, UTNDP_problem_1.problem_inputs.__dict__).iloc[:,1:]
     df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
+    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f1_ATT', ascending=True) # sort
     df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
     
     '''Save the stats for all the runs'''

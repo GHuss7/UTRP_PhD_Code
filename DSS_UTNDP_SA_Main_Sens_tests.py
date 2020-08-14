@@ -43,11 +43,11 @@ del name_input_data
 
 # %% Set variables
 Decisions = {
-"Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified
+"Choice_generate_initial_set" : False, # the alternative loads a set that is prespecified
 "Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : False,
+"Choice_conduct_sensitivity_analysis" : True,
 "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-"Choice_normal_run" : True, # choose this for a normal run without Sensitivity Analysis
+"Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
 "Choice_import_saved_set" : False, # import the prespecified set
 "Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
 }
@@ -76,10 +76,11 @@ parameters_SA_routes={
 "method" : "SA",
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
 "max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-"max_total_iterations" : 15000, # the total number of accepts that are allowed
-"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"max_total_iterations" : 20000, # the total number of accepts that are allowed
+"max_epochs" : 1000, # the maximum number of epochs that are allowed
+"min_accepts" : 6, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
-"max_reheating_times" : 5, # the maximum number of times that reheating can take place
+"max_reheating_times" : 10, # the maximum number of times that reheating can take place
 "max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
 "Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
@@ -87,10 +88,10 @@ parameters_SA_routes={
 "Reheating_rate" : 1.1, # the geometric reheating rate
 "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 2, # number of runs to complete John 2016 set 20
-"Reheating_rate" : 1.5, # the geometric reheating rate
+"number_of_runs" : 1, # number of runs to complete John 2016 set 20
+"Reheating_rate" : 1.1, # the geometric reheating rate
 "number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
-"Feasibility_repair_attempts" : 5, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+"Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
 "number_of_runs" : 1, # number of runs to complete John 2016 set 20
 }
 
@@ -196,8 +197,7 @@ def main(UTNDP_problem_1):
             routes_R = routes_R_initial_set[route_set_nr] # Choose the initial route set to begin with
             '''Initiate algorithm'''
             epoch = 1 # Initialise the epoch counter
-            total_iterations = 0
-            iteration_t = 1 # Initialise the number of iterations 
+            total_iterations = 0 
             poor_epoch = 0 # Initialise the number of epochs without an accepted solution
             attempts = 0 # Initialise the number of attempts made without accepting a solution
             accepts = 0 # Initialise the number of accepts made within an epoch
@@ -228,7 +228,9 @@ def main(UTNDP_problem_1):
              
             
             
-            while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations:
+            while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
+                iteration_t = 1 # Initialise the number of iterations 
+                accepts = 0 # Initialise the accepts
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
                     routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
@@ -284,202 +286,202 @@ def main(UTNDP_problem_1):
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
                 epoch = epoch + 1 # Increase Epoch counter
                 attempts = 0 # resets the attempts
-                accepts = 0 # resets the accepts
-                iteration_t = 1 # Initialise the number of iterations 
                 poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive     
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, i, iteration_t, counter_archive
         
             
          # %% Saving Results per run
-            stats['end_time'] = datetime.datetime.now() # save the end time of the run
+            if Decisions["Choice_print_results"]:
+                stats['end_time'] = datetime.datetime.now() # save the end time of the run
+                
+                print("Run number "+str(run_nr+1)+" duration: "+ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']))
             
-            print("Run number "+str(run_nr+1)+" duration: "+ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']))
-        
-            stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
-            stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
-            stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
-            stats['HV obtained'] = HV
+                stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
+                stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
+                stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
+                stats['HV obtained'] = HV
+                
+                
+                '''Write all results and parameters to files'''
+                '''Main folder path'''
+                path_parent_folder = Path(os.path.dirname(os.getcwd()))
+                path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_inputs.Problem_name+"/"+UTNDP_problem_1.problem_inputs.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
+                
+                path_results = path_parent_folder / ("Results/Results_"+
+                                                     parameters_input['Problem_name']+
+                                                     "/"+parameters_input['Problem_name']+
+                                                     "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
+                                                     " "+parameters_SA_routes['method']+
+                                                     f"_{UTNDP_problem_1.add_text}")
+                
+                '''Sub folder path'''
+                path_results_per_run = path_results / (f"Run_{run_nr + 1}")
+                if not path_results_per_run.exists():
+                    os.makedirs(path_results_per_run)
+                
+                df_SA_analysis.to_csv(path_results_per_run / "SA_Analysis.csv")
+                df_archive.to_csv(path_results_per_run / "Archive_Routes.csv")
+                
+                json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
+                json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results_per_run / "parameters_constraints.json", "w"))
+                json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results_per_run / "parameters_SA_routes.json", "w"))
+                pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
+                
+                with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
+                    w = csv.writer(archive_file)
+                    for key, val in {**UTNDP_problem_1.problem_inputs.__dict__, **UTNDP_problem_1.problem_constraints.__dict__, **UTNDP_problem_1.problem_SA_parameters.__dict__, **stats}.items():
+                        w.writerow([key, val])
+                    del key, val
+            
+            # %% Display and save results per run'''
+                #plt.rcParams['font.family'] = 'serif'
+                #plt.rcParams['font.serif'] = 'CMU Serif, Times New Roman'
+                #plt.rcParams['font.size'] = 15 # Makes the text Sans Serif CMU
+                if True:   
+                    if False:
+                        '''Print Archive'''   
+                        fig = plt.figure()
+                        ax1 = fig.add_subplot(111)
+                        ax1.scatter( df_archive["ATT"], df_archive["TRT"], s=1, c='b', marker="o", label='Archive')
+                        #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
+                        #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
+                        plt.legend(loc='upper left');
+                        plt.show()
+                        
+                    '''Load validation data'''
+                    Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
+                    John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
             
             
-            '''Write all results and parameters to files'''
-            '''Main folder path'''
-            path_parent_folder = Path(os.path.dirname(os.getcwd()))
-            path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_inputs.Problem_name+"/"+UTNDP_problem_1.problem_inputs.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
-            
-            path_results = path_parent_folder / ("Results/Results_"+
-                                                 parameters_input['Problem_name']+
-                                                 "/"+parameters_input['Problem_name']+
-                                                 "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
-                                                 " "+parameters_SA_routes['method']+
-                                                 f"_{UTNDP_problem_1.add_text}")
-            
-            '''Sub folder path'''
-            path_results_per_run = path_results / (f"Run_{run_nr + 1}")
-            if not path_results_per_run.exists():
-                os.makedirs(path_results_per_run)
-            
-            df_SA_analysis.to_csv(path_results_per_run / "SA_Analysis.csv")
-            df_archive.to_csv(path_results_per_run / "Archive_Routes.csv")
-            
-            json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
-            json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results_per_run / "parameters_constraints.json", "w"))
-            json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results_per_run / "parameters_SA_routes.json", "w"))
-            pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
-            
-            with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
-                w = csv.writer(archive_file)
-                for key, val in {**UTNDP_problem_1.problem_inputs.__dict__, **UTNDP_problem_1.problem_constraints.__dict__, **UTNDP_problem_1.problem_SA_parameters.__dict__, **stats}.items():
-                    w.writerow([key, val])
-                del key, val
-        
-        # %% Display and save results per run'''
-            #plt.rcParams['font.family'] = 'serif'
-            #plt.rcParams['font.serif'] = 'CMU Serif, Times New Roman'
-            #plt.rcParams['font.size'] = 15 # Makes the text Sans Serif CMU
-            if True:   
-                if False:
-                    '''Print Archive'''   
-                    fig = plt.figure()
-                    ax1 = fig.add_subplot(111)
-                    ax1.scatter( df_archive["ATT"], df_archive["TRT"], s=1, c='b', marker="o", label='Archive')
-                    #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
-                    #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
-                    plt.legend(loc='upper left');
-                    plt.show()
+                    '''Print Objective functions over time, all solutions and pareto set obtained'''
+                    fig, axs = plt.subplots(2, 2)
+                    fig.set_figheight(15)
+                    fig.set_figwidth(20)
+                    axs[0, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["f1_ATT"], s=1, c='r', marker="o", label='f1_ATT')
+                    axs[0, 0].set_title('ATT over all iterations')
+                    axs[0, 0].set(xlabel='Iterations', ylabel='f1_ATT')
+                    axs[0, 0].legend(loc="upper right")
                     
-                '''Load validation data'''
-                Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
-        
-        
-                '''Print Objective functions over time, all solutions and pareto set obtained'''
-                fig, axs = plt.subplots(2, 2)
-                fig.set_figheight(15)
-                fig.set_figwidth(20)
-                axs[0, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["f1_ATT"], s=1, c='r', marker="o", label='f1_ATT')
-                axs[0, 0].set_title('ATT over all iterations')
-                axs[0, 0].set(xlabel='Iterations', ylabel='f1_ATT')
-                axs[0, 0].legend(loc="upper right")
-                
-                axs[1, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["f2_TRT"], s=1, c='b', marker="o", label='f2_TRT')
-                axs[1, 0].set_title('TRT over all iterations')
-                axs[1, 0].set(xlabel='Iterations', ylabel='f2_TRT')
-                axs[1, 0].legend(loc="upper right") 
-                
-                axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
-                axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                   s=1, c='g', marker="o", label='HV Mumford (2013)')
-                axs[0, 1].set_title('HV and Temperature over all iterations')
-                axs[0, 1].set(xlabel='Iterations', ylabel='%')
-                axs[0, 1].legend(loc="upper right")
-                
-                axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
-                axs[1, 1].scatter(df_archive["f2_TRT"], df_archive["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained')
-                axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
-                axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
-                axs[1, 1].set_title('Pareto front obtained vs Mumford Results')
-                axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
-                axs[1, 1].legend(loc="upper right")
-                
-                manager = plt.get_current_fig_manager()
-                manager.window.showMaximized()
-                plt.show()
-                plt.savefig(path_results_per_run / "Results_objectives.pdf", bbox_inches='tight')
-        
-                manager.window.close()
-                
-                
-                '''Print parameters over time, all solutions and pareto set obtained'''
-                fig, axs = plt.subplots(2, 2)
-                fig.set_figheight(15)
-                fig.set_figwidth(20)
-                axs[0, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["L_iteration_per_epoch"], s=1, c='r', marker="o", label='L_iteration_per_epoch')
-                axs[0, 0].set_title('Iteration per epoch over all iterations')
-                axs[0, 0].set(xlabel='Iterations', ylabel='L_iteration_per_epoch')
-                axs[0, 0].legend(loc="upper right")
-                
-                axs[1, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["A_num_accepted_moves_per_epoch"], s=1, c='b', marker="o", label='A_num_accepted_moves_per_epoch')
-                axs[1, 0].set_title('Number of accepted moves per epoch over all iterations')
-                axs[1, 0].set(xlabel='Iterations', ylabel='A_num_accepted_moves_per_epoch')
-                axs[1, 0].legend(loc="upper right") 
-                
-                axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
-                axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                   s=1, c='g', marker="o", label='HV Mumford (2013)')
-                axs[0, 1].set_title('HV and Temperature over all iterations')
-                axs[0, 1].set(xlabel='Iterations', ylabel='%')
-                axs[0, 1].legend(loc="upper right")
-                
-                axs[1, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["eps_num_epochs_without_accepting_solution"], s=1, c='b', marker="o", label='Num_epochs_without_accepting_solution')
-                axs[1, 1].set_title('Number of epochs without accepting moves over all iterations')
-                axs[1, 1].set(xlabel='Iterations', ylabel='Num_epochs_without_accepting_solution')
-                axs[1, 1].legend(loc="upper left") 
-                
-                manager = plt.get_current_fig_manager()
-                manager.window.showMaximized()
-                plt.show()
-                plt.savefig(path_results_per_run / "Results_parameters.pdf", bbox_inches='tight')
-        
-                manager.window.close()
+                    axs[1, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["f2_TRT"], s=1, c='b', marker="o", label='f2_TRT')
+                    axs[1, 0].set_title('TRT over all iterations')
+                    axs[1, 0].set(xlabel='Iterations', ylabel='f2_TRT')
+                    axs[1, 0].legend(loc="upper right") 
+                    
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].set_title('HV and Temperature over all iterations')
+                    axs[0, 1].set(xlabel='Iterations', ylabel='%')
+                    axs[0, 1].legend(loc="upper right")
+                    
+                    axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
+                    axs[1, 1].scatter(df_archive["f2_TRT"], df_archive["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained')
+                    axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
+                    axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+                    axs[1, 1].set_title('Pareto front obtained vs Mumford Results')
+                    axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
+                    axs[1, 1].legend(loc="upper right")
+                    
+                    manager = plt.get_current_fig_manager()
+                    manager.window.showMaximized()
+                    plt.show()
+                    plt.savefig(path_results_per_run / "Results_objectives.pdf", bbox_inches='tight')
+            
+                    manager.window.close()
+                    
+                    
+                    '''Print parameters over time, all solutions and pareto set obtained'''
+                    fig, axs = plt.subplots(2, 2)
+                    fig.set_figheight(15)
+                    fig.set_figwidth(20)
+                    axs[0, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["L_iteration_per_epoch"], s=1, c='r', marker="o", label='L_iteration_per_epoch')
+                    axs[0, 0].set_title('Iteration per epoch over all iterations')
+                    axs[0, 0].set(xlabel='Iterations', ylabel='L_iteration_per_epoch')
+                    axs[0, 0].legend(loc="upper right")
+                    
+                    axs[1, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["A_num_accepted_moves_per_epoch"], s=1, c='b', marker="o", label='A_num_accepted_moves_per_epoch')
+                    axs[1, 0].set_title('Number of accepted moves per epoch over all iterations')
+                    axs[1, 0].set(xlabel='Iterations', ylabel='A_num_accepted_moves_per_epoch')
+                    axs[1, 0].legend(loc="upper right") 
+                    
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].set_title('HV and Temperature over all iterations')
+                    axs[0, 1].set(xlabel='Iterations', ylabel='%')
+                    axs[0, 1].legend(loc="upper right")
+                    
+                    axs[1, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["eps_num_epochs_without_accepting_solution"], s=1, c='b', marker="o", label='Num_epochs_without_accepting_solution')
+                    axs[1, 1].set_title('Number of epochs without accepting moves over all iterations')
+                    axs[1, 1].set(xlabel='Iterations', ylabel='Num_epochs_without_accepting_solution')
+                    axs[1, 1].legend(loc="upper left") 
+                    
+                    manager = plt.get_current_fig_manager()
+                    manager.window.showMaximized()
+                    plt.show()
+                    plt.savefig(path_results_per_run / "Results_parameters.pdf", bbox_inches='tight')
+            
+                    manager.window.close()
         
 
     # %% Save results after all runs
-    '''Save the summarised results'''
-    df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs(path_results, UTNDP_problem_1.problem_inputs.__dict__).iloc[:,1:]
-    df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
-    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f1_ATT', ascending=True) # sort
-    df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
-    
-    '''Save the stats for all the runs'''
-    df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
-    df_durations = ga.get_stats_from_model_runs(path_results)
-    
-    stats_overall['execution_end_time'] =  datetime.datetime.now()
-    
-    stats_overall['total_model_runs'] = run_nr + 1
-    stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
-    stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
-    stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
-    stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-    stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
-    stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
-    stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-    stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+    if Decisions["Choice_print_results"]:
+        '''Save the summarised results'''
+        df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs(path_results, UTNDP_problem_1.problem_inputs.__dict__).iloc[:,1:]
+        df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
+        df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f1_ATT', ascending=True) # sort
+        df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
         
-    df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
-    df_durations.to_csv(path_results / "Run_durations.csv")
-    del df_durations
-    
-    with open(path_results / "Stats_overall.csv", "w") as archive_file:
-        w = csv.writer(archive_file)
-        for key, val in {**stats_overall, **UTNDP_problem_1.problem_inputs.__dict__, **UTNDP_problem_1.problem_constraints.__dict__, **UTNDP_problem_1.problem_SA_parameters.__dict__}.items():
-            w.writerow([key, val])
-        del key, val
+        '''Save the stats for all the runs'''
+        df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
+        df_durations = ga.get_stats_from_model_runs(path_results)
         
-    ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results, parameters_SA_routes["number_of_runs"])
-    # %% Plot summary graph
-    '''Plot the summarised graph'''
-    fig, axs = plt.subplots(1,1)
-    fig.set_figheight(15)
-    fig.set_figwidth(20)
-    
-    axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='orange', marker="o", label='Initial route sets')
-    axs.scatter(df_overall_pareto_set["f2_TRT"], df_overall_pareto_set["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-    axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
-    axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
-    axs.set_title('Pareto front obtained vs Mumford Results')
-    axs.set(xlabel='f2_TRT', ylabel='f1_ATT')
-    axs.legend(loc="upper right")
-    del axs
-    
-    manager = plt.get_current_fig_manager()
-    manager.window.showMaximized()
-    plt.show()
-    plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
-    manager.window.close()
+        stats_overall['execution_end_time'] =  datetime.datetime.now()
+        
+        stats_overall['total_model_runs'] = run_nr + 1
+        stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
+        stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
+        stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
+        stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
+        stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
+        stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
+        stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+        stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+            
+        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
+        df_durations.to_csv(path_results / "Run_durations.csv")
+        del df_durations
+        
+        with open(path_results / "Stats_overall.csv", "w") as archive_file:
+            w = csv.writer(archive_file)
+            for key, val in {**stats_overall, **UTNDP_problem_1.problem_inputs.__dict__, **UTNDP_problem_1.problem_constraints.__dict__, **UTNDP_problem_1.problem_SA_parameters.__dict__}.items():
+                w.writerow([key, val])
+            del key, val
+            
+        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results, parameters_SA_routes["number_of_runs"])
+        # %% Plot summary graph
+        '''Plot the summarised graph'''
+        fig, axs = plt.subplots(1,1)
+        fig.set_figheight(15)
+        fig.set_figwidth(20)
+        
+        axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='orange', marker="o", label='Initial route sets')
+        axs.scatter(df_overall_pareto_set["f2_TRT"], df_overall_pareto_set["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+        axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
+        axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+        axs.set_title('Pareto front obtained vs Mumford Results')
+        axs.set(xlabel='f2_TRT', ylabel='f1_ATT')
+        axs.legend(loc="upper right")
+        del axs
+        
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
+        plt.show()
+        plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+        manager.window.close()
 
     return df_archive
 

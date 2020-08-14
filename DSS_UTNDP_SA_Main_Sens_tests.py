@@ -77,8 +77,8 @@ parameters_SA_routes={
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
 "max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 20000, # the total number of accepts that are allowed
-"max_epochs" : 1000, # the maximum number of epochs that are allowed
-"min_accepts" : 6, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"max_epochs" : 1500, # the maximum number of epochs that are allowed
+"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
 "max_reheating_times" : 10, # the maximum number of times that reheating can take place
 "max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
@@ -231,6 +231,7 @@ def main(UTNDP_problem_1):
             while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
                 iteration_t = 1 # Initialise the number of iterations 
                 accepts = 0 # Initialise the accepts
+                prob_acceptance_list = []
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
                     routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
@@ -251,7 +252,9 @@ def main(UTNDP_problem_1):
                     total_iterations = total_iterations + 1 # increments the total iterations for stopping criteria
                 
                     '''Test solution acceptance and add to archive if accepted and non-dominated'''
-                    if random.uniform(0,1) < gf.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp): # probability to accept neighbour solution as current solution
+                    prob_to_accept = gf.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp)
+                    prob_acceptance_list.append(prob_to_accept)
+                    if random.uniform(0,1) < prob_to_accept: # probability to accept neighbour solution as current solution
                         routes_R = routes_R_new
                         f_cur = f_new
                         accepts = accepts + 1 
@@ -280,7 +283,7 @@ def main(UTNDP_problem_1):
                 if poor_epoch_flag:
                     poor_epoch = poor_epoch + 1 # update number of epochs without an accepted solution
                 
-                print(f'Epoch:{epoch} \tTemp:{round(SA_Temp,4)} \tHV:{round(HV, 4)} \tAccepts:{accepts} \tAttempts:{attempts} \tPoor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \tTotal_i:{total_iterations}[{iteration_t}] ')
+                print(f'Epoch:{epoch} \tTemp:{round(SA_Temp,4)} \tHV:{round(HV, 4)} \tAccepts:{accepts} \tAttempts:{attempts} \tPoor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \tTotal_i:{total_iterations}[{iteration_t}] \t P_accept:{round(sum(prob_acceptance_list)/len(prob_acceptance_list),4)}')
     
                 '''Úpdate parameters'''
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
@@ -515,7 +518,7 @@ if __name__ == "__main__":
                             #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97],
                             #[parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
                             #[parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
-                            [parameters_SA_routes, "max_attempts", 200, 400, 600],
+                            [parameters_SA_routes, "Temp", 1, 10, 20, 50, 100, 150, 200],
                             ]
         
         

@@ -77,7 +77,7 @@ parameters_SA_routes={
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
 "max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 20000, # the total number of accepts that are allowed
-"max_epochs" : 1000, # the maximum number of epochs that are allowed
+"max_epochs" : 1500, # the maximum number of epochs that are allowed
 "min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
 "max_reheating_times" : 10, # the maximum number of times that reheating can take place

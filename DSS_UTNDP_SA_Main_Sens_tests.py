@@ -76,19 +76,19 @@ parameters_SA_routes={
 "method" : "SA",
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
 "max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-"max_total_iterations" : 15000, # the total number of accepts that are allowed
+"max_total_iterations" : 20000, # the total number of accepts that are allowed
 "max_epochs" : 1000, # the maximum number of epochs that are allowed
-"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"min_accepts" : 6, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
 "max_reheating_times" : 10, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
+"max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
 "Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-"Cooling_rate" : 0.996, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+"Cooling_rate" : 0.99, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
 "Reheating_rate" : 1.1, # the geometric reheating rate
 "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 2, # number of runs to complete John 2016 set 20
+"number_of_runs" : 1, # number of runs to complete John 2016 set 20
 "Reheating_rate" : 1.1, # the geometric reheating rate
 "number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
@@ -197,8 +197,7 @@ def main(UTNDP_problem_1):
             routes_R = routes_R_initial_set[route_set_nr] # Choose the initial route set to begin with
             '''Initiate algorithm'''
             epoch = 1 # Initialise the epoch counter
-            total_iterations = 0
-            iteration_t = 1 # Initialise the number of iterations 
+            total_iterations = 0 
             poor_epoch = 0 # Initialise the number of epochs without an accepted solution
             attempts = 0 # Initialise the number of attempts made without accepting a solution
             accepts = 0 # Initialise the number of accepts made within an epoch
@@ -230,6 +229,8 @@ def main(UTNDP_problem_1):
             
             
             while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
+                iteration_t = 1 # Initialise the number of iterations 
+                accepts = 0 # Initialise the accepts
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
                     routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
@@ -285,8 +286,6 @@ def main(UTNDP_problem_1):
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
                 epoch = epoch + 1 # Increase Epoch counter
                 attempts = 0 # resets the attempts
-                accepts = 0 # resets the accepts
-                iteration_t = 1 # Initialise the number of iterations 
                 poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive     
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, i, iteration_t, counter_archive

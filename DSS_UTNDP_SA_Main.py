@@ -43,11 +43,11 @@ del name_input_data
 
 # %% Set variables
 Decisions = {
-"Choice_generate_initial_set" : False, # the alternative loads a set that is prespecified
+"Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified
 "Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : True,
+"Choice_conduct_sensitivity_analysis" : False,
 "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-"Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
+"Choice_normal_run" : True, # choose this for a normal run without Sensitivity Analysis
 "Choice_import_saved_set" : False, # import the prespecified set
 "Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
 }
@@ -78,10 +78,10 @@ parameters_SA_routes={
 "max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 20000, # the total number of accepts that are allowed
 "max_epochs" : 1000, # the maximum number of epochs that are allowed
-"min_accepts" : 6, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
 "max_reheating_times" : 10, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
+"max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
 "Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
 "Cooling_rate" : 0.99, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168

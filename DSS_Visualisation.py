@@ -252,6 +252,15 @@ def plotRouteSet2(mx_dist,routes_R, mx_coords):
     add_route_edges_to_igraph(g_tn, routes_R)
     ig.plot(g_tn, inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
 
+def plotRouteSetAndSavePDF(mx_dist,routes_R, mx_coords, name):
+    # this function takes as input the distance mx and route set and plots it
+    g_tn = gf.create_igraph_from_dist_mx(mx_dist)
+    g_tn_layout = g_tn.layout("kk")
+    format_igraph_custom_1(g_tn)    
+    add_route_edges_to_igraph(g_tn, routes_R)
+    ig.plot(g_tn, f"{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
+    return g_tn
+
 def plotRouteSet3(mx_dist,routes_R, mx_coords):
     # this function takes as input the distance mx and route set and plots it
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)

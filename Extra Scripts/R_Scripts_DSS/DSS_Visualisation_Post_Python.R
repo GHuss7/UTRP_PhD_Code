@@ -4,6 +4,50 @@
 # source("./DSS_Main.R")
 source("./DSS_Visualisation_Functions.R")
 
+# Load other functions and scripts -------
+source("./DSS_Functions.R")
+source("./DSS_Admin_Functions.R")
+source("./DSS_Visualisation_Functions.R")
+
+# 0.) Define user specified parameters ----------
+
+problemName <- "Mandl_Data" # NB copy this from the folders as it is used in file names
+
+# Create the folder for the results to be stored
+resultsDir = paste("./Results/Results_",substr(Sys.time(),1,10),"_",problemName,"_","Routes_0", sep = "")
+
+resultsDir = createResultsDirectory(resultsDir) # creates a new results directory 
+
+# Enter the number of allowed routes 
+numAllowedRoutes <- 6 # (aim for > [numNodes N ]/[maxNodes in route])
+minNodes <- 3 # minimum nodes in a route
+maxNodes <- 10 # maximum nodes in a route
+
+# Set if archives, workspaces should be saved or loaded
+loadArchive <- FALSE
+loadWorkspace <- FALSE
+saveArchive <- TRUE
+saveWorkspace <- TRUE
+loadSpecificArchive <- FALSE
+loadSpecificWorkspace <- FALSE
+initialiseTemperature <- TRUE
+optimiseFurther <- TRUE
+
+# 1.) Load the appropriate files and data for the network ------------
+# Create and format a distance matrix S
+S <- read.csv(paste("./Input_Data/",problemName,"/Distance_Matrix.csv", sep=""))
+S <- formatDistMatrix(S)
+
+# Create and format the demand matrix
+demandMatrix <- read.csv(paste("./Input_Data/",problemName,"/OD_Demand_Matrix.csv", sep=""))
+demandMatrix <- formatDemandMatrix(demandMatrix)
+
+# Collect the correct co-ordinates of the graph
+# coords <- layout.auto(g) # to generate coordinates for graph automatically
+# write.csv(coords,"MandlSwissNetworkCoords.csv") # use this to store the coords
+coords <- read.csv(file = paste("./Input_Data/",problemName,"/Node_Coords.csv", sep=""))
+coords <- as.matrix(coords)
+
 # Format the routes in the correct format -------
 formattedRoutes <- formatRoutes(x)
 

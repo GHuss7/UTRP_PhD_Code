@@ -75,23 +75,19 @@ parameters_input = {
 parameters_SA_routes={
 "method" : "SA",
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-"max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-"max_total_iterations" : 20000, # the total number of accepts that are allowed
+"max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+"max_total_iterations" : 25000, # the total number of accepts that are allowed
 "max_epochs" : 1500, # the maximum number of epochs that are allowed
 "min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
-"max_reheating_times" : 10, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
-"Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+"max_reheating_times" : 5, # the maximum number of times that reheating can take place
+"max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
+"Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-"Cooling_rate" : 0.99, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-"Reheating_rate" : 1.1, # the geometric reheating rate
+"Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+"Reheating_rate" : 1.05, # the geometric reheating rate
 "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 1, # number of runs to complete John 2016 set 20
-"Reheating_rate" : 1.1, # the geometric reheating rate
-"number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
-"Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
 "number_of_runs" : 1, # number of runs to complete John 2016 set 20
 }
 
@@ -229,8 +225,9 @@ def main(UTNDP_problem_1):
             
             
             while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
-                iteration_t = 1 # Initialise the number of iterations 
                 accepts = 0 # Initialise the accepts
+                iteration_t = 1 # Initialise the number of iterations 
+                poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive
                 prob_acceptance_list = []
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
@@ -289,7 +286,7 @@ def main(UTNDP_problem_1):
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
                 epoch = epoch + 1 # Increase Epoch counter
                 attempts = 0 # resets the attempts
-                poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive     
+                     
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, i, iteration_t, counter_archive
         
@@ -375,11 +372,13 @@ def main(UTNDP_problem_1):
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
                        s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
                     
-                    axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
+                    axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='orange', marker="o", label='Initial route sets')
                     axs[1, 1].scatter(df_archive["f2_TRT"], df_archive["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained')
                     axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
                     axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
@@ -413,6 +412,8 @@ def main(UTNDP_problem_1):
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
                        s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
@@ -464,7 +465,9 @@ def main(UTNDP_problem_1):
                 w.writerow([key, val])
             del key, val
             
-        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results, parameters_SA_routes["number_of_runs"])
+        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
+        ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
+        
         # %% Plot summary graph
         '''Plot the summarised graph'''
         fig, axs = plt.subplots(1,1)
@@ -498,27 +501,27 @@ if __name__ == "__main__":
         start = time.perf_counter()
         
         # Set up the list of parameters to test
-        sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 2500, 5000], 
-                            [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400, 600], # takes longer at first... bottleneck
-                            [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400, 600],
+        sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+                            [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+                            [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
                             [parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
                             [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            [parameters_SA_routes, "Temp", 1, 10, 50, 100, 200, 500, 1000, 2500],
-                            [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.9961682402927605],
+                            [parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+                            [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
                             [parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
                             [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
                             ]
         
-        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 2500, 5000], 
-                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400, 600],
-                            #[parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400, 600],
+        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+                            #[parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
                             #[parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
                             #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            #[parameters_SA_routes, "Temp", 1, 10, 50, 100, 200, 500, 1000, 2500],
-                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97],
+                            #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
                             #[parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
                             #[parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
-                            [parameters_SA_routes, "Temp", 1, 10, 20, 50, 100, 150, 200],
+                            [parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
                             ]
         
         

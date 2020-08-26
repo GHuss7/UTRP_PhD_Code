@@ -87,9 +87,9 @@ parameters_input = {
 'n' : len(mx_dist), # total number of nodes
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 15.1304, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 10.3301, # min f1_ATT for the Hypervolume calculations
+'Problem_name' : "Mandl_UTRP_NSGAII", # Specify the name of the problem currently being addresses
+'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
+'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
 'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
 'ref_point_min_f2_TRT' : 63, # min f2_TRT for the Hypervolume calculations
 'walkFactor' : 3, # factor it takes longer to walk than to drive
@@ -102,12 +102,12 @@ parameters_input = {
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_route_design={
 "method" : "GA",
-"population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-"generations" : 200, # STANDARD: 200 (John 2016)
+"population_size" : 300, #should be an even number STANDARD: 200 (John 2016)
+"generations" : 300, # STANDARD: 200 (John 2016)
 "number_of_runs" : 20, # STANDARD: 20 (John 2016)
-"crossover_probability" : 1.0, 
+"crossover_probability" : 0.5, 
 "crossover_distribution_index" : 5,
-"mutation_probability" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later
+"mutation_probability" : 1, # John: 1/|Route set| -> set later
 "mutation_distribution_index" : 10,
 "tournament_size" : 2,
 "termination_criterion" : "StoppingByEvaluations",
@@ -368,7 +368,7 @@ def main(UTNDP_problem_1):
                 Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
                 John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
             
-                if False:
+                if True:
                     '''Print Objective functions over time, all solutions and pareto set obtained'''
                     fig, axs = plt.subplots(2, 2)
                     fig.set_figheight(15)
@@ -445,10 +445,11 @@ def main(UTNDP_problem_1):
             del key, val
             
         ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_route_design["number_of_runs"]) # prints the runs summary
-                    
+        ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results)           
+          
         # %% Plot analysis graph
         '''Plot the analysis graph'''
-        if False:
+        if True:
             fig, axs = plt.subplots(1,1)
             fig.set_figheight(15)
             fig.set_figwidth(20)

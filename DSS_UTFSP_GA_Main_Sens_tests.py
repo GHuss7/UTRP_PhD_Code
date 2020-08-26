@@ -905,8 +905,9 @@ def main(UTFSP_problem_1):
                 w.writerow([key, val])
             del key, val
             
-        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_frequencies["number_of_runs"]) # prints the runs summary
-                    
+        # ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_frequencies["number_of_runs"]) # prints the runs summary
+        ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
+        
         # %% Plot analysis graph
         '''Plot the analysis graph'''
         if True:

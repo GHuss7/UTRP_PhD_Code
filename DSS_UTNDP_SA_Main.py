@@ -54,7 +54,7 @@ Decisions = {
 
 '''Enter the number of allowed routes''' 
 parameters_constraints = {
-'con_r' : 6,               # (aim for > [numNodes N ]/[maxNodes in route])
+'con_r' : 4,               # (aim for > [numNodes N ]/[maxNodes in route])
 'con_minNodes' : 2,                        # minimum nodes in a route
 'con_maxNodes' : 10,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist)              # number of nodes in the network
@@ -65,7 +65,7 @@ parameters_input = {
 'n' : len(mx_dist), # total number of nodes
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl_UTRP", # Specify the name of the problem currently being addresses
+'Problem_name' : "Mandl_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
 'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
 'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
 'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
@@ -77,7 +77,7 @@ parameters_SA_routes={
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
 "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 30000, # the total number of accepts that are allowed
-"max_epochs" : 10, # the maximum number of epochs that are allowed
+"max_epochs" : 1500, # the maximum number of epochs that are allowed
 "min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
 "max_reheating_times" : 5, # the maximum number of times that reheating can take place
@@ -88,7 +88,7 @@ parameters_SA_routes={
 "Reheating_rate" : 1.05, # the geometric reheating rate
 "number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 1, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 1 # number of runs to complete John 2016 set 20
+"number_of_runs" : 20 # number of runs to complete John 2016 set 20
 }
 
 '''Set the reference point for the Hypervolume calculations'''

@@ -11,8 +11,8 @@ import string
 from pathlib import Path
 
 
-prefix_for_each_csv_file = "UTRP_SA_Summary"
-spl_word = 'SA_' # initializing split word 
+prefix_for_each_csv_file = "UTRP_GA_Summary"
+spl_word = 'GA_' # initializing split word 
 
 def count_Run_folders(path_to_folder):
     # NB only all the folders of Runs should me in the main path, otherwise errors will occur
@@ -71,6 +71,7 @@ for results_folder_name in result_entries:
 """Print dataframes as .csv files"""
 if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
+        results_dataframe.columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "parameter", "value"]
         results_dataframe.to_csv(path_to_main_folder / f"{prefix_for_each_csv_file}_{parameter}.csv")
 
 

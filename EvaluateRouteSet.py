@@ -522,7 +522,7 @@ def fullPassengerEvaluation(routes, travelTimes,DemandMat, total_demand,n,tp,wt)
     routeadj,changes,inv_map,t,shortest,longest = expandTravelMatrixChanges(routes, travelTimes,n,tp,wt)
     D, changes = FastFloydChanges(routeadj,changes)
     SPMatrix,ChMatrix = shortest_paths_matrixChanges(D, inv_map, t, n, changes)
-    print(ChMatrix)
+    #print(ChMatrix)
     a = np.array(ChMatrix)
     np.savetxt('ChangesMat.txt', a.astype(int), fmt='%i', delimiter=' ')   # X is an array
     d0, d1, d2, drest, ATT, total_ATT, total_TT = EvaluateChanges(n, SPMatrix, ChMatrix, DemandMat, total_demand, tp, wt)

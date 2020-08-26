@@ -36,8 +36,6 @@ import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
-# TODO: def main_dss(): # create a main function to encapsulate the main body
-# def main():
     
 #%% Pymoo functions
 from pymoo.util.function_loader import load_function
@@ -87,16 +85,16 @@ parameters_input = {
 'n' : len(mx_dist), # total number of nodes
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 15.1304, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 10.3301, # min f1_ATT for the Hypervolume calculations
+'Problem_name' : "Mandl_UTRP_NSGAII", # Specify the name of the problem currently being addresses
+'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
+'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
 'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
 'ref_point_min_f2_TRT' : 63, # min f2_TRT for the Hypervolume calculations
 'walkFactor' : 3, # factor it takes longer to walk than to drive
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
 'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
 'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
-'alpha_const_inter' : 0.7 # constant for interarrival times relationship (Spiess 1989)
+'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
 }
 
 '''State the various GA input parameters for frequency setting''' 
@@ -366,7 +364,7 @@ def main(UTNDP_problem_1):
                 Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
                 John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
             
-                if False:
+                if True:
                     '''Print Objective functions over time, all solutions and pareto set obtained'''
                     fig, axs = plt.subplots(2, 2)
                     fig.set_figheight(15)
@@ -442,12 +440,13 @@ def main(UTNDP_problem_1):
                              **UTNDP_problem_1.problem_GA_parameters.__dict__}.items():
                 w.writerow([key, val])
             del key, val
-            
-        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_route_design["number_of_runs"]) # prints the runs summary
-                    
+      
+        # ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_route_design["number_of_runs"]) # prints the runs summary
+        ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results)            
+        
         # %% Plot analysis graph
         '''Plot the analysis graph'''
-        if False:
+        if True:
             fig, axs = plt.subplots(1,1)
             fig.set_figheight(15)
             fig.set_figwidth(20)
@@ -456,7 +455,7 @@ def main(UTNDP_problem_1):
             axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
             axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
             axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
-            axs.set_title('Pareto front obtained vs Mumford Results')
+            axs.set_title('Pareto front obtained vs validation Results')
             axs.set(xlabel='f2_TRT', ylabel='f1_ATT')
             axs.legend(loc="upper right")
             del axs
@@ -498,8 +497,12 @@ if __name__ == "__main__":
                     #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
                     #[parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], # TODO: 300 population size gives MemoryError (think problem is in linear calculation of obj function)
                     #[parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
-                    [parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
-                    #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1]
+                    #[parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
+                    #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1],
+                    #[parameters_GA_route_design, "mutation_probability", 0.5],
+                    #[parameters_GA_route_design, "mutation_probability", 0.7],
+                    [parameters_GA_route_design, "mutation_probability", 0.9],
+                    #[parameters_GA_route_design, "mutation_probability", 1],                    
                     ]
         
         for sensitivity_test in sensitivity_list:
@@ -530,67 +533,3 @@ if __name__ == "__main__":
         
         print(f'Finished in {round(finish-start, 6)} second(s)')
         
-if __name__ != '__main__': # Guard the code by not creating unending processes
-
-#%% Multi-thread 
-    if Choice_conduct_sensitivity_analysis:
-            start = time.perf_counter()
-            ''' Create copies of the original input data '''
-            #original_UTNDP_problem_1 = copy.deepcopy(UTNDP_problem_1)    
-            #original_parameters_constraints = copy.deepcopy(parameters_constraints)  
-            #original_parameters_GA_route_design = copy.deepcopy(parameters_GA_route_design)  
-            
-            # Set up the list of parameters to test
-            sensitivity_list = [[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
-                                [parameters_constraints, "con_minNodes", 2, 3, 4, 5],
-                                [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], # TODO: 300 population size gives MemoryError (think problem is in linear calculation of obj function)
-                                [parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
-                                [parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
-                                [parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1]
-                                ]
-            
-            
-            multi_list = []
-            
-            for sensitivity_test in sensitivity_list:
-                parameter_dict = sensitivity_test[0]
-                dict_entry = sensitivity_test[1]
-                for test_counter in range(2,len(sensitivity_test)):
-                    
-                    print("Test: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
-                    
-                    UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
-                    
-                    temp_storage = parameter_dict[dict_entry]
-                    
-                    # Set new parameters
-                    parameter_dict[dict_entry] = sensitivity_test[test_counter]
-        
-                    # Update problem instance
-                    UTNDP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
-                    UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA_route_design)
-                    
-                    # Run model
-                    # main(UTNDP_problem_1)
-                    
-                    # Queue model instead
-                    multi_list.append(copy.deepcopy(UTNDP_problem_1))
-                    
-                    # Reset the original parameters
-                    parameter_dict[dict_entry] = temp_storage
-            
-
-  
-    
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                    #secs = [5, 4, 3, 2, 1]
-                    results = executor.map(main, multi_list) # map returns processes in order they were started
-                
-                    # for result in results:
-                    #     print(result)
-                
-            finish = time.perf_counter()
-                    
-            print(f'Finished in {round(finish-start, 6)} second(s)')
-    
-    

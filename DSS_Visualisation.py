@@ -30,6 +30,16 @@ def format_igraph_custom_1(g_tn):
     g_tn.es["label"] = g_tn.es["distance"]
     return g_tn
 
+def format_igraph_custom_2(g_tn):  
+    # Formats the graph according to some specifications
+    g_tn.vs["size"] = [20]
+    g_tn.vs["label_size"] = [15]
+    g_tn.vs["color"] = ["gray"]
+    g_tn.vs["label"] = range(g_tn.ecount())
+    g_tn.es["label"] = g_tn.es["distance"]
+    g_tn.es["label_size"] = [15]
+    return g_tn
+
 
 # %% Create and plot a graph from a distance matrix
 
@@ -247,24 +257,29 @@ def plotRouteSet(mx_dist,routes_R):
 def plotRouteSet2(mx_dist,routes_R, mx_coords):
     # this function takes as input the distance mx and route set and plots it
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)
-    g_tn_layout = g_tn.layout("kk")
     format_igraph_custom_1(g_tn)    
     add_route_edges_to_igraph(g_tn, routes_R)
     ig.plot(g_tn, inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
 
+def plotRouteSetAndSavePDF_road_network(mx_dist,routes_R, mx_coords, name):
+    # this function takes as input the distance mx and route set and plots it
+    g_tn = gf.create_igraph_from_dist_mx(mx_dist)
+    format_igraph_custom_2(g_tn)    
+    add_route_edges_to_igraph(g_tn, routes_R)
+    ig.plot(g_tn, f"Plots/{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
+    return g_tn
+
 def plotRouteSetAndSavePDF(mx_dist,routes_R, mx_coords, name):
     # this function takes as input the distance mx and route set and plots it
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)
-    g_tn_layout = g_tn.layout("kk")
     format_igraph_custom_1(g_tn)    
     add_route_edges_to_igraph(g_tn, routes_R)
-    ig.plot(g_tn, f"{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
+    ig.plot(g_tn, f"Plots/{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
     return g_tn
 
 def plotRouteSet3(mx_dist,routes_R, mx_coords):
     # this function takes as input the distance mx and route set and plots it
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)
-    g_tn_layout = g_tn.layout("kk")
     format_igraph_custom_1(g_tn)    
     add_route_edges_to_igraph(g_tn, routes_R)
     ig.plot(g_tn, inline=True, layout=mx_coords)  # switch inline to false if you want to print inline   

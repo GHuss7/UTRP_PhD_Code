@@ -75,7 +75,7 @@ Choice_print_full_data_for_analysis = False
 '''State the various parameter constraints''' 
 parameters_constraints = {
 'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
-'con_minNodes' : 3,                        # minimum nodes in a route
+'con_minNodes' : 2,                        # minimum nodes in a route
 'con_maxNodes' : 10,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist),              # number of nodes in the network
 'con_fleet_size' : 40,                     # number of vehicles that are allowed
@@ -93,13 +93,13 @@ parameters_input = {
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
 'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
 'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
-'alpha_const_inter' : 0.5 # constant for interarrival times relationship (Spiess 1989)
+'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
 }
 
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_frequencies={
 "method" : "GA",
-"population_size" : 100, #should be an even number, John: 200
+"population_size" : 200, #should be an even number, John: 200
 "generations" : 20, # John: 200
 "number_of_runs" : 1, # John: 20
 "crossover_probability" : 0.9,  # John: 0.9
@@ -108,7 +108,7 @@ parameters_GA_frequencies={
 "mutation_distribution_index" : 10,
 "tournament_size" : 2,
 "termination_criterion" : "StoppingByEvaluations",
-"max_evaluations" : 25000,
+"max_evaluations" : 40000,
 "number_of_variables" : "not_set",
 "number_of_objectives" : 2 # this could still be automated in the future
 }
@@ -949,17 +949,19 @@ if __name__ == "__main__":
         # Set up the list of parameters to test
         sensitivity_list = [[parameters_GA_frequencies, "population_size", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_frequencies, "generations", 5, 10, 15, 20, 25, 50],
-                            [parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9, 0.95, 1],
-                            [parameters_GA_frequencies, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1]
+                            [parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
+                            [parameters_GA_frequencies, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
                             ]
         
         # Set up the list of parameters to test
         sensitivity_list = [#[parameters_GA_frequencies, "population_size", 10, 20, 50, 100, 150],
-                            #[parameters_GA_frequencies, "population_size", 200, 300],
-                            #[parameters_GA_frequencies, "generations", 5, 10, 15, 20, 25, 50],
-                            #[parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9, 0.95, 1],
-                            #[parameters_GA_frequencies, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3],
-                            [parameters_GA_frequencies, "mutation_probability", 0.5, 0.7, 0.9, 1]
+                            #[parameters_GA_frequencies, "population_size", 200],
+                            #[parameters_GA_frequencies, "population_size", 300],
+                            #[parameters_GA_frequencies, "generations", 60],
+                            #[parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9],
+                            #[parameters_GA_frequencies, "crossover_probability", 0.95, 1],
+                            [parameters_GA_frequencies, "mutation_probability", 0.05, 0.1],
+                            [parameters_GA_frequencies, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
                             ]
         
 

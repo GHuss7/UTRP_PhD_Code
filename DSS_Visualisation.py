@@ -30,16 +30,26 @@ def format_igraph_custom_1(g_tn):
     g_tn.es["label"] = g_tn.es["distance"]
     return g_tn
 
-def format_igraph_custom_2(g_tn):  
+def format_igraph_custom_2(g_tn):   # for transit network
     # Formats the graph according to some specifications
-    g_tn.vs["size"] = [20]
-    g_tn.vs["label_size"] = [15]
+    g_tn.vs["size"] = [30]
+    g_tn.vs["label_size"] = [20]
     g_tn.vs["color"] = ["gray"]
     g_tn.vs["label"] = range(g_tn.ecount())
     g_tn.es["label"] = g_tn.es["distance"]
-    g_tn.es["label_size"] = [15]
+    g_tn.es["label_size"] = [20]
     return g_tn
 
+def format_igraph_custom_thesis(g_tn):  
+    # Formats the graph according to some specifications
+    g_tn.vs["size"] = [30]
+    g_tn.vs["label_size"] = [20]
+    g_tn.vs["color"] = ["gray"]
+    g_tn.vs["label"] = range(g_tn.ecount())
+    g_tn.es["label"] = g_tn.es["distance"]
+    # g_tn.es["size"] = [30]
+    g_tn.es["label_size"] = [15]
+    return g_tn
 
 # %% Create and plot a graph from a distance matrix
 
@@ -217,7 +227,7 @@ def add_route_edges_to_igraph(g_tn, routes_R):
         links_list_route_R_i = list()
     del links_list_route_R_i
     
-    colours = ["red","lime","blue","gold","darkorange","magenta","cyan","brown","gray","black"]
+    colours = ["red","lime","blue","darkorange","magenta","cyan","green","gold","brown","gray","black"]
     
     for i in range(len(routes_R)):
         g_tn.add_edges(links_list_route_R[i]) # "edge_label" = range(len(route)), "edge_color" = "red"
@@ -272,7 +282,7 @@ def plotRouteSetAndSavePDF_road_network(mx_dist,routes_R, mx_coords, name):
 def plotRouteSetAndSavePDF(mx_dist,routes_R, mx_coords, name):
     # this function takes as input the distance mx and route set and plots it
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)
-    format_igraph_custom_1(g_tn)    
+    format_igraph_custom_thesis(g_tn)    
     add_route_edges_to_igraph(g_tn, routes_R)
     ig.plot(g_tn, f"Plots/{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
     return g_tn

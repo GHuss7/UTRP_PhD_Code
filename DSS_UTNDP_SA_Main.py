@@ -54,7 +54,7 @@ Decisions = {
 
 '''Enter the number of allowed routes''' 
 parameters_constraints = {
-'con_r' : 4,               # (aim for > [numNodes N ]/[maxNodes in route])
+'con_r' : 6,               # (aim for > [numNodes N ]/[maxNodes in route])
 'con_minNodes' : 2,                        # minimum nodes in a route
 'con_maxNodes' : 10,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist)              # number of nodes in the network
@@ -78,17 +78,17 @@ parameters_SA_routes={
 "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 30000, # the total number of accepts that are allowed
 "max_epochs" : 1500, # the maximum number of epochs that are allowed
-"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"min_accepts" : 60, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
 "max_attempts" : 3, # maximum number of attempted moves per epoch
-"max_reheating_times" : 5, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
+"max_reheating_times" : 50, # the maximum number of times that reheating can take place
+"max_poor_epochs" : 5, # maximum number of epochs which may pass without the acceptance of any new solution
 "Temp" : 1,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
 "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
 "Reheating_rate" : 1.05, # the geometric reheating rate
 "number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 1, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 20 # number of runs to complete John 2016 set 20
+"number_of_runs" : 1 # number of runs to complete John 2016 set 20
 }
 
 '''Set the reference point for the Hypervolume calculations'''

@@ -120,7 +120,7 @@ gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, name)
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
 # OUTPUT: return(ATT,d0,d1,d2,drest,noRoutes,longest,shortest)
-print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
+print(f'{name}: {round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
 
 ''' DBMOSA UTRP TRT MIN ROUTE '''
 name = 'UTRP_DBMOSA_TRT_MIN'
@@ -129,29 +129,29 @@ routes_R = gf.convert_routes_str2list(routes_R)
 gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, name)
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
-print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
+print(f'{name}: {round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
 
 ''' NSGA II UTRP ATT MIN ROUTE '''
 name = 'UTRP_NSGAII_ATT_MIN'
-routes_R = "11-10-12*0-1-2-5-7-9-10-12*8-14-7-5-3-4-1-0*1-4-3-5-7-9-10-12-13*0-1-3-11-10-9-6-14-8*0-1-2-5-14-6-9-13-12*" 
+routes_R = "12-13-9-6-14-5-2-1-0*0-1-3-11-10-12*11-10-9-6-14-8*0-1-4-3-5-7-14-6*10-9-7-5-3-4*0-1-2-5-7-9-10-12-13*" 
 routes_R = gf.convert_routes_str2list(routes_R)
 gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, name)
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
-print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
+print(f'{name}: {round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
 
 ''' NSGA II UTRP TRT MIN ROUTE '''
 name = 'UTRP_NSGAII_TRT_MIN'
-routes_R = "0-1*10-12*10-9-6-14-7-5-2-1-3-4*12-13*10-11*8-14*" 
+routes_R = "10-11*3-1-2-5-7-14-6-9-10-12*13-12*0-1*14-8*3-4*" 
 routes_R = gf.convert_routes_str2list(routes_R)
 gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, name)
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
-print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
+print(f'{name}: {round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
 
 
 # %% Extra
-print("Ëxtra:")
+print("Extra:")
 routes_R = "11-10*12-13*1-3*12-10-9-6-14-7-5-2-1-0*14-8*3-4*"
 routes_R = gf.convert_routes_str2list(routes_R)
 gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, name)

@@ -70,7 +70,7 @@ del name_input_data
 Choice_generate_initial_set = True 
 Choice_print_results = True 
 Choice_conduct_sensitivity_analysis = True    
-Choice_print_full_data_for_analysis = False
+Choice_print_full_data_for_analysis = True
 
 '''State the various parameter constraints''' 
 parameters_constraints = {
@@ -99,12 +99,12 @@ parameters_input = {
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_frequencies={
 "method" : "GA",
-"population_size" : 200, #should be an even number, John: 200
-"generations" : 20, # John: 200
+"population_size" : 50, #should be an even number, John: 200
+"generations" : 4, # John: 200
 "number_of_runs" : 1, # John: 20
-"crossover_probability" : 0.9,  # John: 0.9
+"crossover_probability" : 0.8,  # John: 0.9
 "crossover_distribution_index" : 5,
-"mutation_probability" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later
+"mutation_probability" : 0.1, #1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later
 "mutation_distribution_index" : 10,
 "tournament_size" : 2,
 "termination_criterion" : "StoppingByEvaluations",
@@ -590,6 +590,14 @@ def main(UTFSP_problem_1):
     UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
     UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
     
+    # TODO: Test errors
+    '''Set the reference point for the Hypervolume calculations'''
+    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = 12, 25
+    parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = 35, 4.2 
+    UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
+    UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
+    
+    
     #%% Function: Add/Delete individuals to/from population
     def combine_offspring_with_pop(pop, offspring_variable_args):
         # Function to combine the offspring with the population
@@ -905,8 +913,8 @@ def main(UTFSP_problem_1):
                 w.writerow([key, val])
             del key, val
             
-        # ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_frequencies["number_of_runs"]) # prints the runs summary
-        ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
+        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_frequencies["number_of_runs"]) # prints the runs summary
+        # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
         
         # %% Plot analysis graph
         '''Plot the analysis graph'''
@@ -961,8 +969,10 @@ if __name__ == "__main__":
                             #[parameters_GA_frequencies, "generations", 60],
                             #[parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9],
                             #[parameters_GA_frequencies, "crossover_probability", 0.95, 1],
-                            [parameters_GA_frequencies, "mutation_probability", 0.05, 0.1],
-                            [parameters_GA_frequencies, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+                            #[parameters_GA_frequencies, "mutation_probability", 0.05, 0.1],
+                            #[parameters_GA_frequencies, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+                            
+                            [parameters_GA_frequencies, "mutation_probability", 0.1],
                             ]
         
 
@@ -1060,4 +1070,20 @@ if False:
     finish = time.perf_counter()
     print(f'Finished in {round(finish-start, 2)} second(s): for loop')
 
-    
+A_link_volumes = TN.mx_volumes_links
+A_mx_C_a = TN.mx_C_a
+fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0],UTFSP_problem_1)
+#TN.R_routes
+#gv.plotUTFSPAndSavePDF(mx_dist,routes_R, mx_coords, name)
+
+
+"""
+self.R_routes_named = R_routes_named
+self.names_of_transit_routes = names_of_transit_routes
+self.names_all_transit_nodes = names_all_transit_nodes
+self.n_transit_nodes = n_transit_nodes
+self.dict_all_nodes = dict_all_nodes
+self.mx_transit_network = mx_transit_network
+self.mx_C_a = mx_C_a
+self.mx_f_a = mx_f_a
+"""

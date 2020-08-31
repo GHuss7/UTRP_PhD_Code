@@ -10,7 +10,7 @@ import re
 import string
 from pathlib import Path
 
-prefix_for_each_csv_file = "UTRP_GA_Summary"
+prefix_for_each_csv_file = "UTFSP_GA_Summary"
 spl_word = 'GA_' # initializing split word 
 
 def count_Run_folders(path_to_folder):

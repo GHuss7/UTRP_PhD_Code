@@ -462,6 +462,7 @@ class Transit_network():
                                          names_all_transit_nodes[j], mx_C_a[i,j], mx_f_a[i,j]]                 
                     counter = counter + 1
         
+        self.R_routes = R_routes
         self.R_routes_named = R_routes_named
         self.names_of_transit_routes = names_of_transit_routes
         self.names_all_transit_nodes = names_all_transit_nodes

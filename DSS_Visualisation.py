@@ -287,6 +287,14 @@ def plotRouteSetAndSavePDF(mx_dist,routes_R, mx_coords, name):
     ig.plot(g_tn, f"Plots/{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
     return g_tn
 
+def plotUTFSPAndSavePDF(mx_dist,routes_R, mx_coords, name):
+    # this function takes as input the distance mx and route set and plots it
+    g_tn = gf.create_igraph_from_dist_mx(mx_dist)
+    format_igraph_custom_thesis(g_tn)    
+    add_route_edges_to_igraph(g_tn, routes_R)
+    ig.plot(g_tn, f"Plots/{name}_plot.pdf", inline=False, layout=mx_coords)  # switch inline to false if you want to print inline   
+    return g_tn
+
 def plotRouteSet3(mx_dist,routes_R, mx_coords):
     # this function takes as input the distance mx and route set and plots it
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)

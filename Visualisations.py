@@ -151,10 +151,10 @@ print(f'{name}: {round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1]
 
 
 # %% Extra
-print("Extra:")
-routes_R = "11-10*12-13*1-3*12-10-9-6-14-7-5-2-1-0*14-8*3-4*"
+print("John 2016, best operator route set:")
+routes_R = "4-3-1*13-12*8-14*9-10-12*9-6-14-7-5-2-1-0*10-11*"
 routes_R = gf.convert_routes_str2list(routes_R)
-gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, name)
+gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, "John_2016_best_operator_obj")
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
 print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')

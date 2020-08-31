@@ -103,9 +103,9 @@ parameters_GA_route_design={
 "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
 "generations" : 200, # STANDARD: 200 (John 2016)
 "number_of_runs" : 20, # STANDARD: 20 (John 2016)
-"crossover_probability" : 1.0, 
+"crossover_probability" : 0.6, 
 "crossover_distribution_index" : 5,
-"mutation_probability" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later
+"mutation_probability" : 1, # John: 1/|Route set| -> set later
 "mutation_distribution_index" : 10,
 "tournament_size" : 2,
 "termination_criterion" : "StoppingByEvaluations",

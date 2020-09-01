@@ -104,9 +104,14 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
                     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
                     mx_f_a[i,j] = 0
                 else:
-                    mx_transit_network[i,j] = 1
-                    mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                    mx_f_a[i,j] = inf
+                    """Test for weird results"""
+                    mx_transit_network[i,j] = 0
+                    mx_C_a[i,j] = parameters_input['large_dist']
+                    mx_f_a[i,j] = 0
+                # else:
+                #     mx_transit_network[i,j] = 1
+                #     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
+                #     mx_f_a[i,j] = inf
     
     
     ''''Fill in the boarding links characteristics'''

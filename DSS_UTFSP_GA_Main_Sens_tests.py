@@ -99,8 +99,8 @@ parameters_input = {
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_frequencies={
 "method" : "GA",
-"population_size" : 2, #should be an even number, John: 200
-"generations" : 1, # John: 200
+"population_size" : 150, #should be an even number, John: 200
+"generations" : 20, # John: 200
 "number_of_runs" : 1, # John: 20
 "crossover_probability" : 0.8,  # John: 0.9
 "crossover_distribution_index" : 5,
@@ -585,17 +585,17 @@ def main(UTFSP_problem_1):
                            UTFSP_problem_1.problem_data.mx_dist)) #f4_TBR
     
     '''Set the reference point for the Hypervolume calculations'''
-    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/5)[0],UTFSP_problem_1)
+    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0],UTFSP_problem_1)
     parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0],UTFSP_problem_1)
     UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
     UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
     
     # TODO: Test errors
-    '''Set the reference point for the Hypervolume calculations'''
-    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = 12, 25
-    parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = 35, 4.2 
-    UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
-    UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
+    # '''Set the reference point for the Hypervolume calculations'''
+    # parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = 12, 25
+    # parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = 35, 4.2 
+    # UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
+    # UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
     
     
     #%% Function: Add/Delete individuals to/from population
@@ -1365,11 +1365,7 @@ u_i_times = np.zeros(shape=(15,15))
 
 for destination_i_strategy, destination_i in zip(B_df_opt_strat_alg, range(15)):
     for origin_j in range(15):
-
         if origin_j != destination_i:
-            #print(destination_i_strategy[(destination_i_strategy.iloc[:,0] == origin_j) & destination_i_strategy.iloc[:,4]].iloc[0,3])
             u_i_times[origin_j,destination_i] = destination_i_strategy[(destination_i_strategy.iloc[:,0] == origin_j) & destination_i_strategy.iloc[:,4]].iloc[0,3]
-        #else:
-            #print(0)
             
 print(sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2))

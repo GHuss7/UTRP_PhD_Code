@@ -104,15 +104,14 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
                     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
                     mx_f_a[i,j] = 0
                 else:
-                    """Test for weird results"""
-                    mx_transit_network[i,j] = 0
-                    mx_C_a[i,j] = parameters_input['large_dist']
-                    mx_f_a[i,j] = 0
+                    mx_transit_network[i,j] = 1
+                    mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
+                    mx_f_a[i,j] = inf
                 # else:
-                #     mx_transit_network[i,j] = 1
-                #     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                #     mx_f_a[i,j] = inf
-    
+                #     """Test for weird results"""
+                #     mx_transit_network[i,j] = 0
+                #     mx_C_a[i,j] = parameters_input['large_dist']
+                #     mx_f_a[i,j] = 0
     
     ''''Fill in the boarding links characteristics'''
     counter = 0
@@ -181,6 +180,8 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
     mx_volumes_nodes = np.zeros(n_transit_nodes) # create object to keep the node volumes
     mx_volumes_links = np.zeros(shape=(n_transit_nodes, n_transit_nodes)) # create object to keep the arc volumes
     names_main_nodes = names_all_transit_nodes[0:parameters_input['n']]
+    
+    u_i_times = np.zeros(shape=(parameters_input['n'],parameters_input['n']))
     
         # Overall loop to change the destinations
     for i_destination in range(parameters_input['n']): 
@@ -272,69 +273,73 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
                 
             '''Remove the current link'''
             mx_S_list = np.delete(mx_S_list, min_u_j_and_c_a_index, axis = 0) # remove the current link from S_list
-            
         
-        '''Assign demand according to optimal strategy'''
-        # Initialise the algorithm
-        # load the volumes of demand per node, called V_i
+        '''Gets the expected travel time per passenger based on optimal strategies'''
+        for origin_j in range(parameters_input['n']):
+            if origin_j != i_destination:
+                u_i_times[origin_j,i_destination] = df_opt_strat_alg[(df_opt_strat_alg.iloc[:,0] == origin_j) & df_opt_strat_alg.iloc[:,4]].iloc[0,3]
+    
         
-        V_i = np.zeros(n_transit_nodes)
-        for i in range(parameters_input['n']):
-            V_i[i] = mx_demand[i,r_destination]
-        V_i[r_destination] = - sum(V_i)
+        #'''Assign demand according to optimal strategy'''
+        # # Initialise the algorithm
+        # # load the volumes of demand per node, called V_i
         
-        # NB this needs to hold to the conservation of flow requirements
-        # colnames(V_i) = names_all_nodes
-        # also the actual demand values can be input here
+        # V_i = np.zeros(n_transit_nodes)
+        # for i in range(parameters_input['n']):
+        #     V_i[i] = mx_demand[i,r_destination]
+        # V_i[r_destination] = - sum(V_i)
         
-        df_opt_strat_alg.insert(5, "v_a", np.zeros(len(df_opt_strat_alg)))
+        # # NB this needs to hold to the conservation of flow requirements
+        # # colnames(V_i) = names_all_nodes
+        # # also the actual demand values can be input here
         
-        '''Load the links according to demand and frequencies'''
-        for i in range(len(df_opt_strat_alg)-1, -1, -1):  # for every link in decreasing order of u_j + c_a
-            if df_opt_strat_alg.iloc[i,4]:
+        # df_opt_strat_alg.insert(5, "v_a", np.zeros(len(df_opt_strat_alg)))
         
-                if not int(df_opt_strat_alg.iloc[i, 0]) == r_destination: # this restricts the alg to assign negative demand to 
-                      # the outgoing nodes from the node that is being evaluated
-                      # also note, errors might come in when demand is wrongfully assigned out, and in.
+        #'''Load the links according to demand and frequencies'''
+        # for i in range(len(df_opt_strat_alg)-1, -1, -1):  # for every link in decreasing order of u_j + c_a
+        #     if df_opt_strat_alg.iloc[i,4]:
+        
+        #         if not int(df_opt_strat_alg.iloc[i, 0]) == r_destination: # this restricts the alg to assign negative demand to 
+        #               # the outgoing nodes from the node that is being evaluated
+        #               # also note, errors might come in when demand is wrongfully assigned out, and in.
                       
-                    # set the indices
-                    node_i_index = int(df_opt_strat_alg.iloc[i, 0])
-                    node_j_index = int(df_opt_strat_alg.iloc[i, 1])
+        #             # set the indices
+        #             node_i_index = int(df_opt_strat_alg.iloc[i, 0])
+        #             node_j_index = int(df_opt_strat_alg.iloc[i, 1])
                     
-                    # assign the v_a values
-                    if not df_opt_strat_alg.iloc[i,2] == inf :
-                        df_opt_strat_alg.iloc[i, 5] = (df_opt_strat_alg.iloc[i,2]/\
-                                                          vec_nodes_f_i[node_i_index])*V_i[node_i_index]
-                    else:
-                        df_opt_strat_alg.iloc[i, 5] = V_i[node_i_index]
+        #             # assign the v_a values
+        #             if not df_opt_strat_alg.iloc[i,2] == inf :
+        #                 df_opt_strat_alg.iloc[i, 5] = (df_opt_strat_alg.iloc[i,2]/\
+        #                                                   vec_nodes_f_i[node_i_index])*V_i[node_i_index]
+        #             else:
+        #                 df_opt_strat_alg.iloc[i, 5] = V_i[node_i_index]
                                 
-                    # assign the V_j values                                                
-                    V_i[node_j_index] = V_i[node_j_index] + df_opt_strat_alg.iloc[i, 5]                                                                                        
+        #             # assign the V_j values                                                
+        #             V_i[node_j_index] = V_i[node_j_index] + df_opt_strat_alg.iloc[i, 5]                                                                                        
         
-        # Update the volumes overall
-        mx_volumes_nodes = mx_volumes_nodes + V_i
+        # # Update the volumes overall
+        # mx_volumes_nodes = mx_volumes_nodes + V_i
         
-        counter_link = 0  
-        while counter_link < len(df_opt_strat_alg):
-            if df_opt_strat_alg.iloc[counter_link,4]:
-                mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
-                mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
+        # counter_link = 0  
+        # while counter_link < len(df_opt_strat_alg):
+        #     if df_opt_strat_alg.iloc[counter_link,4]:
+        #         mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
+        #         mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
         
-          
-            counter_link = counter_link + 1 
-        
-    # end the overall destination change for loop spanning from 6.)
+        #     counter_link = counter_link + 1 
+    
+        # end the overall destination change for loop spanning from 6.)
     
       
-    '''Add the volume per arc details to the list_transit_links object'''
-    df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
+    #'''Add the volume per arc details to the list_transit_links object'''
+    # df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
     
-    for i in range(len(df_transit_links)):
-        df_transit_links.iloc[i,4] = mx_volumes_links[int(dict_all_nodes[df_transit_links.iloc[i,0]]),\
-                             int(dict_all_nodes[df_transit_links.iloc[i,1]])]
+    # for i in range(len(df_transit_links)):
+    #     df_transit_links.iloc[i,4] = mx_volumes_links[int(dict_all_nodes[df_transit_links.iloc[i,0]]),\
+    #                          int(dict_all_nodes[df_transit_links.iloc[i,1]])]
 
     # F3 Expected Travel Time
-    return sum(sum(mx_volumes_links*mx_C_a))/(parameters_input['total_demand']*2)
+    return sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2)
 
 #%% f4_TBR objective function
 

@@ -15,7 +15,7 @@ rm(workingDirectory)
 # NB copy this from the folders as it is used in file names
  problemName <- "Mandl_Data" 
 #problemName <- "ORSSA_example_2019" 
-optimise_with_GA <- FALSE
+optimise_with_GA <- TRUE
 
 # Create the folder for the results to be stored
 resultsDir = paste("./SavedRData/Results_",substr(Sys.time(),1,10),"_",problemName,"_","Routes_Min_a", sep = "")
@@ -47,7 +47,7 @@ coords <- as.matrix(coords)
 
 
 # Input other constants
-walkFactor = 3 # factor it takes longer to walk than to drive
+walkFactor = 100 # factor it takes longer to walk than to drive
 boardingTime = 0.1 # assume boarding and alighting time = 6 seconds
 alightingTime = 0.1 # problem when alighting time = 0 (good test 0.5)(0.1 also works)
 large_dist = max(S) # the large number from the distance matrix
@@ -74,6 +74,14 @@ rm(archive2,archiveDFPareto)
   }  
 }
 
+# The routes for John 2016 OVERRIDE
+R_routes = as.list(NULL)
+R_routes[[1]] = c(4,3,1) +1
+R_routes[[2]] = c(13,12) +1
+R_routes[[3]] = c(8,14) +1
+R_routes[[4]] = c(9,10,12) +1
+R_routes[[5]] = c(9,6,14,7,5,2,1,0) +1
+R_routes[[6]] = c(10,11) +1
 
 # 3.) Initialise the decision variables -----
   # the idea is to encode the decision variables as the argument that is to be input into the 
@@ -467,10 +475,10 @@ lowerBounds = rep(0, varNo)
 upperBounds = rep(1, varNo)
 popSize = 50 # NB, should be even number
 tourSize = 2 
-generations = 20 
-cprob = 0.7 
+generations = 4 
+cprob = 0.8 
 XoverDistIdx = 5
-mprob = 0.2 
+mprob = 0.1 
 MuDistIdx = 10
 
 # Initialise population P_0 with fitness -----

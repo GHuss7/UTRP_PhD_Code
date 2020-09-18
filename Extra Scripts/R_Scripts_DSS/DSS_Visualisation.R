@@ -18,7 +18,7 @@ formatMatrix(RMatrix)
 
     # coords <- layout.auto(g) # to generate coordinates for graph automatically
     # write.csv(coords,"MandlSwissNetworkCoords.csv") # use this to store the coords
-    coords <- read.csv(file = "./Input_Data/Mandl_Data/Node_Coords.csv")
+    coords <- read.csv(file = "./Input_Data/Node_Coords.csv")
     coords <- as.matrix(coords)
 
 # Create and plot a graph of the main network ----------

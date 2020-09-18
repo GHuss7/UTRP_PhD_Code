@@ -37,7 +37,8 @@ import EvaluateRouteSet as ev
 # todo def main_dss(): # create a main function to encapsulate the main body
 # def main():
 # %% Load the respective files
-name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = "SSML_STB_DAY_SUM_0700_1700"      # set the name of the input data
+#name_input_data = "Mandl_Data"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 del name_input_data
 
@@ -45,16 +46,17 @@ del name_input_data
 Decisions = {
 "Choice_generate_initial_set" : False, # the alternative loads a set that is prespecified
 "Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : True,
+"Choice_conduct_sensitivity_analysis" : False,
 "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-"Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
-"Choice_import_saved_set" : False, # import the prespecified set
-"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
+"Choice_normal_run" : True, # choose this for a normal run without Sensitivity Analysis
+"Choice_import_saved_set" : True, # import the prespecified set
+#"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
+"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
 
 '''Enter the number of allowed routes''' 
 parameters_constraints = {
-'con_r' : 6,               # (aim for > [numNodes N ]/[maxNodes in route])
+'con_r' : 8,               # (aim for > [numNodes N ]/[maxNodes in route])
 'con_minNodes' : 2,                        # minimum nodes in a route
 'con_maxNodes' : 10,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist)              # number of nodes in the network
@@ -65,7 +67,7 @@ parameters_input = {
 'n' : len(mx_dist), # total number of nodes
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl_UTRP", # Specify the name of the problem currently being addresses
+'Problem_name' : "Mandl_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
 'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
 'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
 'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
@@ -75,17 +77,17 @@ parameters_input = {
 parameters_SA_routes={
 "method" : "SA",
 # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-"max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+"max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
 "max_total_iterations" : 25000, # the total number of accepts that are allowed
 "max_epochs" : 1500, # the maximum number of epochs that are allowed
-"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
-"max_attempts" : 3, # maximum number of attempted moves per epoch
-"max_reheating_times" : 10, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
+"min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+"max_attempts" : 50, # maximum number of attempted moves per epoch
+"max_reheating_times" : 5, # the maximum number of times that reheating can take place
+"max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
 "Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
 "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
 "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-"Reheating_rate" : 1.1, # the geometric reheating rate
+"Reheating_rate" : 1.05, # the geometric reheating rate
 "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
 "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
 "number_of_runs" : 20, # number of runs to complete John 2016 set 20
@@ -146,21 +148,6 @@ def main(UTNDP_problem_1):
     # %% Simulated Annealing: Initial solutions
     '''Initial solutions'''
     
-    if Decisions["Choice_generate_initial_set"]:
-        '''Generate initial route sets for input as initial solutions'''
-        routes_R_initial_set, df_routes_R_initial_set = gf.generate_initial_route_sets(UTNDP_problem_1)
-    
-    else: # use this alternative if you want to use another set as input
-        """Standard route to begin with"""
-        routes_R_initial_set = list()
-        routes_R_initial_set.append(gf.convert_routes_str2list("5-7-9-12*9-7-5-3-4*0-1-2-5-14-6*13-9-6-14-8*1-2-5-14*9-10-11-3*"))
-      
-        
-        df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
-        for i in range(len(routes_R_initial_set)):
-            f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
-            df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
-        
     if Decisions["Choice_import_saved_set"]: # Make true to import a set that is saved
         df_routes_R_initial_set = pd.read_csv(Decisions["Set_name"]) 
         df_routes_R_initial_set = df_routes_R_initial_set.drop(df_routes_R_initial_set.columns[0], axis=1)
@@ -170,7 +157,23 @@ def main(UTNDP_problem_1):
             routes_R_initial_set.append(gf.convert_routes_str2list(df_routes_R_initial_set.iloc[i,2]))
         
         print("Initial route set imported with size: "+str(len(routes_R_initial_set)))
-        
+    
+    else:        
+        if Decisions["Choice_generate_initial_set"]:
+            '''Generate initial route sets for input as initial solutions'''
+            routes_R_initial_set, df_routes_R_initial_set = gf.generate_initial_route_sets(UTNDP_problem_1)          
+
+        else: # use this alternative if you want to use another set as input
+            """Standard route to begin with"""
+            routes_R_initial_set = list()
+            routes_R_initial_set.append(gf.convert_routes_str2list("5-7-9-12*9-7-5-3-4*0-1-2-5-14-6*13-9-6-14-8*1-2-5-14*9-10-11-3*"))
+          
+            
+            df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
+            for i in range(len(routes_R_initial_set)):
+                f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+                df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
+            
     # %% Simulated Annealing Algorithm for each of the initial route sets
     '''Simulated Annealing Algorithm for each of the initial route sets'''
     run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # default values
@@ -522,6 +525,23 @@ if __name__ == "__main__":
                             #[parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
                             #[parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
                             #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+                            ]
+        
+        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 1000], 
+                            
+                            #[parameters_SA_routes, "min_accepts", 5, 200], # takes longer at first... bottleneck
+                            #[parameters_SA_routes, "max_attempts", 3, 200],
+                            
+                            #[parameters_SA_routes, "max_reheating_times", 1, 25],
+                            
+                            #[parameters_SA_routes, "max_poor_epochs", 10, 600],
+                            [parameters_SA_routes, "Cooling_rate", 0.97],
+                            
+                            #[parameters_SA_routes, "Temp", 0.001, 200],
+                            
+                            #[parameters_SA_routes, "Cooling_rate", 0.7, 0.9961682402927605],
+                            
+                            #[parameters_SA_routes, "Reheating_rate", 1.3, 1.01],
                             ]
         
         

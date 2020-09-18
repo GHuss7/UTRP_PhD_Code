@@ -59,7 +59,7 @@ from pymoo.util.randomized_argsort import randomized_argsort
 
     
 # %% Load the respective files
-name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = "SSML_STB_DAY_SUM_0700_1700"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 del name_input_data
 # %% Set input parameters
@@ -69,7 +69,7 @@ Choice_conduct_sensitivity_analysis = True
   
 '''State the various parameter constraints''' 
 parameters_constraints = {
-'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
+'con_r' : 7,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
 'con_minNodes' : 2,                        # minimum nodes in a route
 'con_maxNodes' : 10,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist),              # number of nodes in the network
@@ -100,8 +100,8 @@ parameters_input = {
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_route_design={
 "method" : "GA",
-"population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-"generations" : 200, # STANDARD: 200 (John 2016)
+"population_size" : 300, #should be an even number STANDARD: 200 (John 2016)
+"generations" : 300, # STANDARD: 200 (John 2016)
 "number_of_runs" : 20, # STANDARD: 20 (John 2016)
 "crossover_probability" : 0.6, 
 "crossover_distribution_index" : 5,
@@ -487,23 +487,32 @@ if __name__ == "__main__":
         # Set up the list of parameters to test
         sensitivity_list = [[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
                             [parameters_constraints, "con_minNodes", 2, 3, 4, 5],
-                            [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], # TODO: 300 population size gives MemoryError (think problem is in linear calculation of obj function)
+                            [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
                             [parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1]
                             ]
         
         sensitivity_list = [#[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
-                    #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
-                    #[parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], # TODO: 300 population size gives MemoryError (think problem is in linear calculation of obj function)
-                    #[parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
-                    #[parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
-                    #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1],
-                    #[parameters_GA_route_design, "mutation_probability", 0.5],
-                    #[parameters_GA_route_design, "mutation_probability", 0.7],
-                    [parameters_GA_route_design, "mutation_probability", 0.9],
-                    #[parameters_GA_route_design, "mutation_probability", 1],                    
-                    ]
+                            #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
+                            #[parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], 
+                            #[parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
+                            #[parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
+                            #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1],
+                            #[parameters_GA_route_design, "mutation_probability", 0.5],
+                            #[parameters_GA_route_design, "mutation_probability", 0.7],
+                            #[parameters_GA_route_design, "mutation_probability", 0.9],
+                            #[parameters_GA_route_design, "mutation_probability", 1],                    
+                            ]
+        
+        sensitivity_list = [#[parameters_GA_route_design, "population_size", 20, 400], 
+                            #[parameters_GA_route_design, "generations", 20, 400],
+                            #[parameters_GA_route_design, "crossover_probability", 0.1],
+                            #[parameters_GA_route_design, "crossover_probability", 1],
+                            #[parameters_GA_route_design, "mutation_probability", 0.05], 
+                            #[parameters_GA_route_design, "mutation_probability", 0.9],
+                            [parameters_GA_route_design, "mutation_probability", 1],  
+                            ]
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]

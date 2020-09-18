@@ -545,6 +545,7 @@ def convert_routes_str2list(routes_R_str):
                     flag_end_node = True
     return routes_R_list
 
+
 # %% Get the mapping of all the adjacent nodes of each node in the form of a list
 
 def get_mapping_of_adj_edges(mx_dist):

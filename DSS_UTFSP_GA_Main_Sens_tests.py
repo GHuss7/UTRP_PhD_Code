@@ -88,7 +88,7 @@ parameters_constraints = {
 parameters_input = {
 'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
 'n' : len(mx_dist), # total number of nodes
-'Problem_name' : "Mandl_UTFSP", # Specify the name of the problem currently being addresses
+'Problem_name' : "Mandl_UTFSP_NSGAII", # Specify the name of the problem currently being addresses
 'walkFactor' : 100, # factor it takes longer to walk than to drive
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
 'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
@@ -585,7 +585,7 @@ def main(UTFSP_problem_1):
                            UTFSP_problem_1.problem_data.mx_dist)) #f4_TBR
     
     '''Set the reference point for the Hypervolume calculations'''
-    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0],UTFSP_problem_1)
+    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/5)[0],UTFSP_problem_1)
     parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0],UTFSP_problem_1)
     UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
     UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
@@ -973,6 +973,14 @@ if __name__ == "__main__":
                             #[parameters_GA_frequencies, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
                             
                             [parameters_GA_frequencies, "mutation_probability", 0.1],
+                            ]
+        
+        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 150], # baseline
+                            #[parameters_GA_frequencies, "population_size", 10, 400],
+                            #[parameters_GA_frequencies, "generations", 5],
+                            #[parameters_GA_frequencies, "generations", 60],
+                            #[parameters_GA_frequencies, "crossover_probability", 0.5, 1],
+                            [parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
                             ]
         
 
@@ -1369,3 +1377,15 @@ for destination_i_strategy, destination_i in zip(B_df_opt_strat_alg, range(15)):
             u_i_times[origin_j,destination_i] = destination_i_strategy[(destination_i_strategy.iloc[:,0] == origin_j) & destination_i_strategy.iloc[:,4]].iloc[0,3]
             
 print(sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2))
+
+def fn_obj_test(frequencies, UTFSP_problem_input):
+    return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
+                       frequencies, 
+                       UTFSP_problem_input.problem_data.mx_dist, 
+                       UTFSP_problem_input.problem_data.mx_demand, 
+                       UTFSP_problem_input.problem_inputs.__dict__), #f3_ETT
+            gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
+                       frequencies, 
+                       UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+
+fn_obj_test(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0], UTFSP_problem_1)

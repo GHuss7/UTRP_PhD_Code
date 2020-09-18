@@ -17,6 +17,7 @@ from collections import deque, namedtuple
 from timeit import default_timer as timer
 import datetime
 from pathlib import Path
+import copy
 
 # %% Timer parts to use when executing code
 # Paste these two pieces of code above and below the block of code you want to time
@@ -182,8 +183,22 @@ def get_sens_tests_stats_from_UTRP_SA_runs(path_to_main_folder):
         
     df_HV_description = df_overall_results[["HV"]].describe().transpose()
     df_HV_description.columns = ["count", "mean", "std", "min", "lq", "med", "uq", "max"]
-
-        
+    
+    IQR = abs((df_HV_description["uq"] - df_HV_description["lq"]).values)[0]
+    
+    """Calculate stats without outliers""" 
+    df_results_cons_outliers = copy.deepcopy(df_overall_results)
+    outlier_list = []
+    
+    for i_entry in range(len(df_results_cons_outliers["HV"])-1,-1,-1):
+        if df_results_cons_outliers["HV"].iloc[i_entry] < df_HV_description["lq"].values[0] - 1.5*IQR or df_results_cons_outliers["HV"].iloc[i_entry] > 1.5*IQR + df_HV_description["uq"].values[0]:
+            outlier_list.append(df_results_cons_outliers["HV"].iloc[i_entry])
+            df_results_cons_outliers = df_results_cons_outliers.drop([i_entry]) 
+    
+    df_HV_description_outliers = df_results_cons_outliers[["HV"]].describe().transpose()
+    df_HV_description_outliers.columns = ["count", "mean", "std", "min", "lq", "med", "uq", "max"]
+    df_HV_description_outliers["outliers"] = ", ".join(map(str, outlier_list))
+     
     df_Total_iterations_description = pd.DataFrame(columns=["count", "mean", "std", "min", "lq", "med", "uq", "max"])
     percentiles = np.percentile(df_overall_results[["Total_iterations"]], [0, 25, 50, 75, 100])
     
@@ -197,8 +212,6 @@ def get_sens_tests_stats_from_UTRP_SA_runs(path_to_main_folder):
                                                                                     percentiles[4]]
     
     df_all_obtained_HV['Mean'] = df_all_obtained_HV.mean(axis=1) # calculates the mean of the HVs
-    df_overall_results.loc[len(df_overall_results)] = df_overall_results.mean(axis=0) # calculates the mean of the HVs and iterations
-    df_overall_results.iloc[-1,0] = "Means"
     
     if False:
         df_all_obtained_HV.to_csv(path_to_main_folder / "Results_all_avg_HV.csv")
@@ -206,7 +219,8 @@ def get_sens_tests_stats_from_UTRP_SA_runs(path_to_main_folder):
     df_runs_summary = pd.DataFrame()
     df_runs_summary["Mean_HV"] = df_all_obtained_HV["Mean"]
     # df_runs_summary.to_csv(path_to_main_folder / "Results_all_runs_summary.csv")
-    df_HV_description.to_csv(path_to_main_folder / "Results_description_HV.csv")
+    df_HV_description.to_csv(path_to_main_folder / "Results_description_HV_no_outliers.csv")
+    df_HV_description_outliers.to_csv(path_to_main_folder / "Results_description_HV.csv")
     df_Total_iterations_description.to_csv(path_to_main_folder / "Results_description_Tot_iter.csv")
     df_overall_results.to_csv(path_to_main_folder / "Overall_results.csv")
         
@@ -283,8 +297,6 @@ def get_sens_tests_stats_from_UTRP_GA_runs(path_to_main_folder):
     df_HV_description.columns = ["count", "mean", "std", "min", "lq", "med", "uq", "max"]
   
     df_all_obtained_HV['Mean'] = df_all_obtained_HV.mean(axis=1) # calculates the mean of the HVs
-    df_overall_results.loc[len(df_overall_results)] = df_overall_results.mean(axis=0) # calculates the mean of the HVs and iterations
-    df_overall_results.iloc[-1,0] = "Means"
     
     if False:
         df_all_obtained_HV.to_csv(path_to_main_folder / "Results_all_avg_HV.csv")
@@ -314,8 +326,6 @@ def get_sens_tests_stats_from_UTFSP_GA_runs(path_to_main_folder):
     df_HV_description.columns = ["count", "mean", "std", "min", "lq", "med", "uq", "max"]
   
     df_all_obtained_HV['Mean'] = df_all_obtained_HV.mean(axis=1) # calculates the mean of the HVs
-    df_overall_results.loc[len(df_overall_results)] = df_overall_results.mean(axis=0) # calculates the mean of the HVs and iterations
-    df_overall_results.iloc[-1,0] = "Means"
     
     if False:
         df_all_obtained_HV.to_csv(path_to_main_folder / "Results_all_avg_HV.csv")

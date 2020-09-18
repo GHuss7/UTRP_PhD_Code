@@ -43,6 +43,35 @@ convertRouteListToCharString = function(routeList){
   return(formattedRoutes)
 }
 
+convertRouteStringToList = function(routeString){
+  # A function to display the routes in the standard format seperated with "\n"
+  desired_length <- str_count(routeString, pattern = fixed("*"))
+  routesList <- vector(mode = "list", length = desired_length)
+  tempList <- as.list(NULL)
+  counter <- 1
+  routeString_split <- strsplit(routeString, "")[[1]]
+  end_of_node <- 1
+  for(i in 1:length(routeString_split)) {           
+    if (routeString_split[i] == "*") {
+      counter <- counter + 1
+      end_of_node <- 1
+    } else {
+      if (routeString_split[i] == "-") {
+        end_of_node <- 1
+      } else {
+        if (end_of_node) {
+          routesList[[counter]][length(routesList[[counter]])+1] <- strtoi(routeString_split[i])
+          end_of_node <- 0
+        } else {
+        routesList[[counter]][length(routesList[[counter]])] <- strtoi(paste0(routesList[[counter]][length(routesList[[counter]])], strtoi(routeString_split[i])))
+        }
+      }
+    }
+  }
+  return(routesList)
+} 
+
+
 # Dijkstra's algorithm --------------------
 # adapted from https://uqkdhanj.wordpress.com/2015/02/10/dijkstras-shortest-pathway-algorithm/
 

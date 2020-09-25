@@ -71,7 +71,7 @@ Choice_conduct_sensitivity_analysis = True
 parameters_constraints = {
 'con_r' : 7,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
 'con_minNodes' : 2,                        # minimum nodes in a route
-'con_maxNodes' : 10,                       # maximum nodes in a route
+'con_maxNodes' : 6,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist),              # number of nodes in the network
 'con_fleet_size' : 40,                     # number of vehicles that are allowed
 'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
@@ -363,6 +363,8 @@ def main(UTNDP_problem_1):
                 '''Load validation data'''
                 Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
                 John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
+                #hv_test_data = pd.read_csv("./Validation_Data/FULL_PARETO_SET_BOTH_SA_AND_GA.csv")
+                #gf.norm_and_calc_2d_hv(hv_test_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
                 if True:
                     '''Print Objective functions over time, all solutions and pareto set obtained'''

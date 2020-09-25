@@ -63,14 +63,18 @@ from pymoo.util.misc import random_permuations
     
 # %% Load the respective files
 name_input_data = "Mandl_Data"      # set the name of the input data
+#name_input_data = "SSML_STB_1700"
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 del name_input_data
 
 # %% Set input parameters
-Choice_generate_initial_set = True 
-Choice_print_results = True 
-Choice_conduct_sensitivity_analysis = True    
-Choice_print_full_data_for_analysis = True
+Decisions = {
+#"Choice_generate_initial_set" : True, 
+"Choice_print_results" : True, 
+"Choice_conduct_sensitivity_analysis" : False,
+"Choice_print_full_data_for_analysis" : True,
+"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
+}
 
 '''State the various parameter constraints''' 
 parameters_constraints = {
@@ -88,7 +92,7 @@ parameters_constraints = {
 parameters_input = {
 'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
 'n' : len(mx_dist), # total number of nodes
-'Problem_name' : "Mandl_UTFSP_NSGAII", # Specify the name of the problem currently being addresses
+'Problem_name' : "Case_study_UTFSP_NSGAII", # Specify the name of the problem currently being addresses
 'walkFactor' : 100, # factor it takes longer to walk than to drive
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
 'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
@@ -133,7 +137,12 @@ if parameters_constraints["con_r"] > parameters_constraints["con_fleet_size"]:
 
 R_x = gf.convert_routes_str2list("4-3-1*13-12*8-14*9-10-12*9-6-14-7-5-2-1-0*10-11*") # John Mumford results shortest route set on Pareto front 2016, 
     #f_1 ATT = 13.48041105	and f_2 TRT = 63
-
+    
+#R_x = gf.convert_routes_str2list("10-9-7-5-3-4-1-0*9-13-12-10-11-3-1-0*5-3-11-10-9-6-14-8*6-14-7-5-3-4-1-2*12-10-9-7-5-2-1-0*0-1-2-5-14-6-9-7*")
+    #f_1 ATT = 10.192779	and f_2 TRT = 217
+    
+#R_x = gf.convert_routes_str2list("5-7-2-8-3-9*1-7*7-6*4-8-5*7-0*7-8*1-0*2-1-0-6-8-5*") # Case Study route set
+    
 if 0 not in set([y for x in R_x for y in x]): # NB: test whether the route is in the correct format containing a 0
     for i in range(len(R_x)): # get routes in the correct format
         R_x[i] = [x - 1 for x in R_x[i]] # subtract 1 from each element in the list
@@ -701,7 +710,7 @@ def main(UTFSP_problem_1):
         pop_1.generate_initial_population(UTFSP_problem_1, fn_obj) 
         pop_generations = np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),0)])
         
-        if Choice_print_full_data_for_analysis:
+        if Decisions["Choice_print_full_data_for_analysis"]:
             data_for_analysis = np.hstack([pop_1.objectives, pop_1.variables]) # create an object to contain all the data for analysis
         df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
         df_data_generations.loc[0] = [0, gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)]
@@ -729,7 +738,7 @@ def main(UTFSP_problem_1):
             combine_offspring_with_pop(pop_1, mutated_variable_args)
             
             pop_size = UTFSP_problem_1.problem_GA_parameters.population_size
-            if Choice_print_full_data_for_analysis:
+            if Decisions["Choice_print_full_data_for_analysis"]:
                 data_for_analysis = np.vstack([data_for_analysis, np.hstack([pop_1.objectives[pop_size:,], pop_1.variables[pop_size:,]])])
               
             # Get new generation
@@ -756,7 +765,7 @@ def main(UTFSP_problem_1):
         
         
         #%% Save the results
-        if Choice_print_results:
+        if Decisions["Choice_print_results"]:
         
             '''Write all results and parameters to files'''
             '''Main folder path'''
@@ -782,7 +791,7 @@ def main(UTFSP_problem_1):
             df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set.values, True)]
             df_non_dominated_set = df_non_dominated_set.sort_values(by='f_1', ascending=True) # sort
             
-            if Choice_print_full_data_for_analysis:
+            if Decisions["Choice_print_full_data_for_analysis"]:
                 df_data_for_analysis = pd.DataFrame(data=data_for_analysis,
                                                     columns=generate_data_analysis_labels(UTFSP_problem_1.problem_GA_parameters.number_of_objectives,
                                                                                           UTFSP_problem_1.problem_constraints.con_r))
@@ -877,7 +886,7 @@ def main(UTFSP_problem_1):
     del i_generation, pop_size, survivor_indices
 
     # %% Save results after all runs
-    if Choice_print_results:
+    if Decisions["Choice_print_results"]:
         '''Save the summarised results'''
         df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
         df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
@@ -948,7 +957,7 @@ def main(UTFSP_problem_1):
 # Single Thread
 if __name__ == "__main__":
     
-    if Choice_conduct_sensitivity_analysis:
+    if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()
         ''' Create copies of the original input data '''
         #original_UTFSP_problem_1 = copy.deepcopy(UTFSP_problem_1)    
@@ -975,12 +984,12 @@ if __name__ == "__main__":
                             [parameters_GA_frequencies, "mutation_probability", 0.1],
                             ]
         
-        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 150], # baseline
+        sensitivity_list = [[parameters_GA_frequencies, "population_size", 20], # baseline
                             #[parameters_GA_frequencies, "population_size", 10, 400],
                             #[parameters_GA_frequencies, "generations", 5],
                             #[parameters_GA_frequencies, "generations", 60],
                             #[parameters_GA_frequencies, "crossover_probability", 0.5, 1],
-                            [parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
+                            #[parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
                             ]
         
 
@@ -1046,37 +1055,349 @@ if False:
     #pop_1.generate_initial_population(UTFSP_problem_1, fn_obj) 
     #pop_1.variables
     
-    offspring_variables = np.array([[0.08333333, 0.2       , 0.05555556, 0.16666667, 0.04      ,
-    0.08333333],
-   [0.08333333, 0.08333333, 0.0625    , 0.08333333, 0.1       ,
-    0.2       ],
-   [0.1       , 0.16666667, 0.05555556, 0.16666667, 0.04      ,
-    0.07142857],
-   [0.0625    , 0.05      , 0.04      , 0.1       , 0.03333333,
-    0.05      ],
-   [0.14285714, 0.16666667, 0.16666667, 0.14285714, 0.16666667,
-    0.0625    ],
-   [0.05      , 0.07142857, 0.1       , 0.03333333, 0.08333333,
-    0.11111111],
-   [0.07142857, 0.16666667, 0.2       , 0.14285714, 0.1       ,
-    0.16666667],
-   [0.14285714, 0.05      , 0.05      , 0.1       , 0.11111111,
-    0.14285714],
-   [0.08333333, 0.04      , 0.08333333, 0.11111111, 0.16666667,
-    0.2       ],
-   [0.14285714, 0.05555556, 0.2       , 0.08333333, 0.05      ,
-    0.07142857]])
+   #  offspring_variables = np.array([[0.08333333, 0.2       , 0.05555556, 0.16666667, 0.04      ,
+   #  0.08333333],
+   # [0.08333333, 0.08333333, 0.0625    , 0.08333333, 0.1       ,
+   #  0.2       ],
+   # [0.1       , 0.16666667, 0.05555556, 0.16666667, 0.04      ,
+   #  0.07142857],
+   # [0.0625    , 0.05      , 0.04      , 0.1       , 0.03333333,
+   #  0.05      ],
+   # [0.14285714, 0.16666667, 0.16666667, 0.14285714, 0.16666667,
+   #  0.0625    ],
+   # [0.05      , 0.07142857, 0.1       , 0.03333333, 0.08333333,
+   #  0.11111111],
+   # [0.07142857, 0.16666667, 0.2       , 0.14285714, 0.1       ,
+   #  0.16666667],
+   # [0.14285714, 0.05      , 0.05      , 0.1       , 0.11111111,
+   #  0.14285714],
+   # [0.08333333, 0.04      , 0.08333333, 0.11111111, 0.16666667,
+   #  0.2       ],
+   # [0.14285714, 0.05555556, 0.2       , 0.08333333, 0.05      ,
+   #  0.07142857]])
+    offspring_variables = np.array([[1/5, 1/5, 1/7, 1/5, 1/5, 1/5],
+                                    [1/30, 1/30, 1/30, 1/30, 1/30, 1/30]])
+    
+    F_x = offspring_variables[1,]
+    
+    # offspring_variables = df_res[1:,3:]
+    
+    offspring_variables = np.array([[0.2, 0.2, 0.16666666666666666, 0.2, 0.2, 0.125],
+       [0.2, 0.2, 0.1111111111111111, 0.2, 0.2,
+        0.14285714285714285],
+       [0.2, 0.2, 0.1111111111111111, 0.2, 0.2, 0.125],
+       [0.2, 0.2, 0.1, 0.2, 0.2, 0.125],
+       [0.2, 0.2, 0.14285714285714285, 0.2,
+        0.16666666666666666, 0.16666666666666666],
+       [0.2, 0.2, 0.1111111111111111, 0.2, 0.2, 0.1],
+       [0.2, 0.2, 0.1111111111111111, 0.2, 0.16666666666666666,
+        0.16666666666666666],
+       [0.2, 0.2, 0.1, 0.2, 0.16666666666666666,
+        0.16666666666666666],
+       [0.2, 0.125, 0.1111111111111111, 0.2,
+        0.16666666666666666, 0.16666666666666666],
+       [0.2, 0.2, 0.16666666666666666, 0.16666666666666666,
+        0.16666666666666666, 0.125],
+       [0.2, 0.2, 0.1111111111111111, 0.16666666666666666,
+        0.16666666666666666, 0.16666666666666666],
+       [0.2, 0.2, 0.1111111111111111, 0.16666666666666666,
+        0.16666666666666666, 0.14285714285714285],
+       [0.2, 0.2, 0.1111111111111111, 0.2, 0.16666666666666666,
+        0.1],
+       [0.2, 0.2, 0.1, 0.2, 0.16666666666666666, 0.1],
+       [0.16666666666666666, 0.2, 0.1111111111111111,
+        0.16666666666666666, 0.16666666666666666,
+        0.14285714285714285],
+       [0.16666666666666666, 0.2, 0.1111111111111111, 0.2,
+        0.16666666666666666, 0.1],
+       [0.16666666666666666, 0.2, 0.1, 0.2,
+        0.16666666666666666, 0.1],
+       [0.2, 0.16666666666666666, 0.1111111111111111,
+        0.16666666666666666, 0.16666666666666666, 0.1],
+       [0.16666666666666666, 0.2, 0.08333333333333333, 0.2,
+        0.16666666666666666, 0.1],
+       [0.16666666666666666, 0.2, 0.1, 0.2,
+        0.16666666666666666, 0.08333333333333333],
+       [0.2, 0.2, 0.1111111111111111, 0.2, 0.125,
+        0.14285714285714285],
+       [0.2, 0.2, 0.1111111111111111, 0.16666666666666666,
+        0.14285714285714285, 0.1111111111111111],
+       [0.2, 0.2, 0.125, 0.2, 0.125, 0.1111111111111111],
+       [0.2, 0.1, 0.1111111111111111, 0.16666666666666666,
+        0.14285714285714285, 0.125],
+       [0.2, 0.2, 0.1, 0.2, 0.125, 0.1111111111111111],
+       [0.2, 0.2, 0.1111111111111111, 0.14285714285714285,
+        0.14285714285714285, 0.1111111111111111],
+       [0.2, 0.2, 0.1, 0.2, 0.1111111111111111,
+        0.14285714285714285],
+       [0.16666666666666666, 0.2, 0.1, 0.2, 0.125,
+        0.1111111111111111],
+       [0.2, 0.2, 0.1, 0.16666666666666666, 0.125,
+        0.1111111111111111],
+       [0.16666666666666666, 0.2, 0.1, 0.2, 0.125, 0.1],
+       [0.2, 0.2, 0.1, 0.16666666666666666, 0.125, 0.1],
+       [0.2, 0.2, 0.125, 0.14285714285714285, 0.125, 0.1],
+       [0.2, 0.2, 0.1111111111111111, 0.14285714285714285,
+        0.125, 0.1],
+       [0.16666666666666666, 0.2, 0.1, 0.14285714285714285,
+        0.125, 0.125],
+       [0.16666666666666666, 0.2, 0.125, 0.14285714285714285,
+        0.125, 0.1],
+       [0.2, 0.2, 0.1, 0.14285714285714285, 0.125,
+        0.08333333333333333],
+       [0.16666666666666666, 0.16666666666666666, 0.125,
+        0.14285714285714285, 0.125, 0.08333333333333333],
+       [0.16666666666666666, 0.2, 0.1111111111111111,
+        0.14285714285714285, 0.125, 0.08333333333333333],
+       [0.16666666666666666, 0.2, 0.1, 0.14285714285714285,
+        0.125, 0.08333333333333333],
+       [0.16666666666666666, 0.16666666666666666, 0.1,
+        0.14285714285714285, 0.125, 0.08333333333333333],
+       [0.14285714285714285, 0.2, 0.1, 0.14285714285714285,
+        0.125, 0.08333333333333333],
+       [0.16666666666666666, 0.2, 0.07142857142857142,
+        0.14285714285714285, 0.125, 0.08333333333333333],
+       [0.16666666666666666, 0.125, 0.08333333333333333,
+        0.14285714285714285, 0.125, 0.08333333333333333],
+       [0.14285714285714285, 0.14285714285714285,
+        0.07142857142857142, 0.14285714285714285, 0.125, 0.1],
+       [0.16666666666666666, 0.2, 0.1, 0.14285714285714285,
+        0.1111111111111111, 0.08333333333333333],
+       [0.14285714285714285, 0.125, 0.08333333333333333,
+        0.14285714285714285, 0.125, 0.08333333333333333],
+       [0.14285714285714285, 0.14285714285714285,
+        0.07142857142857142, 0.14285714285714285, 0.125,
+        0.08333333333333333],
+       [0.2, 0.1, 0.08333333333333333, 0.14285714285714285,
+        0.1, 0.1],
+       [0.16666666666666666, 0.2, 0.05, 0.14285714285714285,
+        0.1111111111111111, 0.1],
+       [0.14285714285714285, 0.16666666666666666,
+        0.07142857142857142, 0.14285714285714285, 0.125, 0.0625],
+       [0.14285714285714285, 0.14285714285714285,
+        0.07142857142857142, 0.14285714285714285, 0.125, 0.0625],
+       [0.125, 0.2, 0.1, 0.14285714285714285, 0.1, 0.1],
+       [0.14285714285714285, 0.14285714285714285,
+        0.07142857142857142, 0.14285714285714285, 0.125,
+        0.05555555555555555],
+       [0.14285714285714285, 0.1111111111111111,
+        0.08333333333333333, 0.1111111111111111,
+        0.1111111111111111, 0.1111111111111111],
+       [0.16666666666666666, 0.2, 0.08333333333333333,
+        0.1111111111111111, 0.1, 0.1],
+       [0.16666666666666666, 0.16666666666666666,
+        0.08333333333333333, 0.1111111111111111,
+        0.1111111111111111, 0.07142857142857142],
+       [0.16666666666666666, 0.125, 0.08333333333333333,
+        0.1111111111111111, 0.1, 0.1],
+       [0.14285714285714285, 0.1111111111111111,
+        0.08333333333333333, 0.1111111111111111,
+        0.1111111111111111, 0.08333333333333333],
+       [0.125, 0.1111111111111111, 0.05555555555555555,
+        0.14285714285714285, 0.1111111111111111,
+        0.08333333333333333],
+       [0.14285714285714285, 0.125, 0.08333333333333333,
+        0.1111111111111111, 0.1, 0.1],
+       [0.14285714285714285, 0.1, 0.08333333333333333,
+        0.1111111111111111, 0.1111111111111111,
+        0.07142857142857142],
+       [0.16666666666666666, 0.2, 0.0625, 0.125, 0.1, 0.0625],
+       [0.125, 0.125, 0.08333333333333333, 0.1111111111111111,
+        0.1, 0.1],
+       [0.1111111111111111, 0.1111111111111111,
+        0.07142857142857142, 0.14285714285714285, 0.1,
+        0.08333333333333333],
+       [0.16666666666666666, 0.125, 0.08333333333333333,
+        0.1111111111111111, 0.1, 0.0625],
+       [0.16666666666666666, 0.16666666666666666,
+        0.08333333333333333, 0.1, 0.1, 0.0625],
+       [0.125, 0.1, 0.08333333333333333, 0.14285714285714285,
+        0.1, 0.05555555555555555],
+       [0.14285714285714285, 0.125, 0.08333333333333333,
+        0.1111111111111111, 0.1, 0.0625],
+       [0.125, 0.125, 0.08333333333333333, 0.125, 0.1,
+        0.05555555555555555],
+       [0.16666666666666666, 0.125, 0.08333333333333333, 0.125,
+        0.08333333333333333, 0.0625],
+       [0.125, 0.2, 0.05555555555555555, 0.1111111111111111,
+        0.1, 0.0625],
+       [0.14285714285714285, 0.14285714285714285,
+        0.08333333333333333, 0.125, 0.08333333333333333, 0.0625],
+       [0.1, 0.125, 0.08333333333333333, 0.1111111111111111,
+        0.1, 0.0625],
+       [0.125, 0.14285714285714285, 0.08333333333333333, 0.125,
+        0.08333333333333333, 0.0625],
+       [0.1111111111111111, 0.1111111111111111,
+        0.05555555555555555, 0.1111111111111111, 0.1, 0.0625],
+       [0.1, 0.1, 0.0625, 0.1111111111111111, 0.1, 0.0625],
+       [0.125, 0.1111111111111111, 0.05555555555555555,
+        0.1111111111111111, 0.08333333333333333,
+        0.08333333333333333],
+       [0.1, 0.1111111111111111, 0.05555555555555555, 0.125,
+        0.08333333333333333, 0.08333333333333333],
+       [0.125, 0.16666666666666666, 0.05, 0.125,
+        0.08333333333333333, 0.05555555555555555],
+       [0.08333333333333333, 0.14285714285714285,
+        0.08333333333333333, 0.125, 0.08333333333333333, 0.0625],
+       [0.1, 0.08333333333333333, 0.08333333333333333, 0.125,
+        0.08333333333333333, 0.05555555555555555],
+       [0.125, 0.1, 0.08333333333333333, 0.125,
+        0.07142857142857142, 0.0625],
+       [0.1111111111111111, 0.08333333333333333,
+        0.08333333333333333, 0.08333333333333333,
+        0.08333333333333333, 0.08333333333333333],
+       [0.14285714285714285, 0.16666666666666666,
+        0.05555555555555555, 0.1111111111111111,
+        0.07142857142857142, 0.0625],
+       [0.1, 0.1, 0.05, 0.125, 0.08333333333333333,
+        0.05555555555555555],
+       [0.1, 0.07142857142857142, 0.05555555555555555, 0.125,
+        0.08333333333333333, 0.05555555555555555],
+       [0.14285714285714285, 0.1111111111111111,
+        0.05555555555555555, 0.08333333333333333,
+        0.08333333333333333, 0.05555555555555555],
+       [0.1111111111111111, 0.0625, 0.05555555555555555,
+        0.1111111111111111, 0.07142857142857142,
+        0.08333333333333333],
+       [0.1111111111111111, 0.1, 0.05555555555555555,
+        0.08333333333333333, 0.08333333333333333, 0.0625],
+       [0.1111111111111111, 0.1111111111111111, 0.05,
+        0.1111111111111111, 0.07142857142857142, 0.0625],
+       [0.1, 0.1, 0.05, 0.1111111111111111,
+        0.07142857142857142, 0.0625],
+       [0.1, 0.0625, 0.05555555555555555, 0.1111111111111111,
+        0.07142857142857142, 0.0625],
+       [0.1, 0.0625, 0.05, 0.1111111111111111,
+        0.07142857142857142, 0.0625],
+       [0.1111111111111111, 0.1111111111111111, 0.0625,
+        0.08333333333333333, 0.07142857142857142,
+        0.05555555555555555],
+       [0.125, 0.1, 0.05555555555555555, 0.08333333333333333,
+        0.07142857142857142, 0.05],
+       [0.1111111111111111, 0.1, 0.05555555555555555,
+        0.08333333333333333, 0.07142857142857142,
+        0.05555555555555555],
+       [0.1, 0.1111111111111111, 0.05555555555555555,
+        0.08333333333333333, 0.07142857142857142,
+        0.05555555555555555],
+       [0.1, 0.1, 0.05, 0.08333333333333333,
+        0.07142857142857142, 0.05555555555555555],
+       [0.08333333333333333, 0.1, 0.05555555555555555,
+        0.08333333333333333, 0.07142857142857142,
+        0.05555555555555555],
+       [0.1, 0.1111111111111111, 0.05555555555555555,
+        0.08333333333333333, 0.0625, 0.0625],
+       [0.1, 0.08333333333333333, 0.05555555555555555,
+        0.08333333333333333, 0.0625, 0.0625],
+       [0.1, 0.08333333333333333, 0.0625, 0.08333333333333333,
+        0.0625, 0.05555555555555555],
+       [0.1, 0.1, 0.05, 0.1, 0.05555555555555555, 0.0625],
+       [0.1, 0.05555555555555555, 0.05555555555555555,
+        0.08333333333333333, 0.0625, 0.05555555555555555],
+       [0.08333333333333333, 0.08333333333333333,
+        0.05555555555555555, 0.08333333333333333, 0.0625,
+        0.05555555555555555],
+       [0.07142857142857142, 0.08333333333333333,
+        0.05555555555555555, 0.08333333333333333, 0.0625, 0.0625],
+       [0.1, 0.1, 0.05, 0.08333333333333333,
+        0.05555555555555555, 0.05555555555555555],
+       [0.08333333333333333, 0.05, 0.03333333333333333, 0.1,
+        0.0625, 0.05555555555555555],
+       [0.1, 0.1, 0.04, 0.08333333333333333,
+        0.05555555555555555, 0.05555555555555555],
+       [0.1, 0.1111111111111111, 0.05555555555555555,
+        0.08333333333333333, 0.05555555555555555, 0.04],
+       [0.1, 0.08333333333333333, 0.05555555555555555,
+        0.08333333333333333, 0.05555555555555555, 0.04],
+       [0.1, 0.05, 0.03333333333333333, 0.08333333333333333,
+        0.05555555555555555, 0.0625],
+       [0.08333333333333333, 0.08333333333333333,
+        0.05555555555555555, 0.08333333333333333,
+        0.05555555555555555, 0.04],
+       [0.0625, 0.1, 0.05, 0.08333333333333333,
+        0.05555555555555555, 0.05555555555555555],
+       [0.1, 0.08333333333333333, 0.04, 0.0625,
+        0.05555555555555555, 0.05555555555555555],
+       [0.1, 0.1, 0.03333333333333333, 0.07142857142857142,
+        0.05, 0.0625],
+       [0.08333333333333333, 0.0625, 0.05, 0.0625,
+        0.05555555555555555, 0.05555555555555555],
+       [0.1, 0.1111111111111111, 0.04, 0.0625, 0.05,
+        0.05555555555555555],
+       [0.07142857142857142, 0.04, 0.05555555555555555,
+        0.08333333333333333, 0.05555555555555555, 0.04],
+       [0.1, 0.05, 0.03333333333333333, 0.08333333333333333,
+        0.05555555555555555, 0.03333333333333333],
+       [0.08333333333333333, 0.0625, 0.05, 0.0625,
+        0.05555555555555555, 0.04],
+       [0.1, 0.07142857142857142, 0.05, 0.0625, 0.05, 0.04],
+       [0.08333333333333333, 0.05, 0.03333333333333333,
+        0.08333333333333333, 0.05555555555555555,
+        0.03333333333333333],
+       [0.07142857142857142, 0.0625, 0.04, 0.05555555555555555,
+        0.05555555555555555, 0.05555555555555555],
+       [0.0625, 0.1, 0.03333333333333333, 0.07142857142857142,
+        0.05, 0.05555555555555555],
+       [0.07142857142857142, 0.04, 0.04, 0.08333333333333333,
+        0.05, 0.04],
+       [0.1, 0.0625, 0.04, 0.05555555555555555, 0.05, 0.04],
+       [0.07142857142857142, 0.0625, 0.04, 0.05555555555555555,
+        0.05555555555555555, 0.04],
+       [0.0625, 0.07142857142857142, 0.05, 0.0625, 0.05,
+        0.04],
+       [0.05555555555555555, 0.07142857142857142, 0.05, 0.0625,
+        0.05, 0.04],
+       [0.07142857142857142, 0.07142857142857142, 0.04, 0.05,
+        0.05555555555555555, 0.03333333333333333],
+       [0.0625, 0.05, 0.04, 0.0625, 0.05, 0.04],
+       [0.0625, 0.04, 0.04, 0.0625, 0.05, 0.04],
+       [0.08333333333333333, 0.0625, 0.04, 0.05, 0.05,
+        0.03333333333333333],
+       [0.07142857142857142, 0.05, 0.04, 0.05555555555555555,
+        0.05, 0.03333333333333333],
+       [0.0625, 0.04, 0.04, 0.05555555555555555, 0.05, 0.04],
+       [0.0625, 0.05, 0.04, 0.05555555555555555, 0.05,
+        0.03333333333333333],
+       [0.0625, 0.04, 0.04, 0.05555555555555555, 0.05,
+        0.03333333333333333],
+       [0.0625, 0.03333333333333333, 0.04, 0.05555555555555555,
+        0.05, 0.03333333333333333],
+       [0.0625, 0.03333333333333333, 0.04, 0.05, 0.05,
+        0.03333333333333333],
+       [0.04, 0.0625, 0.04, 0.05555555555555555, 0.05,
+        0.03333333333333333],
+       [0.04, 0.0625, 0.04, 0.05, 0.05, 0.03333333333333333],
+       [0.0625, 0.03333333333333333, 0.04, 0.05, 0.04,
+        0.03333333333333333],
+       [0.07142857142857142, 0.1, 0.03333333333333333, 0.05,
+        0.03333333333333333, 0.03333333333333333],
+       [0.0625, 0.03333333333333333, 0.04, 0.05555555555555555,
+        0.03333333333333333, 0.04],
+       [0.0625, 0.04, 0.04, 0.05, 0.03333333333333333, 0.04],
+       [0.0625, 0.05, 0.04, 0.05, 0.03333333333333333,
+        0.03333333333333333],
+       [0.0625, 0.03333333333333333, 0.04, 0.05,
+        0.03333333333333333, 0.03333333333333333],
+       [0.04, 0.03333333333333333, 0.04, 0.05,
+        0.03333333333333333, 0.04],
+       [0.04, 0.03333333333333333, 0.04, 0.05,
+        0.03333333333333333, 0.03333333333333333]])
     
     
-    start = time.perf_counter()
-    offspring_objectives = np.apply_along_axis(fn_obj_row, 1, offspring_variables)
-    finish = time.perf_counter()
-    print(f'Finished in {round(finish-start, 2)} second(s): apply_along_axis')
+    # start = time.perf_counter()
+    # offspring_objectives = np.apply_along_axis(fn_obj_row, 1, offspring_variables)
+    # finish = time.perf_counter()
+    # print(f'Finished in {round(finish-start, 2)} second(s): apply_along_axis')
+    if True:
+        start = time.perf_counter()
+        offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables) # takses about 6 seconds for one evaluation   
+        finish = time.perf_counter()
+        print(f'Finished in {round(finish-start, 2)} second(s): for loop')
+        
+        print(f'Freq: 1/5 \t f_1: {round(offspring_objectives[0,0], 3)} | 15.189 \t f_2: {round(offspring_objectives[0,1], 3)} | 24.286')
+        print(f'Freq: 1/30 \t f_1: {round(offspring_objectives[1,0], 3)} | 31.814 \t f_2: {round(offspring_objectives[1,1], 3)} | 4.2')
 
-    start = time.perf_counter()
-    offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables) # takses about 6 seconds for one evaluation   
-    finish = time.perf_counter()
-    print(f'Finished in {round(finish-start, 2)} second(s): for loop')
+    
 
 A_link_volumes = TN.mx_volumes_links
 A_mx_C_a = TN.mx_C_a
@@ -1096,296 +1417,309 @@ self.mx_C_a = mx_C_a
 self.mx_f_a = mx_f_a
 """
 
+
+
 #%% Tests for f_3
-
-R_routes_list = R_routes.routes
-#R_routes, F_x, mx_dist, mx_demand, parameters_input
-'''Create the transit network'''
-R_routes_named = gf2.format_routes_with_letters(R_routes_list)
-names_of_transit_routes = gf2.get_names_of_routes_as_list(R_routes_named)
-names_all_transit_nodes = list(map(str, range(parameters_input['n'])))+names_of_transit_routes
-n_transit_nodes = len(names_all_transit_nodes)
-
-dict_all_nodes = dict() # creates a dictionary to map all the transit nodes to numbers
-for i in range(len(names_all_transit_nodes)):
-    dict_all_nodes[names_all_transit_nodes[i]] = i
-     
-mx_transit_network = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
-mx_C_a = parameters_input['large_dist']*np.ones(shape=(n_transit_nodes, n_transit_nodes))
-mx_f_a = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
-
-
-# Did not  name the numpy arrays
-
-'''Fill in the walk links that are present in the graph'''
-for i in range(parameters_input['n']):  
-    for j in range(parameters_input['n']):
-        if mx_dist[i,j] == parameters_input['large_dist']:
-            mx_C_a[i,j] = mx_dist[i,j]
-        else:
-            if mx_dist[i,j] == 0:
-                mx_transit_network[i,j] = 0
-                mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                mx_f_a[i,j] = 0
-            else:
-                """Test for weird results"""
-                mx_transit_network[i,j] = 0
-                mx_C_a[i,j] = parameters_input['large_dist']
-                mx_f_a[i,j] = 0
-            # else:
-            #     mx_transit_network[i,j] = 1
-            #     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-            #     mx_f_a[i,j] = inf
-
-
-''''Fill in the boarding links characteristics'''
-counter = 0
-
-for i in range(len(R_routes_list)): 
-    for j in range(len(R_routes_list[i])):       
-        i_index =  int(re.findall(r'\d+', names_of_transit_routes[counter])[0]) # number of the transit node
-        j_index = names_all_transit_nodes.index(names_of_transit_routes[counter]) # position of the transit node in network graph
-
-        mx_transit_network[i_index, j_index] = 1   
-        mx_C_a[i_index, j_index] = parameters_input['boardingTime'] # sets the boarding
-        mx_f_a[i_index, j_index] = F_x[i] # set the frequencies per transit line
-  
-        counter = counter + 1  
-
-'''Fill in the alighting links characteristics'''
-counter = 0
-
-for i in range(len(R_routes_list)): 
-    for j in range(len(R_routes_list[i])):       
-        i_index =  int(re.findall(r'\d+', names_of_transit_routes[counter])[0]) # number of the transit node
-        j_index = names_all_transit_nodes.index(names_of_transit_routes[counter]) # position of the transit node in network graph
-
-        mx_transit_network[j_index, i_index] = 1   
-        mx_C_a[j_index, i_index] = parameters_input['alightingTime'] # sets the alighting
-        mx_f_a[j_index, i_index] = inf # set the frequencies per transit line
-  
-        counter = counter + 1 
- 
-'''Fill in the travel times using the transit lines / routes'''       
-
-for i in range(len(names_of_transit_routes) - 1):
-    if " ".join(re.findall("[a-zA-Z]+", names_of_transit_routes[i]))==\
-    " ".join(re.findall("[a-zA-Z]+", names_of_transit_routes[i+1])):
+if False:    
+    R_routes_list = R_routes.routes
+    #R_routes, F_x, mx_dist, mx_demand, parameters_input
+    '''Create the transit network'''
+    R_routes_named = gf2.format_routes_with_letters(R_routes_list)
+    names_of_transit_routes = gf2.get_names_of_routes_as_list(R_routes_named)
+    names_all_transit_nodes = list(map(str, range(parameters_input['n'])))+names_of_transit_routes
+    n_transit_nodes = len(names_all_transit_nodes)
+    
+    vec_nodes_u_i_ALL_array = np.empty((n_transit_nodes,parameters_input['n']))
+    
+    dict_all_nodes = dict() # creates a dictionary to map all the transit nodes to numbers
+    for i in range(len(names_all_transit_nodes)):
+        dict_all_nodes[names_all_transit_nodes[i]] = i
          
-        i_index = names_all_transit_nodes.index(names_of_transit_routes[i])
-        j_index = names_all_transit_nodes.index(names_of_transit_routes[i+1])
+    mx_transit_network = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
+    mx_C_a = parameters_input['large_dist']*np.ones(shape=(n_transit_nodes, n_transit_nodes))
+    mx_f_a = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
     
-        mx_transit_network[i_index, j_index] =\
-        mx_transit_network[j_index, i_index] = 1 
-       
-        mx_C_a[i_index, j_index] =\
-        mx_C_a[j_index, i_index] =\
-        mx_dist[int(re.findall(r'\d+', names_of_transit_routes[i])[0]),\
-        int(re.findall(r'\d+', names_of_transit_routes[i+1])[0])]
     
-        mx_f_a[i_index, j_index] =\
-        mx_f_a[j_index, i_index] = inf
-  
-'''Put all the links in one matrix'''  
-df_transit_links = pd.DataFrame(columns = ["I_i", "I_j", "c_a","f_a"])
-
-counter = 0
-for i in range(n_transit_nodes):
-    for j in range(n_transit_nodes):
-        if mx_transit_network[i,j]:
-      
-            df_transit_links.loc[counter] = [names_all_transit_nodes[i],\
-                                 names_all_transit_nodes[j], mx_C_a[i,j], mx_f_a[i,j]]                 
-            counter = counter + 1
-
-del counter, i, i_index, j, j_index    
-
-
-'''Optimal strategy algorithm (Spiess, 1989)'''    
-mx_volumes_nodes = np.zeros(n_transit_nodes) # create object to keep the node volumes
-mx_volumes_links = np.zeros(shape=(n_transit_nodes, n_transit_nodes)) # create object to keep the arc volumes
-names_main_nodes = names_all_transit_nodes[0:parameters_input['n']]
-
-    # Overall loop to change the destinations
-for i_destination in range(parameters_input['n']): 
+    # Did not  name the numpy arrays
     
-    # Create the data frames to keep the answers in
-    df_opt_strat_alg = pd.DataFrame(columns = ["a=(i,","j)","f_a","u_j+c_a","a_in_A_bar"])
-    vec_nodes_u_i = np.ones(n_transit_nodes)*inf
-    vec_nodes_f_i = np.zeros(n_transit_nodes)
-    
-    # Set values of the first row
-    r_destination = i_destination
-    num_transit_links = len(df_transit_links)
-    vec_nodes_u_i[r_destination] = 0 # set the destination expected time
-    df_S_list = df_transit_links.copy() # creates a copy to work with
-    
-    for i in range(num_transit_links):
-        df_S_list.iloc[i,0] = dict_all_nodes[df_S_list.iloc[i,0]]
-        df_S_list.iloc[i,1] = dict_all_nodes[df_S_list.iloc[i,1]]
-    
-    mx_S_list = df_S_list.values # cast as numpy array for speed in calculations
-    mx_S_list = np.hstack((mx_S_list, np.arange(num_transit_links).reshape(num_transit_links,1))) #adds indices
-    
-    df_A_bar_strategy_lines = pd.DataFrame(columns = ["I_i", "I_j", "c_a","f_a"])
-    mx_A_bar_strategy_lines = np.empty(shape=(0,4))
-    
-    # repeats steps 6.2 and 6.3 until df_S_list is empty
-    
-    '''Get the next link'''
-    
-    for counter_S_list in range(num_transit_links-1, -1, -1):
-        
-        for i in range(counter_S_list+1): # loop through mx_S_list to find the minimum u_j + c_a
-          
-            if i == 0:
-                u_j = vec_nodes_u_i[int(mx_S_list[i,1])]
-                c_a = mx_S_list[i,2]
-                min_u_j_and_c_a = u_j + c_a
-                min_u_j_and_c_a_index = i
-            
+    '''Fill in the walk links that are present in the graph'''
+    for i in range(parameters_input['n']):  
+        for j in range(parameters_input['n']):
+            if mx_dist[i,j] == parameters_input['large_dist']:
+                mx_C_a[i,j] = mx_dist[i,j]
             else:
-                u_j = vec_nodes_u_i[int(mx_S_list[i,1])]
-                c_a = mx_S_list[i,2]
-                
-                if u_j + c_a <= min_u_j_and_c_a:
-                  
+                if mx_dist[i,j] == 0:
+                    mx_transit_network[i,j] = 0
+                    mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
+                    mx_f_a[i,j] = 0
+                else:
+                    """Test for weird results"""
+                    mx_transit_network[i,j] = 0
+                    mx_C_a[i,j] = parameters_input['large_dist']
+                    mx_f_a[i,j] = 0
+                # else:
+                #     mx_transit_network[i,j] = 1
+                #     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
+                #     mx_f_a[i,j] = inf
+    
+    
+    ''''Fill in the boarding links characteristics'''
+    counter = 0
+    
+    for i in range(len(R_routes_list)): 
+        for j in range(len(R_routes_list[i])):       
+            i_index =  int(re.findall(r'\d+', names_of_transit_routes[counter])[0]) # number of the transit node
+            j_index = names_all_transit_nodes.index(names_of_transit_routes[counter]) # position of the transit node in network graph
+    
+            mx_transit_network[i_index, j_index] = 1   
+            mx_C_a[i_index, j_index] = parameters_input['boardingTime'] # sets the boarding
+            mx_f_a[i_index, j_index] = F_x[i] # set the frequencies per transit line
+      
+            counter = counter + 1  
+    
+    '''Fill in the alighting links characteristics'''
+    counter = 0
+    
+    for i in range(len(R_routes_list)): 
+        for j in range(len(R_routes_list[i])):       
+            i_index =  int(re.findall(r'\d+', names_of_transit_routes[counter])[0]) # number of the transit node
+            j_index = names_all_transit_nodes.index(names_of_transit_routes[counter]) # position of the transit node in network graph
+    
+            mx_transit_network[j_index, i_index] = 1   
+            mx_C_a[j_index, i_index] = parameters_input['alightingTime'] # sets the alighting
+            mx_f_a[j_index, i_index] = inf # set the frequencies per transit line
+      
+            counter = counter + 1 
+     
+    '''Fill in the travel times using the transit lines / routes'''       
+    
+    for i in range(len(names_of_transit_routes) - 1):
+        if " ".join(re.findall("[a-zA-Z]+", names_of_transit_routes[i]))==\
+        " ".join(re.findall("[a-zA-Z]+", names_of_transit_routes[i+1])):
+             
+            i_index = names_all_transit_nodes.index(names_of_transit_routes[i])
+            j_index = names_all_transit_nodes.index(names_of_transit_routes[i+1])
+        
+            mx_transit_network[i_index, j_index] =\
+            mx_transit_network[j_index, i_index] = 1 
+           
+            mx_C_a[i_index, j_index] =\
+            mx_C_a[j_index, i_index] =\
+            mx_dist[int(re.findall(r'\d+', names_of_transit_routes[i])[0]),\
+            int(re.findall(r'\d+', names_of_transit_routes[i+1])[0])]
+        
+            mx_f_a[i_index, j_index] =\
+            mx_f_a[j_index, i_index] = inf
+      
+    '''Put all the links in one matrix'''  
+    df_transit_links = pd.DataFrame(columns = ["I_i", "I_j", "c_a","f_a"])
+    
+    counter = 0
+    for i in range(n_transit_nodes):
+        for j in range(n_transit_nodes):
+            if mx_transit_network[i,j]:
+          
+                df_transit_links.loc[counter] = [names_all_transit_nodes[i],\
+                                     names_all_transit_nodes[j], mx_C_a[i,j], mx_f_a[i,j]]                 
+                counter = counter + 1
+    
+    del counter, i, i_index, j, j_index    
+    
+    
+    '''Optimal strategy algorithm (Spiess, 1989)'''    
+    mx_volumes_nodes = np.zeros(n_transit_nodes) # create object to keep the node volumes
+    mx_volumes_links = np.zeros(shape=(n_transit_nodes, n_transit_nodes)) # create object to keep the arc volumes
+    names_main_nodes = names_all_transit_nodes[0:parameters_input['n']]
+    
+        # Overall loop to change the destinations
+    for i_destination in range(parameters_input['n']): 
+        
+        # Create the data frames to keep the answers in
+        df_opt_strat_alg = pd.DataFrame(columns = ["a=(i,","j)","f_a","u_j+c_a","a_in_A_bar"])
+        vec_nodes_u_i = np.ones(n_transit_nodes)*inf
+        vec_nodes_f_i = np.zeros(n_transit_nodes)
+        
+        # Set values of the first row
+        r_destination = i_destination
+        num_transit_links = len(df_transit_links)
+        vec_nodes_u_i[r_destination] = 0 # set the destination expected time
+        df_S_list = df_transit_links.copy() # creates a copy to work with
+        
+        for i in range(num_transit_links):
+            df_S_list.iloc[i,0] = dict_all_nodes[df_S_list.iloc[i,0]]
+            df_S_list.iloc[i,1] = dict_all_nodes[df_S_list.iloc[i,1]]
+        
+        mx_S_list = df_S_list.values # cast as numpy array for speed in calculations
+        mx_S_list = np.hstack((mx_S_list, np.arange(num_transit_links).reshape(num_transit_links,1))) #adds indices
+        
+        df_A_bar_strategy_lines = pd.DataFrame(columns = ["I_i", "I_j", "c_a","f_a"])
+        mx_A_bar_strategy_lines = np.empty(shape=(0,4))
+        
+        # repeats steps 6.2 and 6.3 until df_S_list is empty
+        
+        '''Get the next link'''
+        
+        for counter_S_list in range(num_transit_links-1, -1, -1):
+            
+            for i in range(counter_S_list+1): # loop through mx_S_list to find the minimum u_j + c_a
+              
+                if i == 0:
+                    u_j = vec_nodes_u_i[int(mx_S_list[i,1])]
+                    c_a = mx_S_list[i,2]
                     min_u_j_and_c_a = u_j + c_a
                     min_u_j_and_c_a_index = i
-                  
-        '''Update the node label'''
-        current_link = mx_S_list[min_u_j_and_c_a_index,:4] 
-    
-            
-        col_index_i = int(current_link[0])
-        u_i = vec_nodes_u_i[col_index_i]
-        f_i = vec_nodes_f_i[col_index_i]
-        f_a = current_link[3]
-        
-        ''''Test for optimal strategy'''
-        if u_i >= min_u_j_and_c_a:
-          
-            if f_a == inf or f_i == inf: # for the case where the modification is needed in Spiess (1989) for no waiting time
-            #if f_a == inf:
-                vec_nodes_u_i[col_index_i] = min_u_j_and_c_a 
-                vec_nodes_f_i[col_index_i] = inf
-                mx_A_bar_strategy_lines = np.vstack((mx_A_bar_strategy_lines, current_link))
-                df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
-                                    mx_S_list[min_u_j_and_c_a_index,1],\
-                                    f_a,\
-                                    min_u_j_and_c_a,\
-                                    True]
-          
-            else: # normal case when a link is added
-                vec_nodes_u_i[col_index_i] =\
-                (gf2.f_i_u_i_test(f_i,u_i, parameters_input['alpha_const_inter']) + f_a*(min_u_j_and_c_a))/(f_i+f_a)
-                vec_nodes_f_i[col_index_i] = f_i + f_a
-                mx_A_bar_strategy_lines = np.vstack((mx_A_bar_strategy_lines, current_link))
-                df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
-                            mx_S_list[min_u_j_and_c_a_index,1],\
-                            f_a,\
-                            min_u_j_and_c_a,\
-                            True]
-            
-        else:
-            df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
-                            mx_S_list[min_u_j_and_c_a_index,1],\
-                            f_a,\
-                            min_u_j_and_c_a,\
-                            False]
-            
-        '''Remove the current link'''
-        mx_S_list = np.delete(mx_S_list, min_u_j_and_c_a_index, axis = 0) # remove the current link from S_list
-        
-    
-    '''Assign demand according to optimal strategy'''
-    # Initialise the algorithm
-    # load the volumes of demand per node, called V_i
-    
-    V_i = np.zeros(n_transit_nodes)
-    for i in range(parameters_input['n']):
-        V_i[i] = mx_demand[i,r_destination]
-    V_i[r_destination] = - sum(V_i)
-    
-    # NB this needs to hold to the conservation of flow requirements
-    # colnames(V_i) = names_all_nodes
-    # also the actual demand values can be input here
-    
-    df_opt_strat_alg.insert(5, "v_a", np.zeros(len(df_opt_strat_alg)))
-    
-    '''Load the links according to demand and frequencies'''
-    for i in range(len(df_opt_strat_alg)-1, -1, -1):  # for every link in decreasing order of u_j + c_a
-        if df_opt_strat_alg.iloc[i,4]:
-    
-            if not int(df_opt_strat_alg.iloc[i, 0]) == r_destination: # this restricts the alg to assign negative demand to 
-                  # the outgoing nodes from the node that is being evaluated
-                  # also note, errors might come in when demand is wrongfully assigned out, and in.
-                  
-                # set the indices
-                node_i_index = int(df_opt_strat_alg.iloc[i, 0])
-                node_j_index = int(df_opt_strat_alg.iloc[i, 1])
                 
-                # assign the v_a values
-                if not df_opt_strat_alg.iloc[i,2] == inf :
-                    df_opt_strat_alg.iloc[i, 5] = (df_opt_strat_alg.iloc[i,2]/\
-                                                      vec_nodes_f_i[node_i_index])*V_i[node_i_index]
                 else:
-                    df_opt_strat_alg.iloc[i, 5] = V_i[node_i_index]
-                            
-                # assign the V_j values                                                
-                V_i[node_j_index] = V_i[node_j_index] + df_opt_strat_alg.iloc[i, 5]                                                                                        
-    
-    # Update the volumes overall
-    mx_volumes_nodes = mx_volumes_nodes + V_i
-    
-    counter_link = 0  
-    while counter_link < len(df_opt_strat_alg):
-        if df_opt_strat_alg.iloc[counter_link,4]:
-            mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
-            mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
+                    u_j = vec_nodes_u_i[int(mx_S_list[i,1])]
+                    c_a = mx_S_list[i,2]
+                    
+                    if u_j + c_a <= min_u_j_and_c_a:
+                      
+                        min_u_j_and_c_a = u_j + c_a
+                        min_u_j_and_c_a_index = i
+                      
+            '''Update the node label'''
+            current_link = mx_S_list[min_u_j_and_c_a_index,:4] 
+        
+                
+            col_index_i = int(current_link[0])
+            u_i = vec_nodes_u_i[col_index_i]
+            f_i = vec_nodes_f_i[col_index_i]
+            f_a = current_link[3]
+            
+            ''''Test for optimal strategy'''
+            if u_i >= min_u_j_and_c_a:
+              
+                if f_a == inf or f_i == inf: # for the case where the modification is needed in Spiess (1989) for no waiting time
+                #if f_a == inf:
+                    vec_nodes_u_i[col_index_i] = min_u_j_and_c_a 
+                    vec_nodes_f_i[col_index_i] = inf
+                    mx_A_bar_strategy_lines = np.vstack((mx_A_bar_strategy_lines, current_link))
+                    df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
+                                        mx_S_list[min_u_j_and_c_a_index,1],\
+                                        f_a,\
+                                        min_u_j_and_c_a,\
+                                        True]
+              
+                else: # normal case when a link is added
+                    vec_nodes_u_i[col_index_i] =\
+                    (gf2.f_i_u_i_test(f_i,u_i, parameters_input['alpha_const_inter']) + f_a*(min_u_j_and_c_a))/(f_i+f_a)
+                    vec_nodes_f_i[col_index_i] = f_i + f_a
+                    mx_A_bar_strategy_lines = np.vstack((mx_A_bar_strategy_lines, current_link))
+                    df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
+                                mx_S_list[min_u_j_and_c_a_index,1],\
+                                f_a,\
+                                min_u_j_and_c_a,\
+                                True]
+                
+            else:
+                df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
+                                mx_S_list[min_u_j_and_c_a_index,1],\
+                                f_a,\
+                                min_u_j_and_c_a,\
+                                False]
+                
+            '''Remove the current link'''
+            mx_S_list = np.delete(mx_S_list, min_u_j_and_c_a_index, axis = 0) # remove the current link from S_list
+            
+        
+        '''Assign demand according to optimal strategy'''
+        # Initialise the algorithm
+        # load the volumes of demand per node, called V_i
+        
+        V_i = np.zeros(n_transit_nodes)
+        for i in range(parameters_input['n']):
+            V_i[i] = mx_demand[i,r_destination]
+        V_i[r_destination] = - sum(V_i)
+        
+        # NB this needs to hold to the conservation of flow requirements
+        # colnames(V_i) = names_all_nodes
+        # also the actual demand values can be input here
+        
+        df_opt_strat_alg.insert(5, "v_a", np.zeros(len(df_opt_strat_alg)))
+        
+        '''Load the links according to demand and frequencies'''
+        for i in range(len(df_opt_strat_alg)-1, -1, -1):  # for every link in decreasing order of u_j + c_a
+            if df_opt_strat_alg.iloc[i,4]:
+        
+                if not int(df_opt_strat_alg.iloc[i, 0]) == r_destination: # this restricts the alg to assign negative demand to 
+                      # the outgoing nodes from the node that is being evaluated
+                      # also note, errors might come in when demand is wrongfully assigned out, and in.
+                      
+                    # set the indices
+                    node_i_index = int(df_opt_strat_alg.iloc[i, 0])
+                    node_j_index = int(df_opt_strat_alg.iloc[i, 1])
+                    
+                    # assign the v_a values
+                    if not df_opt_strat_alg.iloc[i,2] == inf :
+                        df_opt_strat_alg.iloc[i, 5] = (df_opt_strat_alg.iloc[i,2]/\
+                                                          vec_nodes_f_i[node_i_index])*V_i[node_i_index]
+                    else:
+                        df_opt_strat_alg.iloc[i, 5] = V_i[node_i_index]
+                                
+                    # assign the V_j values                                                
+                    V_i[node_j_index] = V_i[node_j_index] + df_opt_strat_alg.iloc[i, 5]                                                                                        
+        
+        # Update the volumes overall
+        mx_volumes_nodes = mx_volumes_nodes + V_i
+        
+        counter_link = 0  
+        while counter_link < len(df_opt_strat_alg):
+            if df_opt_strat_alg.iloc[counter_link,4]:
+                mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
+                mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
+        
+          
+            counter_link = counter_link + 1 
+        
+        """Adds all u_i end times to an array for final u_i times"""
+        vec_nodes_u_i_ALL_array[:,i_destination] = vec_nodes_u_i
+    # end the overall destination change for loop spanning from 6.)
     
       
-        counter_link = counter_link + 1 
+    #'''Add the volume per arc details to the list_transit_links object'''
+    # df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
     
-# end the overall destination change for loop spanning from 6.)
-
-  
-'''Add the volume per arc details to the list_transit_links object'''
-df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
-
-for i in range(len(df_transit_links)):
-    df_transit_links.iloc[i,4] = mx_volumes_links[int(dict_all_nodes[df_transit_links.iloc[i,0]]),\
-                         int(dict_all_nodes[df_transit_links.iloc[i,1]])]
-
-# F3 Expected Travel Time
-print(sum(sum(mx_volumes_links*mx_C_a))/(parameters_input['total_demand']*2))
-
-
-# %% Transit network tests
-B_df_opt_strat_alg = TN.df_opt_strat_alg
-B_df_opt_strat_alg_named = TN.df_opt_strat_alg_named
-B_mx_A_bar_strategy_lines = TN.mx_A_bar_strategy_lines
-B_df_A_bar_strategy_lines = TN.df_A_bar_strategy_lines
-
-B_df_opt_strat_alg[0].iloc[:,0]
-
-u_i_times = np.zeros(shape=(15,15))
-
-for destination_i_strategy, destination_i in zip(B_df_opt_strat_alg, range(15)):
-    for origin_j in range(15):
-        if origin_j != destination_i:
-            u_i_times[origin_j,destination_i] = destination_i_strategy[(destination_i_strategy.iloc[:,0] == origin_j) & destination_i_strategy.iloc[:,4]].iloc[0,3]
-            
-print(sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2))
-
-def fn_obj_test(frequencies, UTFSP_problem_input):
-    return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
-                       frequencies, 
-                       UTFSP_problem_input.problem_data.mx_dist, 
-                       UTFSP_problem_input.problem_data.mx_demand, 
-                       UTFSP_problem_input.problem_inputs.__dict__), #f3_ETT
-            gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
-                       frequencies, 
-                       UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
-
-fn_obj_test(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0], UTFSP_problem_1)
+    # for i in range(len(df_transit_links)):
+    #     df_transit_links.iloc[i,4] = mx_volumes_links[int(dict_all_nodes[df_transit_links.iloc[i,0]]),\
+    #                          int(dict_all_nodes[df_transit_links.iloc[i,1]])]
+    
+    # # F3 Expected Travel Time
+    # print(sum(sum(mx_volumes_links*mx_C_a))/(parameters_input['total_demand']*2))
+    
+    
+    # %% Transit network tests
+    TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input) 
+    
+    B_df_opt_strat_alg = TN.df_opt_strat_alg
+    B_df_opt_strat_alg_named = TN.df_opt_strat_alg_named
+    B_mx_A_bar_strategy_lines = TN.mx_A_bar_strategy_lines
+    B_df_A_bar_strategy_lines = TN.df_A_bar_strategy_lines
+    
+    # B_df_opt_strat_alg[0].iloc[:,0]
+    
+    u_i_times = np.zeros(shape=(15,15))
+    
+    for destination_i_strategy, destination_i in zip(B_df_opt_strat_alg, range(15)):
+        for origin_j in range(15):
+            if origin_j != destination_i:
+                u_i_times[origin_j,destination_i] = destination_i_strategy[(destination_i_strategy.iloc[:,0] == origin_j) & destination_i_strategy.iloc[:,4]].iloc[0,3]
+                
+    print(sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2))
+    
+    
+    print(sum(sum(mx_demand*vec_nodes_u_i_ALL_array[:parameters_input['n'],:]))/(parameters_input['total_demand']*2))
+    
+    
+    
+    def fn_obj_test(frequencies, UTFSP_problem_input):
+        return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
+                           frequencies, 
+                           UTFSP_problem_input.problem_data.mx_dist, 
+                           UTFSP_problem_input.problem_data.mx_demand, 
+                           UTFSP_problem_input.problem_inputs.__dict__), #f3_ETT
+                gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
+                           frequencies, 
+                           UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+    
+    fn_obj_test(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0], UTFSP_problem_1)

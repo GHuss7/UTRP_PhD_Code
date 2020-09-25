@@ -82,6 +82,8 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
     names_all_transit_nodes = list(map(str, range(parameters_input['n'])))+names_of_transit_routes
     n_transit_nodes = len(names_all_transit_nodes)
     
+    vec_nodes_u_i_ALL_array = np.empty((n_transit_nodes,parameters_input['n'])) # creates array to contain all the final u_i values
+    
     dict_all_nodes = dict() # creates a dictionary to map all the transit nodes to numbers
     for i in range(len(names_all_transit_nodes)):
         dict_all_nodes[names_all_transit_nodes[i]] = i
@@ -330,6 +332,8 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
     
         # end the overall destination change for loop spanning from 6.)
     
+        """Adds all u_i end times to an array for final u_i times"""
+        vec_nodes_u_i_ALL_array[:,i_destination] = vec_nodes_u_i
       
     #'''Add the volume per arc details to the list_transit_links object'''
     # df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
@@ -339,7 +343,7 @@ def f3_ETT(R_routes, F_x, mx_dist, mx_demand, parameters_input):
     #                          int(dict_all_nodes[df_transit_links.iloc[i,1]])]
 
     # F3 Expected Travel Time
-    return sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2)
+    return sum(sum(mx_demand*vec_nodes_u_i_ALL_array[:parameters_input['n'],:]))/(parameters_input['total_demand']*2)
 
 #%% f4_TBR objective function
 

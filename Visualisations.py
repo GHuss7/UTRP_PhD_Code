@@ -158,3 +158,11 @@ gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, "John_2016_best_operator
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
 print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
+
+print("John 2016, best passenger route set:")
+routes_R = "10-9-7-5-3-4-1-0*9-13-12-10-11-3-1-0*5-3-11-10-9-6-14-8*6-14-7-5-3-4-1-2*12-10-9-7-5-2-1-0*0-1-2-5-14-6-9-7*"
+routes_R = gf.convert_routes_str2list(routes_R)
+gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, "John_2016_best_passenger_obj")
+objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
+evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
+print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')

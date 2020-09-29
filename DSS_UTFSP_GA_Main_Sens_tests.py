@@ -71,7 +71,7 @@ del name_input_data
 Decisions = {
 #"Choice_generate_initial_set" : True, 
 "Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : False,
+"Choice_conduct_sensitivity_analysis" : True,
 "Choice_print_full_data_for_analysis" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
@@ -92,7 +92,7 @@ parameters_constraints = {
 parameters_input = {
 'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
 'n' : len(mx_dist), # total number of nodes
-'Problem_name' : "Case_study_UTFSP_NSGAII", # Specify the name of the problem currently being addresses
+'Problem_name' : "Mandl_UTFSP_Sensitivity_analysis", # Specify the name of the problem currently being addresses
 'walkFactor' : 100, # factor it takes longer to walk than to drive
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
 'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
@@ -103,12 +103,12 @@ parameters_input = {
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_frequencies={
 "method" : "GA",
-"population_size" : 150, #should be an even number, John: 200
+"population_size" : 200, #should be an even number, John: 200
 "generations" : 20, # John: 200
 "number_of_runs" : 1, # John: 20
-"crossover_probability" : 0.8,  # John: 0.9
+"crossover_probability" : 0.7,  # John: 0.9 BEST: 0.8
 "crossover_distribution_index" : 5,
-"mutation_probability" : 0.1, #1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later
+"mutation_probability" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later BEST: 0.1 
 "mutation_distribution_index" : 10,
 "tournament_size" : 2,
 "termination_criterion" : "StoppingByEvaluations",
@@ -974,18 +974,22 @@ if __name__ == "__main__":
         # Set up the list of parameters to test
         sensitivity_list = [#[parameters_GA_frequencies, "population_size", 10, 20, 50, 100, 150],
                             #[parameters_GA_frequencies, "population_size", 200],
+                            
                             #[parameters_GA_frequencies, "population_size", 300],
+                            
                             #[parameters_GA_frequencies, "generations", 60],
+                            [parameters_GA_frequencies, "generations", 60],
+                            
                             #[parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9],
                             #[parameters_GA_frequencies, "crossover_probability", 0.95, 1],
+                            
                             #[parameters_GA_frequencies, "mutation_probability", 0.05, 0.1],
                             #[parameters_GA_frequencies, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
-                            
-                            [parameters_GA_frequencies, "mutation_probability", 0.1],
                             ]
-        
-        sensitivity_list = [[parameters_GA_frequencies, "population_size", 20], # baseline
-                            #[parameters_GA_frequencies, "population_size", 10, 400],
+        # # Sensitivity analysis
+        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 200], # baseline
+                            #[parameters_GA_frequencies, "population_size", 10],
+                            [parameters_GA_frequencies, "population_size", 300],
                             #[parameters_GA_frequencies, "generations", 5],
                             #[parameters_GA_frequencies, "generations", 60],
                             #[parameters_GA_frequencies, "crossover_probability", 0.5, 1],
@@ -1028,7 +1032,7 @@ if __name__ == "__main__":
 
 # %% TESTS: 
 
-if False:  
+if True:  
     
     def fn_obj(frequencies, UTFSP_problem_input):
         return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,

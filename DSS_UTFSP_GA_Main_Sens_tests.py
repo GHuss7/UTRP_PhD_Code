@@ -62,60 +62,78 @@ from pymoo.model.selection import Selection
 from pymoo.util.misc import random_permuations
     
 # %% Load the respective files
-name_input_data = "Mandl_Data"      # set the name of the input data
-#name_input_data = "SSML_STB_1700"
+name_input_data = "SSML_STB_1200_UTFSP"      # set the name of the input data
+name_input_data = "SSML_STB_1200_UTFSP_no_walk"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
-del name_input_data
+if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
+    mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
+    mx_walk = gf.format_mx_dist(mx_walk)
+    mx_walk = mx_walk.values
+else:
+    mx_walk = False
 
 # %% Set input parameters
 Decisions = {
 #"Choice_generate_initial_set" : True, 
 "Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : True,
+"Choice_conduct_sensitivity_analysis" : False,
+"Choice_consider_walk_links" : True,
+"Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
 
-'''State the various parameter constraints''' 
-parameters_constraints = {
-'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
-'con_minNodes' : 2,                        # minimum nodes in a route
-'con_maxNodes' : 10,                       # maximum nodes in a route
-'con_N_nodes' : len(mx_dist),              # number of nodes in the network
-'con_fleet_size' : 40,                     # number of vehicles that are allowed
-'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
-'con_lower_bound' : 0,                 # the lower bound for the problem
-'con_upper_bound' : 1                 # the upper bound for the problem
-}
+# Disables walk links
+if not(Decisions["Choice_consider_walk_links"]):
+    mx_walk = False
 
-'''State the various input parameter''' 
-parameters_input = {
-'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
-'n' : len(mx_dist), # total number of nodes
-'Problem_name' : "Mandl_UTFSP_Sensitivity_analysis", # Specify the name of the problem currently being addresses
-'walkFactor' : 100, # factor it takes longer to walk than to drive
-'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
-'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
-'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
-'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
-}
+# Load the respective dictionaries for the instance
+if Decisions["Choice_import_dictionaries"]:
+    parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
+    parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
+    parameters_GA_frequencies = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_frequencies.json"))
 
-'''State the various GA input parameters for frequency setting''' 
-parameters_GA_frequencies={
-"method" : "GA",
-"population_size" : 200, #should be an even number, John: 200
-"generations" : 20, # John: 200
-"number_of_runs" : 1, # John: 20
-"crossover_probability" : 0.7,  # John: 0.9 BEST: 0.8
-"crossover_distribution_index" : 5,
-"mutation_probability" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later BEST: 0.1 
-"mutation_distribution_index" : 10,
-"tournament_size" : 2,
-"termination_criterion" : "StoppingByEvaluations",
-"max_evaluations" : 40000,
-"number_of_variables" : "not_set",
-"number_of_objectives" : 2 # this could still be automated in the future
-}
+else:
+    '''State the various parameter constraints''' 
+    parameters_constraints = {
+    'con_r' : 8,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
+    'con_minNodes' : 2,                        # minimum nodes in a route
+    'con_maxNodes' : 6,                       # maximum nodes in a route
+    'con_N_nodes' : len(mx_dist),              # number of nodes in the network
+    'con_fleet_size' : 40,                     # number of vehicles that are allowed
+    'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
+    'con_lower_bound' : 0,                 # the lower bound for the problem
+    'con_upper_bound' : 1                 # the upper bound for the problem
+    }
+    
+    '''State the various input parameter''' 
+    parameters_input = {
+    'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
+    'n' : len(mx_dist), # total number of nodes
+    'Problem_name' : name_input_data, # Specify the name of the problem currently being addressed
+    'walkFactor' : 100, # factor it takes longer to walk than to drive
+    'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
+    'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
+    'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
+    'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
+    }
+    
+    '''State the various GA input parameters for frequency setting''' 
+    parameters_GA_frequencies={
+    "method" : "GA",
+    "population_size" : 200, #should be an even number, John: 200
+    "generations" : 20, # John: 200
+    "number_of_runs" : 1, # John: 20
+    "crossover_probability" : 0.7,  # John: 0.9 BEST: 0.8
+    "crossover_distribution_index" : 5,
+    "mutation_probability" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later BEST: 0.1 
+    "mutation_distribution_index" : 10,
+    "tournament_size" : 2,
+    "termination_criterion" : "StoppingByEvaluations",
+    "max_evaluations" : 40000,
+    "number_of_variables" : "not_set",
+    "number_of_objectives" : 2 # this could still be automated in the future
+    }
 
 
 #%% Input parameter tests
@@ -128,21 +146,13 @@ if parameters_constraints["con_r"] > parameters_constraints["con_fleet_size"]:
     parameters_constraints["con_r"] = parameters_constraints["con_fleet_size"]
 
 # %% Import the route set to be evaluated
-''' Import the route set '''
-# R_x = gf.convert_routes_str2list("13-14-10-8-15*4-2-3-6*13-11-12*7-15-9*5-4-6-15*3-2-1*") # unsure of source
+''' Import the route set '''    
+with open("./Input_Data/"+name_input_data+"/Route_set.txt", 'r') as file:
+    route_str = file.read().replace('\n', '')
 
-# R_x = gf.convert_routes_str2list("10-9-7-5-3-4-1-0*9-13-12-10-11-3-1-0*5-3-11-10-9-6-14-8*6-14-7-5-3-4-1-2*12-10-9-7-5-2-1-0*0-1-2-5-14-6-9-7*)
-# John Mumford results longest route set on Pareto front 2016, 
-    #f_1 ATT = 10.19203597	and f_2 TRT = 217                              		
+R_x = gf.convert_routes_str2list(route_str) # convert route set into list
+del route_str
 
-R_x = gf.convert_routes_str2list("4-3-1*13-12*8-14*9-10-12*9-6-14-7-5-2-1-0*10-11*") # John Mumford results shortest route set on Pareto front 2016, 
-    #f_1 ATT = 13.48041105	and f_2 TRT = 63
-    
-#R_x = gf.convert_routes_str2list("10-9-7-5-3-4-1-0*9-13-12-10-11-3-1-0*5-3-11-10-9-6-14-8*6-14-7-5-3-4-1-2*12-10-9-7-5-2-1-0*0-1-2-5-14-6-9-7*")
-    #f_1 ATT = 10.192779	and f_2 TRT = 217
-    
-#R_x = gf.convert_routes_str2list("5-7-2-8-3-9*1-7*7-6*4-8-5*7-0*7-8*1-0*2-1-0-6-8-5*") # Case Study route set
-    
 if 0 not in set([y for x in R_x for y in x]): # NB: test whether the route is in the correct format containing a 0
     for i in range(len(R_x)): # get routes in the correct format
         R_x[i] = [x - 1 for x in R_x[i]] # subtract 1 from each element in the list
@@ -163,7 +173,7 @@ parameters_GA_frequencies["number_of_variables"] = len(F_x)
 
 #%% Define the UTFSP Problem      
 UTFSP_problem_1 = gf2.UTFSP_problem()
-UTFSP_problem_1.problem_data = gf2.Problem_data(mx_dist, mx_demand, mx_coords)
+UTFSP_problem_1.problem_data = gf2.Problem_data(mx_dist, mx_demand, mx_coords, mx_walk)
 UTFSP_problem_1.problem_constraints = gf2.Problem_constraints(parameters_constraints)
 UTFSP_problem_1.problem_inputs = gf2.Problem_inputs(parameters_input)
 UTFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA_frequencies)
@@ -562,6 +572,7 @@ def generate_data_analysis_labels(num_objectives, num_variables):
         label_names.append("x_"+str(j+1))
     return label_names
 
+# %% BEGIN MAIN #######################################################
 
 def main(UTFSP_problem_1):
 
@@ -577,7 +588,8 @@ def main(UTFSP_problem_1):
                            frequencies, 
                            UTFSP_problem_input.problem_data.mx_dist, 
                            UTFSP_problem_input.problem_data.mx_demand, 
-                           UTFSP_problem_input.problem_inputs.__dict__), #f3_ETT
+                           UTFSP_problem_input.problem_inputs.__dict__,
+                           UTFSP_problem_input.problem_data.mx_walk), #f3_ETT
                 gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
                            frequencies, 
                            UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
@@ -588,7 +600,8 @@ def main(UTFSP_problem_1):
                            frequencies, 
                            UTFSP_problem_1.problem_data.mx_dist, 
                            UTFSP_problem_1.problem_data.mx_demand, 
-                           UTFSP_problem_1.problem_inputs.__dict__), #f3_ETT
+                           UTFSP_problem_1.problem_inputs.__dict__,
+                           UTFSP_problem_1.problem_data.mx_walk), #f3_ETT
                 gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, 
                            frequencies, 
                            UTFSP_problem_1.problem_data.mx_dist)) #f4_TBR
@@ -996,6 +1009,15 @@ if __name__ == "__main__":
                             #[parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
                             ]
         
+        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 200], # baseline
+                            #[parameters_GA_frequencies, "population_size", 10],
+                            [parameters_GA_frequencies, "population_size", 10],
+                            #[parameters_GA_frequencies, "generations", 5],
+                            #[parameters_GA_frequencies, "generations", 60],
+                            #[parameters_GA_frequencies, "crossover_probability", 0.5, 1],
+                            #[parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
+                            ]
+        
 
         
         for sensitivity_test in sensitivity_list:
@@ -1025,14 +1047,17 @@ if __name__ == "__main__":
         finish = time.perf_counter()
         
         print(f'Finished in {round(finish-start, 6)} second(s)')
-        
+     
+    else:
+        print(f'Normal run initiated')
+        main(UTFSP_problem_1)
 
 
 
 
 # %% TESTS: 
 
-if True:  
+if False:  
     
     def fn_obj(frequencies, UTFSP_problem_input):
         return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
@@ -1054,339 +1079,15 @@ if True:
                 gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, 
                            frequencies, 
                            UTFSP_problem_1.problem_data.mx_dist)) #f4_TBR
-        
-    #pop_1 = PopulationFreq(UTFSP_problem_1)   
-    #pop_1.generate_initial_population(UTFSP_problem_1, fn_obj) 
-    #pop_1.variables
-    
-   #  offspring_variables = np.array([[0.08333333, 0.2       , 0.05555556, 0.16666667, 0.04      ,
-   #  0.08333333],
-   # [0.08333333, 0.08333333, 0.0625    , 0.08333333, 0.1       ,
-   #  0.2       ],
-   # [0.1       , 0.16666667, 0.05555556, 0.16666667, 0.04      ,
-   #  0.07142857],
-   # [0.0625    , 0.05      , 0.04      , 0.1       , 0.03333333,
-   #  0.05      ],
-   # [0.14285714, 0.16666667, 0.16666667, 0.14285714, 0.16666667,
-   #  0.0625    ],
-   # [0.05      , 0.07142857, 0.1       , 0.03333333, 0.08333333,
-   #  0.11111111],
-   # [0.07142857, 0.16666667, 0.2       , 0.14285714, 0.1       ,
-   #  0.16666667],
-   # [0.14285714, 0.05      , 0.05      , 0.1       , 0.11111111,
-   #  0.14285714],
-   # [0.08333333, 0.04      , 0.08333333, 0.11111111, 0.16666667,
-   #  0.2       ],
-   # [0.14285714, 0.05555556, 0.2       , 0.08333333, 0.05      ,
-   #  0.07142857]])
+       
+
     offspring_variables = np.array([[1/5, 1/5, 1/7, 1/5, 1/5, 1/5],
                                     [1/30, 1/30, 1/30, 1/30, 1/30, 1/30]])
     
     F_x = offspring_variables[1,]
     
     # offspring_variables = df_res[1:,3:]
-    
-    offspring_variables = np.array([[0.2, 0.2, 0.16666666666666666, 0.2, 0.2, 0.125],
-       [0.2, 0.2, 0.1111111111111111, 0.2, 0.2,
-        0.14285714285714285],
-       [0.2, 0.2, 0.1111111111111111, 0.2, 0.2, 0.125],
-       [0.2, 0.2, 0.1, 0.2, 0.2, 0.125],
-       [0.2, 0.2, 0.14285714285714285, 0.2,
-        0.16666666666666666, 0.16666666666666666],
-       [0.2, 0.2, 0.1111111111111111, 0.2, 0.2, 0.1],
-       [0.2, 0.2, 0.1111111111111111, 0.2, 0.16666666666666666,
-        0.16666666666666666],
-       [0.2, 0.2, 0.1, 0.2, 0.16666666666666666,
-        0.16666666666666666],
-       [0.2, 0.125, 0.1111111111111111, 0.2,
-        0.16666666666666666, 0.16666666666666666],
-       [0.2, 0.2, 0.16666666666666666, 0.16666666666666666,
-        0.16666666666666666, 0.125],
-       [0.2, 0.2, 0.1111111111111111, 0.16666666666666666,
-        0.16666666666666666, 0.16666666666666666],
-       [0.2, 0.2, 0.1111111111111111, 0.16666666666666666,
-        0.16666666666666666, 0.14285714285714285],
-       [0.2, 0.2, 0.1111111111111111, 0.2, 0.16666666666666666,
-        0.1],
-       [0.2, 0.2, 0.1, 0.2, 0.16666666666666666, 0.1],
-       [0.16666666666666666, 0.2, 0.1111111111111111,
-        0.16666666666666666, 0.16666666666666666,
-        0.14285714285714285],
-       [0.16666666666666666, 0.2, 0.1111111111111111, 0.2,
-        0.16666666666666666, 0.1],
-       [0.16666666666666666, 0.2, 0.1, 0.2,
-        0.16666666666666666, 0.1],
-       [0.2, 0.16666666666666666, 0.1111111111111111,
-        0.16666666666666666, 0.16666666666666666, 0.1],
-       [0.16666666666666666, 0.2, 0.08333333333333333, 0.2,
-        0.16666666666666666, 0.1],
-       [0.16666666666666666, 0.2, 0.1, 0.2,
-        0.16666666666666666, 0.08333333333333333],
-       [0.2, 0.2, 0.1111111111111111, 0.2, 0.125,
-        0.14285714285714285],
-       [0.2, 0.2, 0.1111111111111111, 0.16666666666666666,
-        0.14285714285714285, 0.1111111111111111],
-       [0.2, 0.2, 0.125, 0.2, 0.125, 0.1111111111111111],
-       [0.2, 0.1, 0.1111111111111111, 0.16666666666666666,
-        0.14285714285714285, 0.125],
-       [0.2, 0.2, 0.1, 0.2, 0.125, 0.1111111111111111],
-       [0.2, 0.2, 0.1111111111111111, 0.14285714285714285,
-        0.14285714285714285, 0.1111111111111111],
-       [0.2, 0.2, 0.1, 0.2, 0.1111111111111111,
-        0.14285714285714285],
-       [0.16666666666666666, 0.2, 0.1, 0.2, 0.125,
-        0.1111111111111111],
-       [0.2, 0.2, 0.1, 0.16666666666666666, 0.125,
-        0.1111111111111111],
-       [0.16666666666666666, 0.2, 0.1, 0.2, 0.125, 0.1],
-       [0.2, 0.2, 0.1, 0.16666666666666666, 0.125, 0.1],
-       [0.2, 0.2, 0.125, 0.14285714285714285, 0.125, 0.1],
-       [0.2, 0.2, 0.1111111111111111, 0.14285714285714285,
-        0.125, 0.1],
-       [0.16666666666666666, 0.2, 0.1, 0.14285714285714285,
-        0.125, 0.125],
-       [0.16666666666666666, 0.2, 0.125, 0.14285714285714285,
-        0.125, 0.1],
-       [0.2, 0.2, 0.1, 0.14285714285714285, 0.125,
-        0.08333333333333333],
-       [0.16666666666666666, 0.16666666666666666, 0.125,
-        0.14285714285714285, 0.125, 0.08333333333333333],
-       [0.16666666666666666, 0.2, 0.1111111111111111,
-        0.14285714285714285, 0.125, 0.08333333333333333],
-       [0.16666666666666666, 0.2, 0.1, 0.14285714285714285,
-        0.125, 0.08333333333333333],
-       [0.16666666666666666, 0.16666666666666666, 0.1,
-        0.14285714285714285, 0.125, 0.08333333333333333],
-       [0.14285714285714285, 0.2, 0.1, 0.14285714285714285,
-        0.125, 0.08333333333333333],
-       [0.16666666666666666, 0.2, 0.07142857142857142,
-        0.14285714285714285, 0.125, 0.08333333333333333],
-       [0.16666666666666666, 0.125, 0.08333333333333333,
-        0.14285714285714285, 0.125, 0.08333333333333333],
-       [0.14285714285714285, 0.14285714285714285,
-        0.07142857142857142, 0.14285714285714285, 0.125, 0.1],
-       [0.16666666666666666, 0.2, 0.1, 0.14285714285714285,
-        0.1111111111111111, 0.08333333333333333],
-       [0.14285714285714285, 0.125, 0.08333333333333333,
-        0.14285714285714285, 0.125, 0.08333333333333333],
-       [0.14285714285714285, 0.14285714285714285,
-        0.07142857142857142, 0.14285714285714285, 0.125,
-        0.08333333333333333],
-       [0.2, 0.1, 0.08333333333333333, 0.14285714285714285,
-        0.1, 0.1],
-       [0.16666666666666666, 0.2, 0.05, 0.14285714285714285,
-        0.1111111111111111, 0.1],
-       [0.14285714285714285, 0.16666666666666666,
-        0.07142857142857142, 0.14285714285714285, 0.125, 0.0625],
-       [0.14285714285714285, 0.14285714285714285,
-        0.07142857142857142, 0.14285714285714285, 0.125, 0.0625],
-       [0.125, 0.2, 0.1, 0.14285714285714285, 0.1, 0.1],
-       [0.14285714285714285, 0.14285714285714285,
-        0.07142857142857142, 0.14285714285714285, 0.125,
-        0.05555555555555555],
-       [0.14285714285714285, 0.1111111111111111,
-        0.08333333333333333, 0.1111111111111111,
-        0.1111111111111111, 0.1111111111111111],
-       [0.16666666666666666, 0.2, 0.08333333333333333,
-        0.1111111111111111, 0.1, 0.1],
-       [0.16666666666666666, 0.16666666666666666,
-        0.08333333333333333, 0.1111111111111111,
-        0.1111111111111111, 0.07142857142857142],
-       [0.16666666666666666, 0.125, 0.08333333333333333,
-        0.1111111111111111, 0.1, 0.1],
-       [0.14285714285714285, 0.1111111111111111,
-        0.08333333333333333, 0.1111111111111111,
-        0.1111111111111111, 0.08333333333333333],
-       [0.125, 0.1111111111111111, 0.05555555555555555,
-        0.14285714285714285, 0.1111111111111111,
-        0.08333333333333333],
-       [0.14285714285714285, 0.125, 0.08333333333333333,
-        0.1111111111111111, 0.1, 0.1],
-       [0.14285714285714285, 0.1, 0.08333333333333333,
-        0.1111111111111111, 0.1111111111111111,
-        0.07142857142857142],
-       [0.16666666666666666, 0.2, 0.0625, 0.125, 0.1, 0.0625],
-       [0.125, 0.125, 0.08333333333333333, 0.1111111111111111,
-        0.1, 0.1],
-       [0.1111111111111111, 0.1111111111111111,
-        0.07142857142857142, 0.14285714285714285, 0.1,
-        0.08333333333333333],
-       [0.16666666666666666, 0.125, 0.08333333333333333,
-        0.1111111111111111, 0.1, 0.0625],
-       [0.16666666666666666, 0.16666666666666666,
-        0.08333333333333333, 0.1, 0.1, 0.0625],
-       [0.125, 0.1, 0.08333333333333333, 0.14285714285714285,
-        0.1, 0.05555555555555555],
-       [0.14285714285714285, 0.125, 0.08333333333333333,
-        0.1111111111111111, 0.1, 0.0625],
-       [0.125, 0.125, 0.08333333333333333, 0.125, 0.1,
-        0.05555555555555555],
-       [0.16666666666666666, 0.125, 0.08333333333333333, 0.125,
-        0.08333333333333333, 0.0625],
-       [0.125, 0.2, 0.05555555555555555, 0.1111111111111111,
-        0.1, 0.0625],
-       [0.14285714285714285, 0.14285714285714285,
-        0.08333333333333333, 0.125, 0.08333333333333333, 0.0625],
-       [0.1, 0.125, 0.08333333333333333, 0.1111111111111111,
-        0.1, 0.0625],
-       [0.125, 0.14285714285714285, 0.08333333333333333, 0.125,
-        0.08333333333333333, 0.0625],
-       [0.1111111111111111, 0.1111111111111111,
-        0.05555555555555555, 0.1111111111111111, 0.1, 0.0625],
-       [0.1, 0.1, 0.0625, 0.1111111111111111, 0.1, 0.0625],
-       [0.125, 0.1111111111111111, 0.05555555555555555,
-        0.1111111111111111, 0.08333333333333333,
-        0.08333333333333333],
-       [0.1, 0.1111111111111111, 0.05555555555555555, 0.125,
-        0.08333333333333333, 0.08333333333333333],
-       [0.125, 0.16666666666666666, 0.05, 0.125,
-        0.08333333333333333, 0.05555555555555555],
-       [0.08333333333333333, 0.14285714285714285,
-        0.08333333333333333, 0.125, 0.08333333333333333, 0.0625],
-       [0.1, 0.08333333333333333, 0.08333333333333333, 0.125,
-        0.08333333333333333, 0.05555555555555555],
-       [0.125, 0.1, 0.08333333333333333, 0.125,
-        0.07142857142857142, 0.0625],
-       [0.1111111111111111, 0.08333333333333333,
-        0.08333333333333333, 0.08333333333333333,
-        0.08333333333333333, 0.08333333333333333],
-       [0.14285714285714285, 0.16666666666666666,
-        0.05555555555555555, 0.1111111111111111,
-        0.07142857142857142, 0.0625],
-       [0.1, 0.1, 0.05, 0.125, 0.08333333333333333,
-        0.05555555555555555],
-       [0.1, 0.07142857142857142, 0.05555555555555555, 0.125,
-        0.08333333333333333, 0.05555555555555555],
-       [0.14285714285714285, 0.1111111111111111,
-        0.05555555555555555, 0.08333333333333333,
-        0.08333333333333333, 0.05555555555555555],
-       [0.1111111111111111, 0.0625, 0.05555555555555555,
-        0.1111111111111111, 0.07142857142857142,
-        0.08333333333333333],
-       [0.1111111111111111, 0.1, 0.05555555555555555,
-        0.08333333333333333, 0.08333333333333333, 0.0625],
-       [0.1111111111111111, 0.1111111111111111, 0.05,
-        0.1111111111111111, 0.07142857142857142, 0.0625],
-       [0.1, 0.1, 0.05, 0.1111111111111111,
-        0.07142857142857142, 0.0625],
-       [0.1, 0.0625, 0.05555555555555555, 0.1111111111111111,
-        0.07142857142857142, 0.0625],
-       [0.1, 0.0625, 0.05, 0.1111111111111111,
-        0.07142857142857142, 0.0625],
-       [0.1111111111111111, 0.1111111111111111, 0.0625,
-        0.08333333333333333, 0.07142857142857142,
-        0.05555555555555555],
-       [0.125, 0.1, 0.05555555555555555, 0.08333333333333333,
-        0.07142857142857142, 0.05],
-       [0.1111111111111111, 0.1, 0.05555555555555555,
-        0.08333333333333333, 0.07142857142857142,
-        0.05555555555555555],
-       [0.1, 0.1111111111111111, 0.05555555555555555,
-        0.08333333333333333, 0.07142857142857142,
-        0.05555555555555555],
-       [0.1, 0.1, 0.05, 0.08333333333333333,
-        0.07142857142857142, 0.05555555555555555],
-       [0.08333333333333333, 0.1, 0.05555555555555555,
-        0.08333333333333333, 0.07142857142857142,
-        0.05555555555555555],
-       [0.1, 0.1111111111111111, 0.05555555555555555,
-        0.08333333333333333, 0.0625, 0.0625],
-       [0.1, 0.08333333333333333, 0.05555555555555555,
-        0.08333333333333333, 0.0625, 0.0625],
-       [0.1, 0.08333333333333333, 0.0625, 0.08333333333333333,
-        0.0625, 0.05555555555555555],
-       [0.1, 0.1, 0.05, 0.1, 0.05555555555555555, 0.0625],
-       [0.1, 0.05555555555555555, 0.05555555555555555,
-        0.08333333333333333, 0.0625, 0.05555555555555555],
-       [0.08333333333333333, 0.08333333333333333,
-        0.05555555555555555, 0.08333333333333333, 0.0625,
-        0.05555555555555555],
-       [0.07142857142857142, 0.08333333333333333,
-        0.05555555555555555, 0.08333333333333333, 0.0625, 0.0625],
-       [0.1, 0.1, 0.05, 0.08333333333333333,
-        0.05555555555555555, 0.05555555555555555],
-       [0.08333333333333333, 0.05, 0.03333333333333333, 0.1,
-        0.0625, 0.05555555555555555],
-       [0.1, 0.1, 0.04, 0.08333333333333333,
-        0.05555555555555555, 0.05555555555555555],
-       [0.1, 0.1111111111111111, 0.05555555555555555,
-        0.08333333333333333, 0.05555555555555555, 0.04],
-       [0.1, 0.08333333333333333, 0.05555555555555555,
-        0.08333333333333333, 0.05555555555555555, 0.04],
-       [0.1, 0.05, 0.03333333333333333, 0.08333333333333333,
-        0.05555555555555555, 0.0625],
-       [0.08333333333333333, 0.08333333333333333,
-        0.05555555555555555, 0.08333333333333333,
-        0.05555555555555555, 0.04],
-       [0.0625, 0.1, 0.05, 0.08333333333333333,
-        0.05555555555555555, 0.05555555555555555],
-       [0.1, 0.08333333333333333, 0.04, 0.0625,
-        0.05555555555555555, 0.05555555555555555],
-       [0.1, 0.1, 0.03333333333333333, 0.07142857142857142,
-        0.05, 0.0625],
-       [0.08333333333333333, 0.0625, 0.05, 0.0625,
-        0.05555555555555555, 0.05555555555555555],
-       [0.1, 0.1111111111111111, 0.04, 0.0625, 0.05,
-        0.05555555555555555],
-       [0.07142857142857142, 0.04, 0.05555555555555555,
-        0.08333333333333333, 0.05555555555555555, 0.04],
-       [0.1, 0.05, 0.03333333333333333, 0.08333333333333333,
-        0.05555555555555555, 0.03333333333333333],
-       [0.08333333333333333, 0.0625, 0.05, 0.0625,
-        0.05555555555555555, 0.04],
-       [0.1, 0.07142857142857142, 0.05, 0.0625, 0.05, 0.04],
-       [0.08333333333333333, 0.05, 0.03333333333333333,
-        0.08333333333333333, 0.05555555555555555,
-        0.03333333333333333],
-       [0.07142857142857142, 0.0625, 0.04, 0.05555555555555555,
-        0.05555555555555555, 0.05555555555555555],
-       [0.0625, 0.1, 0.03333333333333333, 0.07142857142857142,
-        0.05, 0.05555555555555555],
-       [0.07142857142857142, 0.04, 0.04, 0.08333333333333333,
-        0.05, 0.04],
-       [0.1, 0.0625, 0.04, 0.05555555555555555, 0.05, 0.04],
-       [0.07142857142857142, 0.0625, 0.04, 0.05555555555555555,
-        0.05555555555555555, 0.04],
-       [0.0625, 0.07142857142857142, 0.05, 0.0625, 0.05,
-        0.04],
-       [0.05555555555555555, 0.07142857142857142, 0.05, 0.0625,
-        0.05, 0.04],
-       [0.07142857142857142, 0.07142857142857142, 0.04, 0.05,
-        0.05555555555555555, 0.03333333333333333],
-       [0.0625, 0.05, 0.04, 0.0625, 0.05, 0.04],
-       [0.0625, 0.04, 0.04, 0.0625, 0.05, 0.04],
-       [0.08333333333333333, 0.0625, 0.04, 0.05, 0.05,
-        0.03333333333333333],
-       [0.07142857142857142, 0.05, 0.04, 0.05555555555555555,
-        0.05, 0.03333333333333333],
-       [0.0625, 0.04, 0.04, 0.05555555555555555, 0.05, 0.04],
-       [0.0625, 0.05, 0.04, 0.05555555555555555, 0.05,
-        0.03333333333333333],
-       [0.0625, 0.04, 0.04, 0.05555555555555555, 0.05,
-        0.03333333333333333],
-       [0.0625, 0.03333333333333333, 0.04, 0.05555555555555555,
-        0.05, 0.03333333333333333],
-       [0.0625, 0.03333333333333333, 0.04, 0.05, 0.05,
-        0.03333333333333333],
-       [0.04, 0.0625, 0.04, 0.05555555555555555, 0.05,
-        0.03333333333333333],
-       [0.04, 0.0625, 0.04, 0.05, 0.05, 0.03333333333333333],
-       [0.0625, 0.03333333333333333, 0.04, 0.05, 0.04,
-        0.03333333333333333],
-       [0.07142857142857142, 0.1, 0.03333333333333333, 0.05,
-        0.03333333333333333, 0.03333333333333333],
-       [0.0625, 0.03333333333333333, 0.04, 0.05555555555555555,
-        0.03333333333333333, 0.04],
-       [0.0625, 0.04, 0.04, 0.05, 0.03333333333333333, 0.04],
-       [0.0625, 0.05, 0.04, 0.05, 0.03333333333333333,
-        0.03333333333333333],
-       [0.0625, 0.03333333333333333, 0.04, 0.05,
-        0.03333333333333333, 0.03333333333333333],
-       [0.04, 0.03333333333333333, 0.04, 0.05,
-        0.03333333333333333, 0.04],
-       [0.04, 0.03333333333333333, 0.04, 0.05,
-        0.03333333333333333, 0.03333333333333333]])
-    
+       
     
     # start = time.perf_counter()
     # offspring_objectives = np.apply_along_axis(fn_obj_row, 1, offspring_variables)
@@ -1721,9 +1422,61 @@ if False:
                            frequencies, 
                            UTFSP_problem_input.problem_data.mx_dist, 
                            UTFSP_problem_input.problem_data.mx_demand, 
-                           UTFSP_problem_input.problem_inputs.__dict__), #f3_ETT
+                           UTFSP_problem_input.problem_inputs.__dict__,
+                           UTFSP_problem_input.problem_data.mx_walk), #f3_ETT
                 gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
                            frequencies, 
                            UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
     
-    fn_obj_test(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0], UTFSP_problem_1)
+    fn_obj_test(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], UTFSP_problem_1)
+    
+    
+    gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
+                           np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], 
+                           UTFSP_problem_1.problem_data.mx_dist, 
+                           UTFSP_problem_1.problem_data.mx_demand, 
+                           UTFSP_problem_1.problem_inputs.__dict__)
+    
+    
+    gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
+                           np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], 
+                           UTFSP_problem_1.problem_data.mx_dist, 
+                           UTFSP_problem_1.problem_data.mx_demand, 
+                           UTFSP_problem_1.problem_inputs.__dict__,
+                           UTFSP_problem_1.problem_data.mx_walk)
+
+# %% Post optimisation analysis:
+F_x = np.array([[1/5, 1/5, 1/7, 1/5, 1/5, 1/5, 1/5, 1/5]])
+Route_lengths = gf.calc_seperate_route_length(R_x, mx_dist)  
+    
+buses_required = gf2.f4_TBR(R_x, F_x, mx_dist)
+
+print_str = ""
+comma = ","
+
+for i in range(len(buses_required)):  
+    buses_required[i] = math.ceil(buses_required[i])
+
+for i in range(len(buses_required)): 
+    freq_temp = round(buses_required[i]/(Route_lengths[i]*2),3)
+    headway_temp = round(1/(buses_required[i]/(Route_lengths[i]*2)),3) 
+    
+    temp_str = f"$\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {Route_lengths[i]} & {math.ceil(buses_required[i])} & {freq_temp} & {headway_temp}\\\\"
+    print_str = "\n".join([print_str, temp_str])
+
+print(print_str)
+
+
+gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
+                       np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], 
+                       UTFSP_problem_1.problem_data.mx_dist, 
+                       UTFSP_problem_1.problem_data.mx_demand, 
+                       UTFSP_problem_1.problem_inputs.__dict__)
+    
+    
+gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
+                       np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], 
+                       UTFSP_problem_1.problem_data.mx_dist, 
+                       UTFSP_problem_1.problem_data.mx_demand, 
+                       UTFSP_problem_1.problem_inputs.__dict__,
+                       UTFSP_problem_1.problem_data.mx_walk)

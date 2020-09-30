@@ -369,6 +369,23 @@ def f1_total_route_length(routes_R, mx_dist):
     
     return sum(lengths_of_routes) 
 
+# %% Define a function, the sum each route lengths
+def calc_seperate_route_length(routes_R, mx_dist):
+    # Takes as input the route set R and the associated distance matrix
+    # Output: an array of
+    lengths_of_routes = np.full(len(routes_R), 0)
+    
+    for i in range(len(routes_R)):
+        path = routes_R[i]
+        dist = 0
+        length_path = len(path)
+        for j in range(length_path-1):
+            dist = dist + mx_dist[path[j],path[j+1]]
+    
+        lengths_of_routes[i] = dist
+    
+    return lengths_of_routes
+
 # %% Generate bus network
 def generate_bus_network_dist_mx(routes_R, mx_dist):
     # Generate Bus Route Network 

@@ -36,47 +36,54 @@ import EvaluateRouteSet as ev
 
 # %% Load the respective files
 name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = "SSML_STB_1200_UTFSP"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
-del name_input_data
 
-'''Enter the number of allowed routes''' 
-parameters_constraints = {
-'con_r' : 6,               # (aim for > [numNodes N ]/[maxNodes in route])
-'con_minNodes' : 2,                        # minimum nodes in a route
-'con_maxNodes' : 10,                       # maximum nodes in a route
-'con_N_nodes' : len(mx_dist)              # number of nodes in the network
-}
+# Load the respective dictionaries for the instance
+if False:
+    parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
+    parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
+    parameters_GA_frequencies = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_frequencies.json"))
 
-parameters_input = {
-'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
-'n' : len(mx_dist), # total number of nodes
-'wt' : 0, # waiting time [min]
-'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl_UTRP", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
-'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
-}
-
-parameters_SA_routes={
-"method" : "SA",
-# ALSO: t_max > A_min (max_iterations_t > min_accepts)
-"max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-"max_total_iterations" : 25000, # the total number of accepts that are allowed
-"max_epochs" : 1500, # the maximum number of epochs that are allowed
-"min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
-"max_attempts" : 3, # maximum number of attempted moves per epoch
-"max_reheating_times" : 5, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
-"Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
-"M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-"Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-"Reheating_rate" : 1.05, # the geometric reheating rate
-"number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
-"Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 1, # number of runs to complete John 2016 set 20
-}
+else:
+    '''Enter the number of allowed routes''' 
+    parameters_constraints = {
+    'con_r' : 8,               # (aim for > [numNodes N ]/[maxNodes in route])
+    'con_minNodes' : 2,                        # minimum nodes in a route
+    'con_maxNodes' : 6,                       # maximum nodes in a route
+    'con_N_nodes' : len(mx_dist)              # number of nodes in the network
+    }
+    
+    parameters_input = {
+    'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
+    'n' : len(mx_dist), # total number of nodes
+    'wt' : 0, # waiting time [min]
+    'tp' : 5, # transfer penalty [min]
+    'Problem_name' : name_input_data, # Specify the name of the problem currently being addresses
+    'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
+    'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
+    'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
+    'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
+    }
+    
+    parameters_SA_routes={
+    "method" : "SA",
+    # ALSO: t_max > A_min (max_iterations_t > min_accepts)
+    "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+    "max_total_iterations" : 25000, # the total number of accepts that are allowed
+    "max_epochs" : 1500, # the maximum number of epochs that are allowed
+    "min_accepts" : 10, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+    "max_attempts" : 3, # maximum number of attempted moves per epoch
+    "max_reheating_times" : 5, # the maximum number of times that reheating can take place
+    "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
+    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
+    "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+    "Reheating_rate" : 1.05, # the geometric reheating rate
+    "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
+    "Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    "number_of_runs" : 1, # number of runs to complete John 2016 set 20
+    }
 
 '''Set the reference point for the Hypervolume calculations'''
 max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
@@ -163,6 +170,15 @@ print("John 2016, best passenger route set:")
 routes_R = "10-9-7-5-3-4-1-0*9-13-12-10-11-3-1-0*5-3-11-10-9-6-14-8*6-14-7-5-3-4-1-2*12-10-9-7-5-2-1-0*0-1-2-5-14-6-9-7*"
 routes_R = gf.convert_routes_str2list(routes_R)
 gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, "John_2016_best_passenger_obj")
+objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
+evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
+print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')
+
+#%% Case study evaluation
+print("Case study chosen route set:")
+routes_R = "5-7-2-8-3-9*1-7*7-6*4-8-5*7-0*7-8*1-0*2-1-0-6-8-5*"
+routes_R = gf.convert_routes_str2list(routes_R)
+gv.plotRouteSetAndSavePDF(mx_dist, routes_R, mx_coords, "Case_study_chosen_route_set")
 objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
 evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
 print(f'{round(objs[0], 6)} & {round(objs[1], 2)} & {round(evaluation[1], 2)} & {round(evaluation[2], 2)} & {round(evaluation[3], 2)} & {round(evaluation[4], 2)}')

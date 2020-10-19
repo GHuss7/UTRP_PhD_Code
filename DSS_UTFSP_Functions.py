@@ -668,7 +668,7 @@ def calc_fn_obj_for_np_array(fn_obj_row, variables):
 
 class Transit_network():
     """A class containing all the information about the transit network""" 
-    def __init__(self, R_routes, F_x, mx_dist, mx_demand, parameters_input):
+    def __init__(self, R_routes, F_x, mx_dist, mx_demand, parameters_input, mx_walk=False):
         
         # Define the adjacent mapping of each node
         self.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
@@ -677,11 +677,16 @@ class Transit_network():
         self.df_opt_strat_alg_named = []
         self.mx_A_bar_strategy_lines = []
         self.df_A_bar_strategy_lines = []
+        self.volumes_nodes_per_destination_i = []
+        self.volumes_links_per_destination = []
         
         R_routes_named = format_routes_with_letters(R_routes)
         names_of_transit_routes = get_names_of_routes_as_list(R_routes_named)
         names_all_transit_nodes = list(map(str, range(parameters_input['n'])))+names_of_transit_routes
         n_transit_nodes = len(names_all_transit_nodes)
+
+        vec_nodes_u_i_ALL_array = np.empty((n_transit_nodes,parameters_input['n'])) # creates array to contain all the final u_i values
+        volumes_links_per_destination = np.empty((n_transit_nodes,parameters_input['n'])) # creates array to contain all the final u_i values
 
         dict_all_nodes = dict() # creates a dictionary to map all the transit nodes to numbers
         for i in range(len(names_all_transit_nodes)):
@@ -690,23 +695,38 @@ class Transit_network():
         mx_transit_network = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
         mx_C_a = parameters_input['large_dist']*np.ones(shape=(n_transit_nodes, n_transit_nodes))
         mx_f_a = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
-        
+    
         
         '''Fill in the walk links that are present in the graph'''
-        for i in range(parameters_input['n']):  
-            for j in range(parameters_input['n']):
-                if mx_dist[i,j] == parameters_input['large_dist']:
-                    mx_C_a[i,j] = mx_dist[i,j]
-                else:
-                    if mx_dist[i,j] == 0:
-                        mx_transit_network[i,j] = 0
-                        mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                        mx_f_a[i,j] = 0
+        if hasattr(mx_walk, "__len__"):
+            for i in range(parameters_input['n']):  
+                for j in range(parameters_input['n']):
+                    if mx_dist[i,j] == parameters_input['large_dist']:
+                        mx_C_a[i,j] = mx_walk[i,j]
                     else:
-                        mx_transit_network[i,j] = 1
-                        mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                        mx_f_a[i,j] = inf
-        
+                        if mx_dist[i,j] == 0:
+                            mx_transit_network[i,j] = 0
+                            mx_C_a[i,j] = mx_walk[i,j]
+                            mx_f_a[i,j] = 0
+                        else:
+                            mx_transit_network[i,j] = 1
+                            mx_C_a[i,j] = mx_walk[i,j]
+                            mx_f_a[i,j] = inf
+                            
+        else:
+            for i in range(parameters_input['n']):  
+                for j in range(parameters_input['n']):
+                    if mx_dist[i,j] == parameters_input['large_dist']:
+                        mx_C_a[i,j] = mx_dist[i,j]
+                    else:
+                        if mx_dist[i,j] == 0:
+                            mx_transit_network[i,j] = 0
+                            mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
+                            mx_f_a[i,j] = 0
+                        else:
+                            mx_transit_network[i,j] = 1
+                            mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
+                            mx_f_a[i,j] = inf        
         
         ''''Fill in the boarding links characteristics'''
         counter = 0
@@ -784,6 +804,7 @@ class Transit_network():
         
         mx_volumes_nodes = np.zeros(n_transit_nodes) # create object to keep the node volumes
         mx_volumes_links = np.zeros(shape=(n_transit_nodes, n_transit_nodes)) # create object to keep the arc volumes
+        
         names_main_nodes = names_all_transit_nodes[0:parameters_input['n']]
         
             # Overall loop to change the destinations
@@ -793,6 +814,7 @@ class Transit_network():
             df_opt_strat_alg = pd.DataFrame(columns = ["a=(i,","j)","f_a","u_j+c_a","a_in_A_bar"])
             vec_nodes_u_i = np.ones(n_transit_nodes)*inf
             vec_nodes_f_i = np.zeros(n_transit_nodes)
+            mx_volumes_links_per_destination = np.zeros(shape=(n_transit_nodes, n_transit_nodes)) # create object to keep the arc volumes per destination
             
             # Set values of the first row
             r_destination = i_destination
@@ -928,7 +950,10 @@ class Transit_network():
                 if df_opt_strat_alg.iloc[counter_link,4]:
                     mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
                     mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
-            
+                    
+                    mx_volumes_links_per_destination[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
+                    mx_volumes_links_per_destination[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
+
               
                 counter_link = counter_link + 1 
          
@@ -950,9 +975,13 @@ class Transit_network():
             self.df_opt_strat_alg_named.append(df_opt_strat_alg_named)
             self.mx_A_bar_strategy_lines.append(mx_A_bar_strategy_lines)
             self.df_A_bar_strategy_lines.append(df_A_bar_strategy_lines)
+            self.volumes_nodes_per_destination_i.append(V_i)
         
-        # end the overall destination change for loop spanning from 6.)
-              
+            """Adds all u_i end times to an array for final u_i times"""
+            vec_nodes_u_i_ALL_array[:,i_destination] = vec_nodes_u_i  
+            
+         # end the overall destination change for loop spanning from 6.)   
+            
         '''Add the volume per arc details to the list_transit_links object'''
         df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
         
@@ -967,6 +996,8 @@ class Transit_network():
         self.df_transit_links = df_transit_links
         self.mx_volumes_links = mx_volumes_links
         self.mx_volumes_nodes = mx_volumes_nodes
+        self.vec_nodes_u_i_ALL_array = vec_nodes_u_i_ALL_array
+        self.volumes_links_per_destination.append(mx_volumes_links_per_destination)
         
     def test_reachability(self):
         # Test reachability matrix operations with boolean matrices 

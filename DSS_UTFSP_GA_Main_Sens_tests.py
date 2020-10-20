@@ -1595,3 +1595,6 @@ F_x_achieved = buses_required_final/Route_lengths
 F_x_achieved[4] = 1/100000
 F_x_achieved[5] = 1/100000
 objective_function_analysis(UTFSP_problem_1, F_x_achieved)
+
+# Matie Bus Evaluations
+UTFSP_problem_matie_bus_routes = copy.deepcopy(UTFSP_problem_1)

@@ -255,6 +255,38 @@ def generate_feasible_solution(paths_shortest_all, con_r, N , iterations):
                 break
     return routes_R
 
+
+def generate_feasible_solution_smart(pop, main_problem):
+    """Crossover function for entire route population"""
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
+    
+    if random.random() < main_problem.problem_GA_parameters.crossover_probability:
+        offspring_variables = [None] * main_problem.problem_GA_parameters.population_size
+    
+        
+        for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
+            parent_A = pop.variables[selection[i,0]]
+            parent_B = pop.variables[selection[i,1]]
+        
+            offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+                # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+            
+            while not test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], 
+                                                                             main_problem.problem_inputs.n, 
+                                                                             main_problem.mapping_adjacent)
+                
+                if test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                    continue
+                else:
+                    offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+        
+        return offspring_variables
+    
+    else:
+        return pop.variables
+
+
 def generate_initial_route_sets(main_problem, printing=True):
     '''Generate initial route sets for input as initial solutions'''
     if printing:
@@ -523,7 +555,7 @@ def generate_initial_feasible_route_set(mx_dist, parameters_constraints):
             del paths_shortest_all[i]
     
     # Generate initial feasible solution
-    routes_R = generate_feasible_solution(paths_shortest_all, con_r, len(mx_dist), 1000)
+    routes_R = generate_feasible_solution(paths_shortest_all, con_r, len(mx_dist), 100000)
 
     return routes_R
 

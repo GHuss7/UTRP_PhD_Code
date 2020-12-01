@@ -38,7 +38,7 @@ import EvaluateRouteSet as ev
 # def main():
 # %% Load the respective files
 #name_input_data = "SSML_STB_DAY_SUM_0700_1700"      # set the name of the input data
-name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = "Mumford0"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -101,7 +101,7 @@ if name_input_data == "SSML_STB_DAY_SUM_0700_1700":
 else:
     # %% Set variables
     Decisions = {
-    "Choice_generate_initial_set" : False, # the alternative loads a set that is prespecified, False is default for MANDL NB
+    "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
     "Choice_print_results" : True, 
     "Choice_conduct_sensitivity_analysis" : True,
     "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
@@ -113,9 +113,9 @@ else:
     
     '''Enter the number of allowed routes''' 
     parameters_constraints = {
-    'con_r' : 6,               # (aim for > [numNodes N ]/[maxNodes in route])
+    'con_r' : 12,               # (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
-    'con_maxNodes' : 10,                       # maximum nodes in a route
+    'con_maxNodes' : 15,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist)              # number of nodes in the network
     }
     
@@ -124,10 +124,10 @@ else:
     'n' : len(mx_dist), # total number of nodes
     'wt' : 0, # waiting time [min]
     'tp' : 5, # transfer penalty [min]
-    'Problem_name' : "Mandl_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
-    'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
+    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
+    'ref_point_max_f1_ATT' : 30, # max f1_ATT for the Hypervolume calculations
     'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-    'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
+    'ref_point_max_f2_TRT' : 400, # max f2_TRT for the Hypervolume calculations
     'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
     }
     
@@ -135,8 +135,8 @@ else:
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 25000, # the total number of accepts that are allowed
-    "max_epochs" : 1500, # the maximum number of epochs that are allowed
+    "max_total_iterations" : 70000, # the total number of accepts that are allowed
+    "max_epochs" : 2000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
     "max_reheating_times" : 5, # the maximum number of times that reheating can take place
@@ -573,9 +573,9 @@ if __name__ == "__main__":
                             [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
                             ]
         
-        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+        #sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
                             #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
-                            [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+                            #[parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
                             #[parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
                             #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
                             #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
@@ -583,9 +583,9 @@ if __name__ == "__main__":
                             #[parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
                             #[parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
                             #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
-                            ]
+                            #]
         
-        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 1000], 
+        #sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 1000], 
                             
                             #[parameters_SA_routes, "min_accepts", 5, 200], # takes longer at first... bottleneck
                             #[parameters_SA_routes, "max_attempts", 3, 200],
@@ -595,15 +595,16 @@ if __name__ == "__main__":
                             #[parameters_SA_routes, "max_poor_epochs", 10, 600],
                             #[parameters_SA_routes, "Cooling_rate", 0.97],
                             
-                            [parameters_SA_routes, "Temp", 0.001, 1000],
-                            [parameters_SA_routes, "Temp", 10],
+                            #[parameters_SA_routes, "Temp", 10],
+                            #[parameters_SA_routes, "Temp", 0.001, 1000],
+                            
                             #[parameters_SA_routes, "Temp", 10],
                             #[parameters_SA_routes, "Temp", 50],
                             
                             #[parameters_SA_routes, "Cooling_rate", 0.7, 0.9961682402927605],
                             
                             #[parameters_SA_routes, "Reheating_rate", 1.3, 1.01],
-                            ]
+                            #]
         
         
         for sensitivity_test in sensitivity_list:

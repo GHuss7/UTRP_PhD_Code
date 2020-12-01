@@ -59,7 +59,7 @@ from pymoo.util.randomized_argsort import randomized_argsort
 
     
 # %% Load the respective files
-name_input_data = "SSML_STB_DAY_SUM_0700_1700"      # set the name of the input data
+name_input_data = "Mumford0"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 del name_input_data
 # %% Set input parameters
@@ -69,9 +69,9 @@ Choice_conduct_sensitivity_analysis = True
   
 '''State the various parameter constraints''' 
 parameters_constraints = {
-'con_r' : 7,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
+'con_r' : 12,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
 'con_minNodes' : 2,                        # minimum nodes in a route
-'con_maxNodes' : 6,                       # maximum nodes in a route
+'con_maxNodes' : 15,                       # maximum nodes in a route
 'con_N_nodes' : len(mx_dist),              # number of nodes in the network
 'con_fleet_size' : 40,                     # number of vehicles that are allowed
 'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
@@ -86,9 +86,9 @@ parameters_input = {
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
 'Problem_name' : "Mandl_UTRP_NSGAII", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
+'ref_point_max_f1_ATT' : 30, # max f1_ATT for the Hypervolume calculations
 'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
+'ref_point_max_f2_TRT' : 400, # max f2_TRT for the Hypervolume calculations
 'ref_point_min_f2_TRT' : 63, # min f2_TRT for the Hypervolume calculations
 'walkFactor' : 3, # factor it takes longer to walk than to drive
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds

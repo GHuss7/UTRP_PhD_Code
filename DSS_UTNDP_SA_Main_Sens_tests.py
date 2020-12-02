@@ -125,17 +125,17 @@ else:
     'wt' : 0, # waiting time [min]
     'tp' : 5, # transfer penalty [min]
     'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
-    'ref_point_max_f1_ATT' : 30, # max f1_ATT for the Hypervolume calculations
-    'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-    'ref_point_max_f2_TRT' : 400, # max f2_TRT for the Hypervolume calculations
-    'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
+    'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
+    'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
+    'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
+    'ref_point_min_f2_TRT' : 94 # min f2_TRT for the Hypervolume calculations
     }
     
     parameters_SA_routes={
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 70000, # the total number of accepts that are allowed
+    "max_total_iterations" : 25000, # the total number of accepts that are allowed
     "max_epochs" : 2000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
@@ -411,9 +411,10 @@ def main(UTNDP_problem_1):
                         plt.show()
                         
                     '''Load validation data'''
-                    Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                    John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
-            
+                    #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
+                    John_validation_data = pd.read_csv("./Input_Data/"+problem_name+"/Validation_data/Results_data_headers.csv")
+                    
+                    
             
                     '''Print Objective functions over time, all solutions and pareto set obtained'''
                     fig, axs = plt.subplots(2, 2)
@@ -431,8 +432,8 @@ def main(UTNDP_problem_1):
                     
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       #s=1, c='g', marker="o", label='HV Mumford (2013)')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
                        s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
@@ -441,7 +442,7 @@ def main(UTNDP_problem_1):
                     
                     axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='orange', marker="o", label='Initial route sets')
                     axs[1, 1].scatter(df_archive["f2_TRT"], df_archive["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained')
-                    axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
+                    #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
                     axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
                     axs[1, 1].set_title('Pareto front obtained vs Mumford Results')
                     axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
@@ -471,8 +472,8 @@ def main(UTNDP_problem_1):
                     
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
                        s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
@@ -513,7 +514,7 @@ def main(UTNDP_problem_1):
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
         stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
-        stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+        #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
         df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
@@ -537,7 +538,7 @@ def main(UTNDP_problem_1):
         
         axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='orange', marker="o", label='Initial route sets')
         axs.scatter(df_overall_pareto_set["f2_TRT"], df_overall_pareto_set["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-        axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
+        #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
         axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
         axs.set_title('Pareto front obtained vs Mumford Results')
         axs.set(xlabel='f2_TRT', ylabel='f1_ATT')

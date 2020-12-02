@@ -208,4 +208,4 @@ def determine_demand_per_route(list_of_routes, mx_demand):
     
     return demand_for_shortest_path_list
 
-demand_list = determine_demand_per_route(paths_shortest_all, mx_demand)
+demand_for_shortest_path_list = determine_demand_per_route(paths_shortest_all, mx_demand)

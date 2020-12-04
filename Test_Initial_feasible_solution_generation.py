@@ -182,6 +182,9 @@ g_tn = gf.create_igraph_from_dist_mx(mx_dist)
 
 paths_shortest_all = gf.get_all_shortest_paths(g_tn) # Generate all the shortest paths
 
+# set(paths_shortest_all) 
+"""Remove duplicate lists in reverse order"""
+
 # Shorten the candidate routes according to the constraints
 for i in range(len(paths_shortest_all)-1, -1, -1):
     if len(paths_shortest_all[i]) < con_minNodes or len(paths_shortest_all[i]) > con_maxNodes:  
@@ -209,3 +212,11 @@ def determine_demand_per_route(list_of_routes, mx_demand):
     return demand_for_shortest_path_list
 
 demand_for_shortest_path_list = determine_demand_per_route(paths_shortest_all, mx_demand)
+
+demand_for_shortest_path_list / sum(demand_for_shortest_path_list)
+
+num_to_draw = 10
+draw = list(np.random.choice(np.arange(len(paths_shortest_all)), num_to_draw,
+              p=demand_for_shortest_path_list / sum(demand_for_shortest_path_list), replace=False))
+
+chosen_routes = [paths_shortest_all[x] for x in draw]

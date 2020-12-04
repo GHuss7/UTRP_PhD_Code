@@ -412,7 +412,7 @@ def main(UTNDP_problem_1):
                         
                     '''Load validation data'''
                     #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                    John_validation_data = pd.read_csv("./Input_Data/"+problem_name+"/Validation_data/Results_data_headers.csv")
+                    John_validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_data/Results_data_headers.csv")
                     
                     
             
@@ -562,30 +562,34 @@ if __name__ == "__main__":
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()
         
+        """Full sensitivity analysis"""
         # Set up the list of parameters to test
-        sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
-                            [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
-                            [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            [parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
-                            [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            [parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
-                            [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
-                            [parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
+        # sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+        #                     [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+        #                     [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+        #                     [parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
+        #                     [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+        #                     [parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+        #                     [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
+        #                     [parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
+        #                     [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
+        #                     ]
+        
+        """Quick tests with main parameters only"""
+        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+                            
+                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+                            
+                            #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+                            
+                            #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+                            
+                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
+                            
                             [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
                             ]
         
-        #sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
-                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
-                            #[parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            #[parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
-                            #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
-                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
-                            #[parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
-                            #[parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
-                            #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
-                            #]
-        
+        """Sensitivity analysis with highs and lows"""
         #sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 1000], 
                             
                             #[parameters_SA_routes, "min_accepts", 5, 200], # takes longer at first... bottleneck

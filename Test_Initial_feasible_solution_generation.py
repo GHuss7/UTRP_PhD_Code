@@ -113,7 +113,7 @@ else:
     
     '''Enter the number of allowed routes''' 
     parameters_constraints = {
-    'con_r' : 12,               # (aim for > [numNodes N ]/[maxNodes in route])
+    'con_r' : 4,               # (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
     'con_maxNodes' : 15,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist)              # number of nodes in the network
@@ -211,6 +211,60 @@ def determine_demand_per_route(list_of_routes, mx_demand):
     
     return demand_for_shortest_path_list
 
+
+#%% Crossover type route generation based on unseen vertices probability
+def routes_generation_unseen_prob(parent_i, parent_j, solution_len):
+    """Crossover function for routes based on Mumford 2013's Crossover function
+    for routes based on alternating between parents and including a route from
+    each parent that maximises the unseen vertices added to the child route
+    Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
+    parents = []  
+    parents.append(copy.deepcopy(parent_i))
+    parents.append(copy.deepcopy(parent_j))
+    parent_index = random.randint(0,1) # counter to help alternate between parents  
+    
+    child_i = [] # define child
+    parent_len = len(parent_i)
+    
+    # Randomly select the first seed solution for the child
+    random_index = random.randint(0,parent_len-1)
+    child_i.append(parents[parent_index][random_index]) # adds seed solution to parent
+    del(parents[parent_index][random_index]) # removes the route from parent so that it is not evaluated again
+    
+    # Alternates parent solutions
+    parent_index = gf.looped_incrementor(parent_index, 1)
+    
+    
+    # Calculate the unseen proportions to select next route for inclusion into child
+    while len(child_i) < solution_len:
+        # Determines all nodes present in the child
+        all_nodes_present = set([y for x in child_i for y in x]) # flatten all the elements in child
+    
+        parent_curr = parents[parent_index] # sets the current parent
+        
+        proportions = []
+        for i_candidate in range(len(parent_curr)):
+            R_i = set(parent_curr[i_candidate])
+            if bool(R_i.intersection(all_nodes_present)): # test whether there is a common transfer point
+                proportions.append(len(R_i - all_nodes_present) / len(R_i)) # calculate the proportion of unseen vertices
+            else:
+                proportions.append(0) # set proportion to zero so that it won't be chosen
+        
+        # Get route that maximises the proportion of unseen nodes included
+        max_indices = set([i for i, j in enumerate(proportions) if j == max(proportions)]) # position of max proportion/s
+        max_index = random.sample(max_indices, 1)[0] # selects only one index randomly between a possible tie, else the only one
+        
+        # Add the route to the child
+        child_i.append(parent_curr[max_index]) # add max proportion unseen nodes route to the child
+        del(parents[parent_index][max_index]) # removes the route from parent so that it is not evaluated again
+        
+        # Alternates parent solutions
+        parent_index = gf.looped_incrementor(parent_index, 1)
+    
+    return child_i
+
+
+
 demand_for_shortest_path_list = determine_demand_per_route(paths_shortest_all, mx_demand)
 
 demand_for_shortest_path_list / sum(demand_for_shortest_path_list)
@@ -220,3 +274,118 @@ draw = list(np.random.choice(np.arange(len(paths_shortest_all)), num_to_draw,
               p=demand_for_shortest_path_list / sum(demand_for_shortest_path_list), replace=False))
 
 chosen_routes = [paths_shortest_all[x] for x in draw]
+
+initial_route_set_test = routes_generation_unseen_prob(paths_shortest_all, paths_shortest_all, UTNDP_problem_1.problem_constraints.con_r)
+
+print(gf.test_route_feasibility(initial_route_set_test, UTNDP_problem_1.problem_constraints.__dict__))
+gf.test_all_four_constraints_debug(initial_route_set_test, UTNDP_problem_1.problem_constraints.__dict__)
+
+R_set = gc.Routes(initial_route_set_test)
+R_set.plot_routes(UTNDP_problem_1)
+
+repaired_set_1 = gf.repair_add_missing_from_terminal(initial_route_set_test, UTNDP_problem_1.problem_constraints.con_N_nodes, mapping_adjacent)
+gf.test_all_four_constraints_debug(repaired_set_1, UTNDP_problem_1.problem_constraints.__dict__)
+
+R_set_2 = gc.Routes(repaired_set_1)
+R_set_2.plot_routes(UTNDP_problem_1)
+
+
+
+
+distance_list_vertex_u = gf.get_graph_distance_levels_from_vertex_u(4,5,mapping_adjacent)
+
+def repair_add_missing_from_terminal_multiple_backup(routes_R, n_nodes, mapping_adjacent):
+    """ A function that searches for all the missing nodes, and tries to connect 
+    them with one route's terminal node by trying to add one or more vertices to terminals"""
+    all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
+    
+    # Initial test for all nodes present:
+    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+    
+        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+        random.shuffle(missing_nodes) # shuffles the nodes for randomness
+        
+        for missing_node in missing_nodes:
+            # Find adjacent nodes of the missing nodes
+            adj_nodes = mapping_adjacent[missing_node] # get the required nodes that are adjacent to 
+            
+            # Get terminal nodes
+            terminal_nodes_front = [x[0] for x in routes_R] # get all the terminal nodes in the first position
+            terminal_nodes_back = [x[-1] for x in routes_R] # get all the terminal nodes in the last position
+            
+            # Two cases, one from the front and one from the back
+            terminal_nodes_front_candidates = set(terminal_nodes_front).intersection(adj_nodes) # Find intersection between first terminal nodes and adj nodes
+            terminal_nodes_back_candidates = set(terminal_nodes_back).intersection(adj_nodes) # Find intersection between last terminal nodes and adj nodes
+    
+            if random.random() < 0.5:   # adds randomness to either front or back, and not just always one direction
+                if bool(terminal_nodes_front_candidates):
+                    random_adj_node = random.sample(terminal_nodes_front_candidates, 1)[0]
+                    terminal_nodes_front.index(random_adj_node)
+                    # Insert missing node at the front of adjacent terminal node
+                    routes_R[terminal_nodes_front.index(random_adj_node)].insert(0, missing_node) 
+                    
+                elif bool(terminal_nodes_back_candidates):
+                    random_adj_node = random.sample(terminal_nodes_back_candidates, 1)[0]
+                    # Insert missing node at the back of adjacent terminal node
+                    routes_R[terminal_nodes_back.index(random_adj_node)].append(missing_node) 
+                    
+            else:
+                if bool(terminal_nodes_back_candidates):
+                    random_adj_node = random.sample(terminal_nodes_back_candidates, 1)[0]
+                    # Insert missing node at the back of adjacent terminal node
+                    routes_R[terminal_nodes_back.index(random_adj_node)].append(missing_node) 
+                
+                elif bool(terminal_nodes_front_candidates):
+                    random_adj_node = random.sample(terminal_nodes_front_candidates, 1)[0]
+                    terminal_nodes_front.index(random_adj_node)
+                    # Insert missing node at the front of adjacent terminal node
+                    routes_R[terminal_nodes_front.index(random_adj_node)].insert(0, missing_node) 
+                    
+    return routes_R
+
+routes_R = copy.deepcopy(initial_route_set_test)
+n_nodes = len(mapping_adjacent)
+gf.test_all_four_constraints_debug(initial_route_set_test, UTNDP_problem_1.problem_constraints.__dict__)
+
+#def repair_add_missing_from_terminal_multiple_backup(routes_R, n_nodes, mapping_adjacent, UTNDP_problem_1):
+""" A function that searches for all the missing nodes, and tries to connect 
+them with one route's terminal node by trying to add one or more vertices to terminals"""
+
+#TODO: REPLACE ALL n_nodes and mapping_adjacent with UTNDP_problem_1. ... 
+
+max_depth = UTNDP_problem_1.problem_constraints.con_maxNodes - UTNDP_problem_1.problem_constraints.con_minNodes
+
+all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
+
+# Initial test for all nodes present:
+if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+    
+    missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+    random.shuffle(missing_nodes) # shuffles the nodes for randomness
+
+    for missing_node in missing_nodes:
+        # Find adjacent nodes of the missing nodes
+        distance_list_vertex_u = gf.get_graph_distance_levels_from_vertex_u(missing_node,max_depth,mapping_adjacent)
+
+        # Get terminal nodes
+        terminal_nodes_front = [x[0] for x in routes_R] # get all the terminal nodes in the first position
+        terminal_nodes_back = [x[-1] for x in routes_R] # get all the terminal nodes in the last position
+        terminal_nodes_all = terminal_nodes_front + terminal_nodes_back
+
+        missing_node_insertions = []
+
+        for distance_dept in range(len(distance_list_vertex_u)-1):
+            intersection_terminal_dist_list = set(terminal_nodes_all).intersection(set(distance_list_vertex_u[distance_dept+1]))
+            if intersection_terminal_dist_list:
+                random_adj_node = random.choice(tuple(intersection_terminal_dist_list))
+                missing_node_insertions.extend([random_adj_node])
+                if distance_dept == 1:
+                    
+                    if terminal_nodes_all.index(random_adj_node) < len(routes_R):
+                        routes_R[terminal_nodes_all.index(random_adj_node)].insert(0, missing_node) 
+                    else:
+                        routes_R[terminal_nodes_all.index(random_adj_node) - len(routes_R)].append(missing_node) 
+                    break
+                        
+R_set_3 = gc.Routes(routes_R)
+R_set_3.plot_routes(UTNDP_problem_1)

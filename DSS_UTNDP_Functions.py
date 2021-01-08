@@ -78,7 +78,7 @@ def read_problem_data_to_matrices(problem_name):
 
 
     
-# %% 
+# %% Graph-based functions
 def get_links_list_and_distances(matrix_dist):
     # Creates a list of all the links in a given adjacency matrix and a 
     # corresponding vector of distances associated with each link
@@ -103,6 +103,31 @@ def get_links_list_and_distances(matrix_dist):
         links_list_distances[i] = matrix_dist[links_list_dist_mx[i]]
     
     return links_list_dist_mx, links_list_distances
+
+def get_graph_distance_levels_from_vertex_u(vertex_u, max_depth, mapping_adjacent):
+    """A function to determine the different level of distances of each vertex,
+    i.e. d(u,v) and then give the levels in a list, with each level being d = 0,1,2 etc
+    Input:
+        vertex_u: the vertex from which distance will be measured
+        max_depth: maximum depth that the distance list is allowed to reach
+        mapping_adjacent: list of all the adjacent vertices in the graph to each vertex
+    """
+
+    visited = {vertex_u}
+    distance_list = [[vertex_u]] 
+    n_vertices = len(mapping_adjacent) # the number of vertices contained in the graph
+    
+    while (len(visited) < n_vertices) & (len(distance_list) < max_depth):
+        next_level = []
+        for vertex_v in distance_list[len(distance_list)-1]:
+            next_level.extend(mapping_adjacent[vertex_v])
+            
+        next_level = list(set(next_level).difference(visited))
+            
+        visited = visited.union(set(next_level))    
+        distance_list.append(next_level)
+        
+    return distance_list
     
 # %% Create igraph from dist matrix 
 def create_igraph_from_dist_mx(matrix_dist): 

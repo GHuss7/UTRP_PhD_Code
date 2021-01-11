@@ -113,7 +113,7 @@ else:
     
     '''Enter the number of allowed routes''' 
     parameters_constraints = {
-    'con_r' : 4,               # (aim for > [numNodes N ]/[maxNodes in route])
+    'con_r' : 3,               # (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
     'con_maxNodes' : 15,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist)              # number of nodes in the network
@@ -283,11 +283,11 @@ gf.test_all_four_constraints_debug(initial_route_set_test, UTNDP_problem_1.probl
 R_set = gc.Routes(initial_route_set_test)
 R_set.plot_routes(UTNDP_problem_1)
 
-repaired_set_1 = gf.repair_add_missing_from_terminal(initial_route_set_test, UTNDP_problem_1.problem_constraints.con_N_nodes, mapping_adjacent)
-gf.test_all_four_constraints_debug(repaired_set_1, UTNDP_problem_1.problem_constraints.__dict__)
+# repaired_set_1 = gf.repair_add_missing_from_terminal(initial_route_set_test, UTNDP_problem_1.problem_constraints.con_N_nodes, mapping_adjacent)
+# gf.test_all_four_constraints_debug(repaired_set_1, UTNDP_problem_1.problem_constraints.__dict__)
 
-R_set_2 = gc.Routes(repaired_set_1)
-R_set_2.plot_routes(UTNDP_problem_1)
+# R_set_2 = gc.Routes(repaired_set_1)
+# R_set_2.plot_routes(UTNDP_problem_1)
 
 
 
@@ -344,14 +344,45 @@ def repair_add_missing_from_terminal_multiple_backup(routes_R, n_nodes, mapping_
     return routes_R
 
 routes_R = copy.deepcopy(initial_route_set_test)
-n_nodes = len(mapping_adjacent)
-gf.test_all_four_constraints_debug(initial_route_set_test, UTNDP_problem_1.problem_constraints.__dict__)
 
-#def repair_add_missing_from_terminal_multiple_backup(routes_R, n_nodes, mapping_adjacent, UTNDP_problem_1):
+#routes_R = [[5, 14, 6, 9, 10, 12], [13, 9, 7, 5, 2, 1, 0], [4, 3, 5], [11, 10]]
+# routes_R = [[14, 5], [0, 1, 2, 5, 7, 9, 13, 12], [9, 10, 11]] #difficult one to repair, but a success __though error arises
+
+n_nodes = len(UTNDP_problem_1.mapping_adjacent)
+gf.test_all_four_constraints_debug(routes_R, UTNDP_problem_1.problem_constraints.__dict__)
+
+
+def find_path_from_dist_list(path, distance_list_vertex_u, distance_depth, mapping_adjacent):
+    """A recursive function to find the path from the closest terminal vertex to the missing vertex, given a list
+    of different distances each vertex in the graph is away from the missing vertex. 
+    Input:
+        path: list that is created by adding the shortest path in distance, initiate the first list with only the starting vertex
+        distance_list_vertex_u: a list of lists where entry 0 is the missing vertex, and entry 1 the vertices with distance 1 to the missing vertex, etc.
+        distance_depth: the current distance depth in the distance_list_vertex_u used to find the next set of adjacent vertices
+        mapping_adjacent: a list where mapping_adjacent[i] is the vertices adjacent to vertex i
+    Output:
+        path: the input path appended with an adjacent vertex one distance less to the missing vertex than the former vertex
+        distance_depth: the updated distance depth
+        """
+    vertex_j = path[-1]
+    adj_possibilities = set(mapping_adjacent[vertex_j]).intersection(set(distance_list_vertex_u[distance_depth-1]))
+    vertex_i = random.choice(tuple(adj_possibilities))
+    path.append(vertex_i)
+    
+    distance_depth = distance_depth - 1
+    
+    if distance_depth == 0: 
+        return path, distance_depth
+    
+    else:    
+        path, distance_depth = find_path_from_dist_list(path, distance_list_vertex_u, distance_depth, mapping_adjacent)
+        return path, distance_depth
+
+
+
+#def repair_add_missing_from_terminal_multiple_backup(routes_R, n_nodes, UTNDP_problem_1):
 """ A function that searches for all the missing nodes, and tries to connect 
 them with one route's terminal node by trying to add one or more vertices to terminals"""
-
-#TODO: REPLACE ALL n_nodes and mapping_adjacent with UTNDP_problem_1. ... 
 
 max_depth = UTNDP_problem_1.problem_constraints.con_maxNodes - UTNDP_problem_1.problem_constraints.con_minNodes
 
@@ -365,27 +396,48 @@ if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what no
 
     for missing_node in missing_nodes:
         # Find adjacent nodes of the missing nodes
-        distance_list_vertex_u = gf.get_graph_distance_levels_from_vertex_u(missing_node,max_depth,mapping_adjacent)
+        distance_list_vertex_u = gf.get_graph_distance_levels_from_vertex_u(missing_node,max_depth,UTNDP_problem_1.mapping_adjacent)
 
         # Get terminal nodes
         terminal_nodes_front = [x[0] for x in routes_R] # get all the terminal nodes in the first position
         terminal_nodes_back = [x[-1] for x in routes_R] # get all the terminal nodes in the last position
         terminal_nodes_all = terminal_nodes_front + terminal_nodes_back
 
-        missing_node_insertions = []
 
-        for distance_dept in range(len(distance_list_vertex_u)-1):
-            intersection_terminal_dist_list = set(terminal_nodes_all).intersection(set(distance_list_vertex_u[distance_dept+1]))
+        for distance_depth in range(len(distance_list_vertex_u)-1):
+            intersection_terminal_dist_list = set(terminal_nodes_all).intersection(set(distance_list_vertex_u[distance_depth+1]))
             if intersection_terminal_dist_list:
-                random_adj_node = random.choice(tuple(intersection_terminal_dist_list))
-                missing_node_insertions.extend([random_adj_node])
-                if distance_dept == 1:
-                    
-                    if terminal_nodes_all.index(random_adj_node) < len(routes_R):
-                        routes_R[terminal_nodes_all.index(random_adj_node)].insert(0, missing_node) 
-                    else:
-                        routes_R[terminal_nodes_all.index(random_adj_node) - len(routes_R)].append(missing_node) 
-                    break
-                        
+                random_terminal_node = random.choice(tuple(intersection_terminal_dist_list))
+
+                path_to_add = find_path_from_dist_list([random_terminal_node], distance_list_vertex_u, distance_depth+1, mapping_adjacent)[0]
+                print(path_to_add)
+
+                """Adds the connecting path to the correct route"""  
+                # Finds all the routes with the correct terminal vertex for the connection, ensuring no infeasible connections
+                feasible_routes_terminal_vertex = [path_to_add[0]==x for x in terminal_nodes_all]
+                #feasible_routes_terminal_vertex = [feasible_routes_terminal_vertex[i] or feasible_routes_terminal_vertex[i+len(routes_R)] for i in range(len(routes_R))]
+                
+                # Finds all the routes that do not contain the path in itself, avoiding cycles
+                feasible_routes_no_cycle = [not bool(y) for y in [set(path_to_add[1:]).intersection(set(x)) for x in routes_R]] # determine which routes do not contain the path
+                feasible_routes_no_cycle = feasible_routes_no_cycle + feasible_routes_no_cycle
+
+
+                # Finds all possible routes to merge with
+                feasible_routes_to_add_path = [feasible_routes_terminal_vertex[i] and feasible_routes_no_cycle[i] for i in range(len(feasible_routes_terminal_vertex))]
+
+                add_path_indices = [i for i, x in enumerate(feasible_routes_to_add_path) if x]
+
+                add_path_index = random.choice(add_path_indices)
+                if add_path_index < len(routes_R):
+                    """Adds the path to the front end of a route"""
+                    path_to_add.reverse()
+                    routes_R[add_path_index] = path_to_add[:-1] + routes_R[add_path_index]
+                else:
+                    """Adds the path to the back end of a route"""
+                    routes_R[add_path_index - len(routes_R)].extend(path_to_add[1:]) 
+                break
+
+
+
 R_set_3 = gc.Routes(routes_R)
 R_set_3.plot_routes(UTNDP_problem_1)

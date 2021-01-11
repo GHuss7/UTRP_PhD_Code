@@ -123,6 +123,10 @@ class Routes():
         """A function that plots the routes of a problem based on the problem defined"""
         gv.plotRouteSet2(main_problem.problem_data.mx_dist, self.routes, main_problem.problem_data.mx_coords) # using iGraph
      
+    def plot_routes_no_coords(self, main_problem):
+        """A function that plots the routes of a problem based on the problem defined, where no coords are defined"""
+        gv.plotRouteSet(main_problem.problem_data.mx_dist, self.routes) # using iGraph
+     
 
 # %% Class: PopulationRoutes
 class PopulationRoutes(Routes):

@@ -245,6 +245,57 @@ def generate_candidate_route_solution(paths_shortest_all, con_r):
         
     return paths_candidate
 
+# Crossover type route generation based on unseen vertices probability
+def routes_generation_unseen_prob(parent_i, parent_j, solution_len):
+    """Crossover function for routes based on Mumford 2013's Crossover function
+    for routes based on alternating between parents and including a route from
+    each parent that maximises the unseen vertices added to the child route
+    Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
+    parents = []  
+    parents.append(copy.deepcopy(parent_i))
+    parents.append(copy.deepcopy(parent_j))
+    parent_index = random.randint(0,1) # counter to help alternate between parents  
+    
+    child_i = [] # define child
+    parent_len = len(parent_i)
+    
+    # Randomly select the first seed solution for the child
+    random_index = random.randint(0,parent_len-1)
+    child_i.append(parents[parent_index][random_index]) # adds seed solution to parent
+    del(parents[parent_index][random_index]) # removes the route from parent so that it is not evaluated again
+    
+    # Alternates parent solutions
+    parent_index = looped_incrementor(parent_index, 1)
+    
+    
+    # Calculate the unseen proportions to select next route for inclusion into child
+    while len(child_i) < solution_len:
+        # Determines all nodes present in the child
+        all_nodes_present = set([y for x in child_i for y in x]) # flatten all the elements in child
+    
+        parent_curr = parents[parent_index] # sets the current parent
+        
+        proportions = []
+        for i_candidate in range(len(parent_curr)):
+            R_i = set(parent_curr[i_candidate])
+            if bool(R_i.intersection(all_nodes_present)): # test whether there is a common transfer point
+                proportions.append(len(R_i - all_nodes_present) / len(R_i)) # calculate the proportion of unseen vertices
+            else:
+                proportions.append(0) # set proportion to zero so that it won't be chosen
+        
+        # Get route that maximises the proportion of unseen nodes included
+        max_indices = set([i for i, j in enumerate(proportions) if j == max(proportions)]) # position of max proportion/s
+        max_index = random.sample(max_indices, 1)[0] # selects only one index randomly between a possible tie, else the only one
+        
+        # Add the route to the child
+        child_i.append(parent_curr[max_index]) # add max proportion unseen nodes route to the child
+        del(parents[parent_index][max_index]) # removes the route from parent so that it is not evaluated again
+        
+        # Alternates parent solutions
+        parent_index = looped_incrementor(parent_index, 1)
+    
+    return child_i
+
 # %% Try to generate a feasible solution 
 def generate_solution(paths_shortest_all, con_r, N , iterations):
     # Generate a feasible solution where all routes are connected
@@ -442,6 +493,20 @@ def calc_seperate_route_length(routes_R, mx_dist):
         lengths_of_routes[i] = dist
     
     return lengths_of_routes
+
+# %% Determine demand per route
+def determine_demand_per_route(list_of_routes, mx_demand):
+    """Takes as input a list of routes and a demand matrix and calculates the total demand that a route satisfies
+    Returns a list containing the demand met by the route with the corresponding index """
+    demand_for_routes_list = [0] * len(list_of_routes) # generates a list with only zeroes
+
+    for list_counter in range(len(list_of_routes)):
+        for i_counter in range(len(list_of_routes[list_counter])):
+            for j_counter in range(len(list_of_routes[list_counter])):
+                if i_counter != j_counter:  
+                    demand_for_routes_list[list_counter] = demand_for_routes_list[list_counter] + mx_demand[list_of_routes[list_counter][i_counter], list_of_routes[list_counter][j_counter]]
+    
+    return demand_for_routes_list
 
 # %% Generate bus network
 def generate_bus_network_dist_mx(routes_R, mx_dist):
@@ -1383,6 +1448,182 @@ def repair_add_missing_from_terminal(routes_R, n_nodes, mapping_adjacent):
     return routes_R
 
 
+def find_path_from_dist_list(path, distance_list_vertex_u, distance_depth, mapping_adjacent):
+    """A recursive function to find the path from the closest terminal vertex to the missing vertex, given a list
+    of different distances each vertex in the graph is away from the missing vertex. 
+    Input:
+        path: list that is created by adding the shortest path in distance, initiate the first list with only the starting vertex
+        distance_list_vertex_u: a list of lists where entry 0 is the missing vertex, and entry 1 the vertices with distance 1 to the missing vertex, etc.
+        distance_depth: the current distance depth in the distance_list_vertex_u used to find the next set of adjacent vertices
+        mapping_adjacent: a list where mapping_adjacent[i] is the vertices adjacent to vertex i
+    Output:
+        path: the input path appended with an adjacent vertex one distance less to the missing vertex than the former vertex
+        distance_depth: the updated distance depth
+        """
+    vertex_j = path[-1]
+    adj_possibilities = set(mapping_adjacent[vertex_j]).intersection(set(distance_list_vertex_u[distance_depth-1]))
+    vertex_i = random.choice(tuple(adj_possibilities))
+    path.append(vertex_i)
+    
+    distance_depth = distance_depth - 1
+    
+    if distance_depth == 0: 
+        return path, distance_depth
+    
+    else:    
+        path, distance_depth = find_path_from_dist_list(path, distance_list_vertex_u, distance_depth, mapping_adjacent)
+        return path, distance_depth
+
+
+def repair_add_missing_from_terminal_multiple_debug(routes_R, n_nodes, UTNDP_problem):
+    """ A function that searches for all the missing nodes, and tries to connect 
+    them with one route's terminal node by trying to add one or more vertices to terminals"""
+    
+    max_depth = UTNDP_problem.problem_constraints.con_maxNodes - UTNDP_problem.problem_constraints.con_minNodes
+    
+    all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
+    
+    # Initial test for all nodes present:
+    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+        
+        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+        random.shuffle(missing_nodes) # shuffles the nodes for randomness
+    
+        for missing_node in missing_nodes:
+            
+            all_nodes = [y for x in routes_R for y in x] # flatten all the elements in the updated route set
+            if missing_node in all_nodes: # test whether the missing node was already included, and continue loop
+                continue
+            
+            distance_list_vertex_u = get_graph_distance_levels_from_vertex_u(missing_node,max_depth,UTNDP_problem.mapping_adjacent)
+            print(f"\nMissing node: {missing_node} | Missing nodes: {missing_nodes}")
+            # Get terminal nodes
+            terminal_nodes_front = [x[0] for x in routes_R] # get all the terminal nodes in the first position
+            terminal_nodes_back = [x[-1] for x in routes_R] # get all the terminal nodes in the last position
+            terminal_nodes_all = terminal_nodes_front + terminal_nodes_back
+    
+    
+            for distance_depth in range(len(distance_list_vertex_u)-1):
+                intersection_terminal_dist_list = list(set(terminal_nodes_all).intersection(set(distance_list_vertex_u[distance_depth+1])))
+                print(f"Dist depth: {distance_depth} | Terminal intersection dist: {intersection_terminal_dist_list}")
+    
+                if intersection_terminal_dist_list:
+                    random.shuffle(intersection_terminal_dist_list) # shuffles the terminal nodes list for randomness
+                    
+                    for random_terminal_node in intersection_terminal_dist_list:
+                    
+                        path_to_add = find_path_from_dist_list([random_terminal_node], distance_list_vertex_u, distance_depth+1, UTNDP_problem.mapping_adjacent)[0]
+                        print(path_to_add)
+        
+                        """Adds the connecting path to the correct route"""  
+                        # Finds all the routes with the correct terminal vertex for the connection, ensuring no infeasible connections
+                        feasible_routes_terminal_vertex = [path_to_add[0]==x for x in terminal_nodes_all]
+                        #feasible_routes_terminal_vertex = [feasible_routes_terminal_vertex[i] or feasible_routes_terminal_vertex[i+len(routes_R)] for i in range(len(routes_R))]
+                        
+                        # Finds all the routes that do not contain the path in itself, avoiding cycles
+                        feasible_routes_no_cycle = [not bool(y) for y in [set(path_to_add[1:]).intersection(set(x)) for x in routes_R]] # determine which routes do not contain the path
+                        feasible_routes_no_cycle = feasible_routes_no_cycle + feasible_routes_no_cycle
+        
+        
+                        # Finds all possible routes to merge with
+                        feasible_routes_to_add_path = [feasible_routes_terminal_vertex[i] and feasible_routes_no_cycle[i] for i in range(len(feasible_routes_terminal_vertex))]
+                        
+                        # Determines all the feasible indices the path may be added to
+                        add_path_indices = [i for i, x in enumerate(feasible_routes_to_add_path) if x]
+                        
+                        if add_path_indices: # tests whether any legal additions exists, may be that a previous addition included more missing nodes
+                            add_path_index = random.choice(add_path_indices)
+                            if add_path_index < len(routes_R):
+                                """Adds the path to the front end of a route"""
+                                path_to_add.reverse()
+                                routes_R[add_path_index] = path_to_add[:-1] + routes_R[add_path_index]
+                                
+                                print(f"....Path added: {path_to_add[:-1]}")
+                            else:
+                                """Adds the path to the back end of a route"""
+                                routes_R[add_path_index - len(routes_R)].extend(path_to_add[1:]) 
+                            
+                                print(f"....Path added: {path_to_add[1:]}")
+                            break
+                        
+                    else:
+                        continue # continue when inner loop was not broken
+                    
+                    break # inner loop was broken, then break the outer loop too
+
+    return routes_R
+
+def repair_add_missing_from_terminal_multiple(routes_R, n_nodes, UTNDP_problem):
+    """ A robust function that searches for all the missing nodes, and tries to connect 
+    them with one route's terminal node by trying to add one or more vertices to terminal vertices"""
+    
+    max_depth = UTNDP_problem.problem_constraints.con_maxNodes - UTNDP_problem.problem_constraints.con_minNodes
+    
+    all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
+    
+    # Initial test for all nodes present:
+    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+        
+        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+        random.shuffle(missing_nodes) # shuffles the nodes for randomness
+    
+        for missing_node in missing_nodes:
+            
+            all_nodes = [y for x in routes_R for y in x] # flatten all the elements in the updated route set
+            if missing_node in all_nodes: # test whether the missing node was already included, and continue loop
+                continue
+            
+            distance_list_vertex_u = get_graph_distance_levels_from_vertex_u(missing_node,max_depth,UTNDP_problem.mapping_adjacent)
+            
+            # Get terminal nodes
+            terminal_nodes_all = [x[0] for x in routes_R] + [x[-1] for x in routes_R] # get all the terminal nodes in the first and last positions
+    
+    
+            for distance_depth in range(len(distance_list_vertex_u)-1):
+                intersection_terminal_dist_list = list(set(terminal_nodes_all).intersection(set(distance_list_vertex_u[distance_depth+1])))
+    
+                if intersection_terminal_dist_list:
+                    random.shuffle(intersection_terminal_dist_list) # shuffles the terminal nodes list for randomness
+                    
+                    for random_terminal_node in intersection_terminal_dist_list:
+                    
+                        path_to_add = find_path_from_dist_list([random_terminal_node], distance_list_vertex_u, distance_depth+1, UTNDP_problem.mapping_adjacent)[0]
+        
+                        """Adds the connecting path to the correct route"""  
+                        # Finds all the routes with the correct terminal vertex for the connection, ensuring no infeasible connections
+                        feasible_routes_terminal_vertex = [path_to_add[0]==x for x in terminal_nodes_all]
+                        #feasible_routes_terminal_vertex = [feasible_routes_terminal_vertex[i] or feasible_routes_terminal_vertex[i+len(routes_R)] for i in range(len(routes_R))]
+                        
+                        # Finds all the routes that do not contain the path in itself, avoiding cycles
+                        feasible_routes_no_cycle = [not bool(y) for y in [set(path_to_add[1:]).intersection(set(x)) for x in routes_R]] # determine which routes do not contain the path
+                        feasible_routes_no_cycle = feasible_routes_no_cycle + feasible_routes_no_cycle
+        
+        
+                        # Finds all possible routes to merge with
+                        feasible_routes_to_add_path = [feasible_routes_terminal_vertex[i] and feasible_routes_no_cycle[i] for i in range(len(feasible_routes_terminal_vertex))]
+                        
+                        # Determines all the feasible indices the path may be added to
+                        add_path_indices = [i for i, x in enumerate(feasible_routes_to_add_path) if x]
+                        
+                        if add_path_indices: # tests whether any legal additions exists, may be that a previous addition included more missing nodes
+                            add_path_index = random.choice(add_path_indices)
+                            if add_path_index < len(routes_R):
+                                """Adds the path to the front end of a route"""
+                                path_to_add.reverse()
+                                routes_R[add_path_index] = path_to_add[:-1] + routes_R[add_path_index]
+                                                               
+                            else:
+                                """Adds the path to the back end of a route"""
+                                routes_R[add_path_index - len(routes_R)].extend(path_to_add[1:]) 
+                            
+                            break
+                        
+                    else:
+                        continue # continue when inner loop was not broken
+                    
+                    break # inner loop was broken, then break the outer loop too
+
+    return routes_R
 
 # %% Crossover functions
 

@@ -1475,7 +1475,7 @@ def find_path_from_dist_list(path, distance_list_vertex_u, distance_depth, mappi
         return path, distance_depth
 
 
-def repair_add_missing_from_terminal_multiple_debug(routes_R, n_nodes, UTNDP_problem):
+def repair_add_missing_from_terminal_multiple_debug(routes_R, UTNDP_problem):
     """ A function that searches for all the missing nodes, and tries to connect 
     them with one route's terminal node by trying to add one or more vertices to terminals"""
     
@@ -1484,9 +1484,9 @@ def repair_add_missing_from_terminal_multiple_debug(routes_R, n_nodes, UTNDP_pro
     all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
     
     # Initial test for all nodes present:
-    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+    if (len(set(all_nodes)) != UTNDP_problem.problem_constraints.con_N_nodes): # if not true, go on to testing for what nodes are ommited
         
-        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+        missing_nodes = list(set(range(UTNDP_problem.problem_constraints.con_N_nodes)).difference(set(all_nodes))) # find all the missing nodes
         random.shuffle(missing_nodes) # shuffles the nodes for randomness
     
         for missing_node in missing_nodes:
@@ -1553,7 +1553,7 @@ def repair_add_missing_from_terminal_multiple_debug(routes_R, n_nodes, UTNDP_pro
 
     return routes_R
 
-def repair_add_missing_from_terminal_multiple(routes_R, n_nodes, UTNDP_problem):
+def repair_add_missing_from_terminal_multiple(routes_R, UTNDP_problem):
     """ A robust function that searches for all the missing nodes, and tries to connect 
     them with one route's terminal node by trying to add one or more vertices to terminal vertices"""
     
@@ -1562,9 +1562,9 @@ def repair_add_missing_from_terminal_multiple(routes_R, n_nodes, UTNDP_problem):
     all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
     
     # Initial test for all nodes present:
-    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+    if (len(set(all_nodes)) != UTNDP_problem.problem_constraints.con_N_nodes): # if not true, go on to testing for what nodes are ommited
         
-        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+        missing_nodes = list(set(range(UTNDP_problem.problem_constraints.con_N_nodes)).difference(set(all_nodes))) # find all the missing nodes
         random.shuffle(missing_nodes) # shuffles the nodes for randomness
     
         for missing_node in missing_nodes:

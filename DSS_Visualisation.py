@@ -51,6 +51,19 @@ def format_igraph_custom_thesis(g_tn):
     g_tn.es["label_size"] = [15]
     return g_tn
 
+def format_igraph_custom_experiment(g_tn):  
+    # Formats the graph according to some specifications
+    g_tn.vs["size"] = [30]
+    g_tn.vs["label_size"] = [20]
+    g_tn.vs["color"] = ["gray"]
+    g_tn.vs["label"] = range(g_tn.ecount())
+    g_tn.es["label"] = g_tn.es["distance"]
+    # g_tn.es["size"] = [30]
+    g_tn.es["label_size"] = [15]
+    g_tn.es["curved"] = [0]
+    return g_tn
+
+
 # %% Create and plot a graph from a distance matrix
 
 def plot_igraph_from_dist_mx(distance_matrix):
@@ -227,7 +240,48 @@ def add_route_edges_to_igraph(g_tn, routes_R):
         links_list_route_R_i = list()
     del links_list_route_R_i
     
-    colours = ["red","lime","blue","darkorange","magenta","cyan","green","gold","brown","gray","black"]
+    colours = ["red","lime","blue","darkorange","magenta","cyan","green","gold",
+               "brown","gray",'yellow', 'purple', 'pink', 'orange', 'teal', 
+               'coral', 'lightblue', 'lavender', 'turquoise', 'darkgreen', 'tan', 
+               'salmon', 'lightpurple', 'darkred', 'darkblue']
+    
+    for i in range(len(routes_R)):
+        g_tn.add_edges(links_list_route_R[i]) # "edge_label" = range(len(route)), "edge_color" = "red"
+        g_tn.es[g_tn.ecount()-len(links_list_route_R[i]):]["color"] = colours[i] # format the route to travel as red
+        # g_tn.es[g_tn.ecount():]["weight"] = could_add_later     
+    return g_tn
+
+
+def add_route_edges_to_igraph_experiment(g_tn, routes_R):
+    # adds the edges with different colours (up to 10 routes) and returns the graph
+    
+    links_list_route_R = list()
+    for i in  range(len(routes_R)):
+        links_list_route_R_i = list()
+        for j in  range(len(routes_R[i])-1):
+            links_list_route_R_i.append((routes_R[i][j],routes_R[i][j+1]))
+        links_list_route_R.append(links_list_route_R_i)
+        links_list_route_R_i = list()
+    del links_list_route_R_i
+    
+    colours = ["red","lime","blue","darkorange","magenta","cyan","green","gold",
+               "brown","gray",'yellow', 'purple', 'pink', 'orange', 'teal', 
+               'coral', 'lightblue', 'lavender', 'turquoise', 'darkgreen', 'tan', 
+               'salmon', 'lightpurple', 'darkred', 'darkblue']
+    
+      
+    
+    multiple_edges_mx = np.zeros(shape=(len(g_tn.vs()), len(g_tn.vs())))
+    
+    for edge in g_tn.es:
+        multiple_edges_mx[edge.tuple[0], edge.tuple[1]] += 1
+        multiple_edges_mx[edge.tuple[1], edge.tuple[0]] += 1
+    
+    #TODO: finish the specific edge's additions and set curved appropriately
+    # https://igraph.org/python/doc/igraph.EdgeSeq-class.html
+    
+    # g_tn.es.is_multiple() a function that migth be of use
+    
     
     for i in range(len(routes_R)):
         g_tn.add_edges(links_list_route_R[i]) # "edge_label" = range(len(route)), "edge_color" = "red"
@@ -255,10 +309,11 @@ if False:
 #plot(g)
     
 # %% Plots graph in seperate window
-def plotRouteSet(mx_dist,routes_R):
+def plotRouteSet(mx_dist,routes_R,layout_style="kk"):
     # this function takes as input the distance mx and route set and plots it
+    # different layout styles: https://igraph.org/python/doc/tutorial/tutorial.html#layouts-and-plotting
     g_tn = gf.create_igraph_from_dist_mx(mx_dist)
-    g_tn_layout = g_tn.layout("kk")
+    g_tn_layout = g_tn.layout(layout_style)
     format_igraph_custom_1(g_tn)    
     add_route_edges_to_igraph(g_tn, routes_R)
     ig.plot(g_tn, inline=False, layout=g_tn_layout)  # switch inline to false if you want to print inline   

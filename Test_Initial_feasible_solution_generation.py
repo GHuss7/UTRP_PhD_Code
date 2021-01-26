@@ -220,7 +220,7 @@ n_nodes = len(UTNDP_problem_1.mapping_adjacent)
 gf.test_all_four_constraints_debug(routes_R, UTNDP_problem_1.problem_constraints.__dict__)
 
 
-routes_R = gf.repair_add_missing_from_terminal_multiple(routes_R, 15, UTNDP_problem_1)
+routes_R = gf.repair_add_missing_from_terminal_multiple(routes_R, UTNDP_problem_1)
 
 R_set_3 = gc.Routes(routes_R)
 R_set_3.plot_routes(UTNDP_problem_1)

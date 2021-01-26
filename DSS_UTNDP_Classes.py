@@ -117,15 +117,38 @@ class Routes():
         """Generate feasible route based on appending random shortest paths"""
         return gf.generate_initial_feasible_route_set(UTNDP_problem_input.problem_data.mx_dist, 
                                                       UTNDP_problem_input.problem_constraints.__dict__)
+    
+    def return_feasible_route_robust(UTNDP_problem_input):
+        """Generate feasible route based on appending random shortest paths"""
+        
+        '''Create the transit network graph'''
+        g_tn = gf.create_igraph_from_dist_mx(UTNDP_problem_input.problem_data.mx_dist)
+
+        paths_shortest_all = gf.get_all_shortest_paths(g_tn) # Generate all the shortest paths
+
+        """Remove duplicate lists in reverse order""" #can be added for efficiency, but not that neccessary
+        
+        # Shorten the candidate routes according to the constraints
+        for i in range(len(paths_shortest_all)-1, -1, -1):
+            if len(paths_shortest_all[i]) < UTNDP_problem_input.problem_constraints.con_minNodes or len(paths_shortest_all[i]) > UTNDP_problem_input.problem_constraints.con_maxNodes:  
+                del paths_shortest_all[i]
+        
+        initial_route_set = gf.routes_generation_unseen_prob(paths_shortest_all, paths_shortest_all, UTNDP_problem_input.problem_constraints.con_r)
+        
+        if gf.test_all_four_constraints(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
+        
+            routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)    
+        
+        return routes_R
          
     
     def plot_routes(self, main_problem):
         """A function that plots the routes of a problem based on the problem defined"""
         gv.plotRouteSet2(main_problem.problem_data.mx_dist, self.routes, main_problem.problem_data.mx_coords) # using iGraph
      
-    def plot_routes_no_coords(self, main_problem):
+    def plot_routes_no_coords(self, main_problem,layout_style="kk"):
         """A function that plots the routes of a problem based on the problem defined, where no coords are defined"""
-        gv.plotRouteSet(main_problem.problem_data.mx_dist, self.routes) # using iGraph
+        gv.plotRouteSet(main_problem.problem_data.mx_dist, self.routes,layout_style) # using iGraph
      
 
 # %% Class: PopulationRoutes
@@ -150,6 +173,30 @@ class PopulationRoutes(Routes):
         for i in range(self.population_size):
             #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
             self.variables[i] = Routes.return_feasible_route(main_problem)
+            self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
+            self.objectives[i,] = fn_obj(self.variables[i], main_problem)
+ 
+            # get the objective space values and objects
+            # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+        
+            # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
+
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = gf.calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
+                
+    def generate_initial_population_robust(self, main_problem, fn_obj):
+        for i in range(self.population_size):
+            #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+            self.variables[i] = Routes.return_feasible_route_robust(main_problem)
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
  

@@ -61,7 +61,7 @@ from pymoo.util.randomized_argsort import randomized_argsort
 # %% Load the respective files
 name_input_data = "Mumford0"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
-del name_input_data
+
 # %% Set input parameters
 Choice_generate_initial_set = True 
 Choice_print_results = True 
@@ -85,11 +85,11 @@ parameters_input = {
 'n' : len(mx_dist), # total number of nodes
 'wt' : 0, # waiting time [min]
 'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl_UTRP_NSGAII", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 30, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-'ref_point_max_f2_TRT' : 400, # max f2_TRT for the Hypervolume calculations
-'ref_point_min_f2_TRT' : 63, # min f2_TRT for the Hypervolume calculations
+'Problem_name' : f"{name_input_data}_UTRP_NSGAII", # Specify the name of the problem currently being addresses
+'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
+'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
+'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
+'ref_point_min_f2_TRT' : 94, # min f2_TRT for the Hypervolume calculations
 'walkFactor' : 3, # factor it takes longer to walk than to drive
 'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
 'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
@@ -100,8 +100,8 @@ parameters_input = {
 '''State the various GA input parameters for frequency setting''' 
 parameters_GA_route_design={
 "method" : "GA",
-"population_size" : 300, #should be an even number STANDARD: 200 (John 2016)
-"generations" : 300, # STANDARD: 200 (John 2016)
+"population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+"generations" : 200, # STANDARD: 200 (John 2016)
 "number_of_runs" : 20, # STANDARD: 20 (John 2016)
 "crossover_probability" : 0.6, 
 "crossover_distribution_index" : 5,
@@ -151,6 +151,7 @@ UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
 UTNDP_problem_1.add_text = "" # define the additional text for the file name
 # UTNDP_problem_1.R_routes = R_routes
+
 
 def main(UTNDP_problem_1):
     
@@ -235,7 +236,7 @@ def main(UTNDP_problem_1):
         print("######################### RUN {0} #########################".format(run_nr+1))
         print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)   
-        pop_1.generate_initial_population(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
         pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
         
         data_for_analysis = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str)]) # create an object to contain all the data for analysis
@@ -361,8 +362,8 @@ def main(UTNDP_problem_1):
                     plt.show()
                     
                 '''Load validation data'''
-                Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
+                #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
+                John_validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_data/Results_data_headers.csv")
                 #hv_test_data = pd.read_csv("./Validation_Data/FULL_PARETO_SET_BOTH_SA_AND_GA.csv")
                 #gf.norm_and_calc_2d_hv(hv_test_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
@@ -390,7 +391,7 @@ def main(UTNDP_problem_1):
                     
                     #axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
                     axs[1, 1].scatter(df_non_dominated_set["f_2"], df_non_dominated_set["f_1"], s=10, c='r', marker="o", label='Non-dom set obtained')
-                    axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
+                    #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
                     axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
                     axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
                     axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
@@ -427,7 +428,7 @@ def main(UTNDP_problem_1):
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
         #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-        stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+        #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         
         df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
@@ -455,7 +456,7 @@ def main(UTNDP_problem_1):
             
             # axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='b', marker="o", label='Initial route sets')
             axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-            axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
+            #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
             axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
             axs.set_title('Pareto front obtained vs validation Results')
             axs.set(xlabel='f2_TRT', ylabel='f1_ATT')
@@ -487,34 +488,31 @@ if __name__ == "__main__":
         #original_parameters_GA_route_design = copy.deepcopy(parameters_GA_route_design)  
         
         # Set up the list of parameters to test
-        sensitivity_list = [[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
-                            [parameters_constraints, "con_minNodes", 2, 3, 4, 5],
+        sensitivity_list = [#[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
+                            #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
                             [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
                             [parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1]
                             ]
         
-        sensitivity_list = [#[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
-                            #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
+        sensitivity_list = [
                             #[parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], 
                             #[parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
-                            #[parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
-                            #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1],
-                            #[parameters_GA_route_design, "mutation_probability", 0.5],
-                            #[parameters_GA_route_design, "mutation_probability", 0.7],
-                            #[parameters_GA_route_design, "mutation_probability", 0.9],
-                            #[parameters_GA_route_design, "mutation_probability", 1],                    
+                            #[parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8],
+                            #[parameters_GA_route_design, "crossover_probability", 0.9, 0.95, 1],
+                            #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3],                   
+                            [parameters_GA_route_design, "mutation_probability", 0.5, 0.7, 0.9, 1]
                             ]
         
-        sensitivity_list = [#[parameters_GA_route_design, "population_size", 20, 400], 
+        #sensitivity_list = [#[parameters_GA_route_design, "population_size", 20, 400], 
                             #[parameters_GA_route_design, "generations", 20, 400],
                             #[parameters_GA_route_design, "crossover_probability", 0.1],
                             #[parameters_GA_route_design, "crossover_probability", 1],
                             #[parameters_GA_route_design, "mutation_probability", 0.05], 
                             #[parameters_GA_route_design, "mutation_probability", 0.9],
-                            [parameters_GA_route_design, "mutation_probability", 1],  
-                            ]
+                            #[parameters_GA_route_design, "mutation_probability", 1],  
+                            #]
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]

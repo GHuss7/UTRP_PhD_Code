@@ -34,70 +34,74 @@ import DSS_UTNDP_Functions as gf
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
-# todo def main_dss(): # create a main function to encapsulate the main body
-# def main():
 # %% Load the respective files
-name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = ["Mandl_Data","Mumford0"][0]      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
-del name_input_data
 
 # %% Set variables
 Decisions = {
-"Choice_generate_initial_set" : False, # the alternative loads a set that is prespecified
+"Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : True,
+"Choice_import_dictionaries" : True,
 "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
 "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
 "Choice_import_saved_set" : False, # import the prespecified set
-"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
+#"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
+"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
 
-'''Enter the number of allowed routes''' 
-parameters_constraints = {
-'con_r' : 6,               # (aim for > [numNodes N ]/[maxNodes in route])
-'con_minNodes' : 2,                        # minimum nodes in a route
-'con_maxNodes' : 10,                       # maximum nodes in a route
-'con_N_nodes' : len(mx_dist)              # number of nodes in the network
-}
 
-parameters_input = {
-'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
-'n' : len(mx_dist), # total number of nodes
-'wt' : 0, # waiting time [min]
-'tp' : 5, # transfer penalty [min]
-'Problem_name' : "Mandl_UTRP", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
-'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
-}
+# Load the respective input data (dictionaries) for the instance
+if Decisions["Choice_import_dictionaries"]:
+    parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
+    parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
+    parameters_SA_routes = json.load(open("./Input_Data/"+name_input_data+"/parameters_SA_routes.json"))
 
-parameters_SA_routes={
-"method" : "SA",
-# ALSO: t_max > A_min (max_iterations_t > min_accepts)
-"max_iterations_t" : 500, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-"max_total_iterations" : 20000, # the total number of accepts that are allowed
-"max_epochs" : 1000, # the maximum number of epochs that are allowed
-"min_accepts" : 6, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
-"max_attempts" : 3, # maximum number of attempted moves per epoch
-"max_reheating_times" : 10, # the maximum number of times that reheating can take place
-"max_poor_epochs" : 200, # maximum number of epochs which may pass without the acceptance of any new solution
-"Temp" : 100,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
-"M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-"Cooling_rate" : 0.99, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-"Reheating_rate" : 1.1, # the geometric reheating rate
-"number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
-"Feasibility_repair_attempts" : 2, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 1, # number of runs to complete John 2016 set 20
-"Reheating_rate" : 1.1, # the geometric reheating rate
-"number_of_initial_solutions" : 1000, # sets the number of initial solutions to generate as starting position
-"Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-"number_of_runs" : 1, # number of runs to complete John 2016 set 20
-}
+else:
+    '''Enter the number of allowed routes''' 
+    parameters_constraints = {
+    'con_r' : 12,               # (aim for > [numNodes N ]/[maxNodes in route])
+    'con_minNodes' : 2,                        # minimum nodes in a route
+    'con_maxNodes' : 15,                       # maximum nodes in a route
+    'con_N_nodes' : len(mx_dist)              # number of nodes in the network
+    }
+    
+    parameters_input = {
+    'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
+    'n' : len(mx_dist), # total number of nodes
+    'wt' : 0, # waiting time [min]
+    'tp' : 5, # transfer penalty [min]
+    'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
+    'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
+    'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
+    'ref_point_min_f2_TRT' : 94 # min f2_TRT for the Hypervolume calculations
+    }
+    
+    parameters_SA_routes={
+    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
+    "method" : "SA",
+    # ALSO: t_max > A_min (max_iterations_t > min_accepts)
+    "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+    "max_total_iterations" : 25000, # the total number of accepts that are allowed
+    "max_epochs" : 2000, # the maximum number of epochs that are allowed
+    "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+    "max_attempts" : 50, # maximum number of attempted moves per epoch
+    "max_reheating_times" : 5, # the maximum number of times that reheating can take place
+    "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
+    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
+    "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+    "Reheating_rate" : 1.05, # the geometric reheating rate
+    "number_of_initial_solutions" : 1, # sets the number of initial solutions to generate as starting position
+    "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    "number_of_runs" : 20, # number of runs to complete John 2016 set 20
+    }
 
 '''Set the reference point for the Hypervolume calculations'''
 max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
 min_objs = np.array([parameters_input['ref_point_min_f1_ATT'],parameters_input['ref_point_min_f2_TRT']])
+
   
 # %% Define the adjacent mapping of each node
 mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
@@ -150,21 +154,6 @@ def main(UTNDP_problem_1):
     # %% Simulated Annealing: Initial solutions
     '''Initial solutions'''
     
-    if Decisions["Choice_generate_initial_set"]:
-        '''Generate initial route sets for input as initial solutions'''
-        routes_R_initial_set, df_routes_R_initial_set = gf.generate_initial_route_sets(UTNDP_problem_1)
-    
-    else: # use this alternative if you want to use another set as input
-        """Standard route to begin with"""
-        routes_R_initial_set = list()
-        routes_R_initial_set.append(gf.convert_routes_str2list("5-7-9-12*9-7-5-3-4*0-1-2-5-14-6*13-9-6-14-8*1-2-5-14*9-10-11-3*"))
-      
-        
-        df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
-        for i in range(len(routes_R_initial_set)):
-            f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
-            df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
-        
     if Decisions["Choice_import_saved_set"]: # Make true to import a set that is saved
         df_routes_R_initial_set = pd.read_csv(Decisions["Set_name"]) 
         df_routes_R_initial_set = df_routes_R_initial_set.drop(df_routes_R_initial_set.columns[0], axis=1)
@@ -174,7 +163,23 @@ def main(UTNDP_problem_1):
             routes_R_initial_set.append(gf.convert_routes_str2list(df_routes_R_initial_set.iloc[i,2]))
         
         print("Initial route set imported with size: "+str(len(routes_R_initial_set)))
-        
+    
+    else:        
+        if Decisions["Choice_generate_initial_set"]:
+            '''Generate initial route sets for input as initial solutions'''
+            routes_R_initial_set, df_routes_R_initial_set = gf.generate_initial_route_sets(UTNDP_problem_1)          
+
+        else: # use this alternative if you want to use another set as input
+            """Standard route to begin with"""
+            routes_R_initial_set = list()
+            routes_R_initial_set.append(gf.convert_routes_str2list("5-7-9-12*9-7-5-3-4*0-1-2-5-14-6*13-9-6-14-8*1-2-5-14*9-10-11-3*"))
+          
+            
+            df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
+            for i in range(len(routes_R_initial_set)):
+                f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+                df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
+            
     # %% Simulated Annealing Algorithm for each of the initial route sets
     '''Simulated Annealing Algorithm for each of the initial route sets'''
     run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # default values
@@ -229,8 +234,10 @@ def main(UTNDP_problem_1):
             
             
             while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
-                iteration_t = 1 # Initialise the number of iterations 
                 accepts = 0 # Initialise the accepts
+                iteration_t = 1 # Initialise the number of iterations 
+                poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive
+                prob_acceptance_list = []
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
                     routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
@@ -251,7 +258,9 @@ def main(UTNDP_problem_1):
                     total_iterations = total_iterations + 1 # increments the total iterations for stopping criteria
                 
                     '''Test solution acceptance and add to archive if accepted and non-dominated'''
-                    if random.uniform(0,1) < gf.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp): # probability to accept neighbour solution as current solution
+                    prob_to_accept = gf.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp)
+                    prob_acceptance_list.append(prob_to_accept)
+                    if random.uniform(0,1) < prob_to_accept: # probability to accept neighbour solution as current solution
                         routes_R = routes_R_new
                         f_cur = f_new
                         accepts = accepts + 1 
@@ -280,13 +289,13 @@ def main(UTNDP_problem_1):
                 if poor_epoch_flag:
                     poor_epoch = poor_epoch + 1 # update number of epochs without an accepted solution
                 
-                print(f'Epoch:{epoch} \tTemp:{round(SA_Temp,4)} \tHV:{round(HV, 4)} \tAccepts:{accepts} \tAttempts:{attempts} \tPoor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \tTotal_i:{total_iterations}[{iteration_t}] ')
+                print(f'Epoch:{epoch} \tTemp:{round(SA_Temp,4)} \tHV:{round(HV, 4)} \tAccepts:{accepts} \tAttempts:{attempts} \tPoor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \tTotal_i:{total_iterations}[{iteration_t}] \t P_accept:{round(sum(prob_acceptance_list)/len(prob_acceptance_list),4)}')
     
                 '''Úpdate parameters'''
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
                 epoch = epoch + 1 # Increase Epoch counter
                 attempts = 0 # resets the attempts
-                poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive     
+                     
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, i, iteration_t, counter_archive
         
@@ -306,11 +315,11 @@ def main(UTNDP_problem_1):
                 '''Write all results and parameters to files'''
                 '''Main folder path'''
                 path_parent_folder = Path(os.path.dirname(os.getcwd()))
-                path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_inputs.Problem_name+"/"+UTNDP_problem_1.problem_inputs.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
+                path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_SA_parameters.Problem_name+"/"+UTNDP_problem_1.problem_SA_parameters.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
                 
                 path_results = path_parent_folder / ("Results/Results_"+
-                                                     parameters_input['Problem_name']+
-                                                     "/"+parameters_input['Problem_name']+
+                                                     parameters_SA_routes['Problem_name']+
+                                                     "/"+parameters_SA_routes['Problem_name']+
                                                      "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                                      " "+parameters_SA_routes['method']+
                                                      f"_{UTNDP_problem_1.add_text}")
@@ -350,9 +359,10 @@ def main(UTNDP_problem_1):
                         plt.show()
                         
                     '''Load validation data'''
-                    Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                    John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
-            
+                    #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
+                    John_validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_data/Results_data_headers.csv")
+                    
+                    
             
                     '''Print Objective functions over time, all solutions and pareto set obtained'''
                     fig, axs = plt.subplots(2, 2)
@@ -370,15 +380,17 @@ def main(UTNDP_problem_1):
                     
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       #s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
                     
-                    axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
+                    axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='orange', marker="o", label='Initial route sets')
                     axs[1, 1].scatter(df_archive["f2_TRT"], df_archive["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained')
-                    axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
+                    #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
                     axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
                     axs[1, 1].set_title('Pareto front obtained vs Mumford Results')
                     axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
@@ -408,8 +420,10 @@ def main(UTNDP_problem_1):
                     
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                       s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
@@ -448,7 +462,7 @@ def main(UTNDP_problem_1):
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
         stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
-        stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+        #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
         df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
@@ -461,7 +475,9 @@ def main(UTNDP_problem_1):
                 w.writerow([key, val])
             del key, val
             
-        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results, parameters_SA_routes["number_of_runs"])
+        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
+        ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
+        
         # %% Plot summary graph
         '''Plot the summarised graph'''
         fig, axs = plt.subplots(1,1)
@@ -470,7 +486,7 @@ def main(UTNDP_problem_1):
         
         axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='orange', marker="o", label='Initial route sets')
         axs.scatter(df_overall_pareto_set["f2_TRT"], df_overall_pareto_set["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-        axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
+        #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
         axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
         axs.set_title('Pareto front obtained vs Mumford Results')
         axs.set(xlabel='f2_TRT', ylabel='f1_ATT')
@@ -494,29 +510,54 @@ if __name__ == "__main__":
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()
         
+        """Full sensitivity analysis"""
         # Set up the list of parameters to test
-        sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 2500, 5000], 
-                            [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400, 600], # takes longer at first... bottleneck
-                            [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400, 600],
-                            [parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
-                            [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            [parameters_SA_routes, "Temp", 1, 10, 50, 100, 200, 500, 1000, 2500],
-                            [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.9961682402927605],
-                            [parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
+        # sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+        #                     [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+        #                     [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+        #                     [parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
+        #                     [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+        #                     [parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+        #                     [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
+        #                     [parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
+        #                     [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
+        #                     ]
+        
+        """Quick tests with main parameters only"""
+        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+                            
+                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+                            
+                            #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+                            
+                            #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+                            
+                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
+                            
                             [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
                             ]
         
-        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 2500, 5000], 
-                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400, 600],
-                            #[parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400, 600],
-                            #[parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
-                            #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            #[parameters_SA_routes, "Temp", 1, 10, 50, 100, 200, 500, 1000, 2500],
-                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97],
-                            #[parameters_SA_routes, "Reheating_rate", 1.5, 1.3, 1.1, 1.05, 1.02],
-                            #[parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
-                            [parameters_SA_routes, "max_attempts", 200, 400, 600],
-                            ]
+        """Sensitivity analysis with highs and lows"""
+        #sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 1000], 
+                            
+                            #[parameters_SA_routes, "min_accepts", 5, 200], # takes longer at first... bottleneck
+                            #[parameters_SA_routes, "max_attempts", 3, 200],
+                            
+                            #[parameters_SA_routes, "max_reheating_times", 1, 25],
+                            
+                            #[parameters_SA_routes, "max_poor_epochs", 10, 600],
+                            #[parameters_SA_routes, "Cooling_rate", 0.97],
+                            
+                            #[parameters_SA_routes, "Temp", 10],
+                            #[parameters_SA_routes, "Temp", 0.001, 1000],
+                            
+                            #[parameters_SA_routes, "Temp", 10],
+                            #[parameters_SA_routes, "Temp", 50],
+                            
+                            #[parameters_SA_routes, "Cooling_rate", 0.7, 0.9961682402927605],
+                            
+                            #[parameters_SA_routes, "Reheating_rate", 1.3, 1.01],
+                            #]
         
         
         for sensitivity_test in sensitivity_list:

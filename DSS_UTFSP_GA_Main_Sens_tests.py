@@ -87,7 +87,7 @@ Decisions = {
 if not(Decisions["Choice_consider_walk_links"]):
     mx_walk = False
 
-# Load the respective dictionaries for the instance
+# Load the respective input data (dictionaries) for the instance
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))

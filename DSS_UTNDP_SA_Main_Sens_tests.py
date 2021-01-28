@@ -34,83 +34,31 @@ import DSS_UTNDP_Functions as gf
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
-# todo def main_dss(): # create a main function to encapsulate the main body
-# def main():
 # %% Load the respective files
-#name_input_data = "SSML_STB_DAY_SUM_0700_1700"      # set the name of the input data
-name_input_data = "Mumford0"      # set the name of the input data
+name_input_data = ["Mandl_Data","Mumford0"][0]      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
-# del name_input_data
 
-if name_input_data == "SSML_STB_DAY_SUM_0700_1700":
-    # %% Set variables
-    Decisions = {
-    "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
-    "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : True,
-    "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-    "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
-    "Choice_import_saved_set" : False, # import the prespecified set
-    #"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
-    "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
-    }
-    
-    '''Enter the number of allowed routes''' 
-    parameters_constraints = {
-    'con_r' : 8,               # (aim for > [numNodes N ]/[maxNodes in route])
-    'con_minNodes' : 2,                        # minimum nodes in a route
-    'con_maxNodes' : 6,                       # maximum nodes in a route
-    'con_N_nodes' : len(mx_dist)              # number of nodes in the network
-    }
-    
-    parameters_input = {
-    'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
-    'n' : len(mx_dist), # total number of nodes
-    'wt' : 0, # waiting time [min]
-    'tp' : 5, # transfer penalty [min]
-    'Problem_name' : "Case_study_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
-    'ref_point_max_f1_ATT' : 15, # max f1_ATT for the Hypervolume calculations
-    'ref_point_min_f1_ATT' : 10, # min f1_ATT for the Hypervolume calculations
-    'ref_point_max_f2_TRT' : 224, # max f2_TRT for the Hypervolume calculations
-    'ref_point_min_f2_TRT' : 63 # min f2_TRT for the Hypervolume calculations
-    }
-    
-    parameters_SA_routes={
-    "method" : "SA",
-    # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-    "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 25000, # the total number of accepts that are allowed
-    "max_epochs" : 1500, # the maximum number of epochs that are allowed
-    "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
-    "max_attempts" : 50, # maximum number of attempted moves per epoch
-    "max_reheating_times" : 5, # the maximum number of times that reheating can take place
-    "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
-    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
-    "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-    "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-    "Reheating_rate" : 1.05, # the geometric reheating rate
-    "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
-    "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-    "number_of_runs" : 20, # number of runs to complete John 2016 set 20
-    }
-    
-    '''Set the reference point for the Hypervolume calculations'''
-    max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
-    min_objs = np.array([parameters_input['ref_point_min_f1_ATT'],parameters_input['ref_point_min_f2_TRT']])
-    
+# %% Set variables
+Decisions = {
+"Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
+"Choice_print_results" : True, 
+"Choice_conduct_sensitivity_analysis" : True,
+"Choice_import_dictionaries" : True,
+"Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
+"Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
+"Choice_import_saved_set" : False, # import the prespecified set
+#"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
+"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
+}
+
+
+# Load the respective input data (dictionaries) for the instance
+if Decisions["Choice_import_dictionaries"]:
+    parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
+    parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
+    parameters_SA_routes = json.load(open("./Input_Data/"+name_input_data+"/parameters_SA_routes.json"))
+
 else:
-    # %% Set variables
-    Decisions = {
-    "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
-    "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : True,
-    "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-    "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
-    "Choice_import_saved_set" : False, # import the prespecified set
-    #"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
-    "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
-    }
-    
     '''Enter the number of allowed routes''' 
     parameters_constraints = {
     'con_r' : 12,               # (aim for > [numNodes N ]/[maxNodes in route])
@@ -124,7 +72,6 @@ else:
     'n' : len(mx_dist), # total number of nodes
     'wt' : 0, # waiting time [min]
     'tp' : 5, # transfer penalty [min]
-    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
     'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
     'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
     'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
@@ -132,6 +79,7 @@ else:
     }
     
     parameters_SA_routes={
+    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
@@ -145,15 +93,15 @@ else:
     "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
     "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
     "Reheating_rate" : 1.05, # the geometric reheating rate
-    "number_of_initial_solutions" : 2, # sets the number of initial solutions to generate as starting position
+    "number_of_initial_solutions" : 1, # sets the number of initial solutions to generate as starting position
     "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
     "number_of_runs" : 20, # number of runs to complete John 2016 set 20
     }
-    
-    '''Set the reference point for the Hypervolume calculations'''
-    max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
-    min_objs = np.array([parameters_input['ref_point_min_f1_ATT'],parameters_input['ref_point_min_f2_TRT']])
-    
+
+'''Set the reference point for the Hypervolume calculations'''
+max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
+min_objs = np.array([parameters_input['ref_point_min_f1_ATT'],parameters_input['ref_point_min_f2_TRT']])
+
   
 # %% Define the adjacent mapping of each node
 mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
@@ -367,11 +315,11 @@ def main(UTNDP_problem_1):
                 '''Write all results and parameters to files'''
                 '''Main folder path'''
                 path_parent_folder = Path(os.path.dirname(os.getcwd()))
-                path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_inputs.Problem_name+"/"+UTNDP_problem_1.problem_inputs.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
+                path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_SA_parameters.Problem_name+"/"+UTNDP_problem_1.problem_SA_parameters.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
                 
                 path_results = path_parent_folder / ("Results/Results_"+
-                                                     parameters_input['Problem_name']+
-                                                     "/"+parameters_input['Problem_name']+
+                                                     parameters_SA_routes['Problem_name']+
+                                                     "/"+parameters_SA_routes['Problem_name']+
                                                      "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                                      " "+parameters_SA_routes['method']+
                                                      f"_{UTNDP_problem_1.add_text}")

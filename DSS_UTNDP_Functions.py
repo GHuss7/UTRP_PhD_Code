@@ -1849,7 +1849,7 @@ def mutate_overall_routes(routes_R, main_problem, mutation_probability):
     
     if random.random() < mutation_probability:
     
-        if random.random() < 0.9: # 1st Mutation: Two routes intertwine
+        if random.random() < main_problem.problem_GA_parameters.mutation_ratio: # 1st Mutation: Two routes intertwine
             candidate_routes_R = mutate_routes_two_intertwine(routes_R, 
                                                        main_problem.problem_constraints.__dict__,
                                                        main_problem.mapping_adjacent)

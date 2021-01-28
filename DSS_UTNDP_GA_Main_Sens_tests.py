@@ -59,61 +59,73 @@ from pymoo.util.randomized_argsort import randomized_argsort
 
     
 # %% Load the respective files
-name_input_data = "Mumford0"      # set the name of the input data
+name_input_data = ["Mandl_Data","Mumford0"][0]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set input parameters
-Choice_generate_initial_set = True 
-Choice_print_results = True 
-Choice_conduct_sensitivity_analysis = True 
-  
-'''State the various parameter constraints''' 
-parameters_constraints = {
-'con_r' : 12,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
-'con_minNodes' : 2,                        # minimum nodes in a route
-'con_maxNodes' : 15,                       # maximum nodes in a route
-'con_N_nodes' : len(mx_dist),              # number of nodes in the network
-'con_fleet_size' : 40,                     # number of vehicles that are allowed
-'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
-'con_lower_bound' : 0,                 # the lower bound for the problem
-'con_upper_bound' : 1                 # the upper bound for the problem
+Decisions = {
+"Choice_print_results" : True, 
+"Choice_conduct_sensitivity_analysis" : True,
+"Choice_import_dictionaries" : True,
+"Choice_print_full_data_for_analysis" : True,
+"Set_name" : "Overall_Pareto_set.csv" # the name of the set in the main working folder
 }
 
-'''State the various input parameter''' 
-parameters_input = {
-'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
-'n' : len(mx_dist), # total number of nodes
-'wt' : 0, # waiting time [min]
-'tp' : 5, # transfer penalty [min]
-'Problem_name' : f"{name_input_data}_UTRP_NSGAII", # Specify the name of the problem currently being addresses
-'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
-'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
-'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
-'ref_point_min_f2_TRT' : 94, # min f2_TRT for the Hypervolume calculations
-'walkFactor' : 3, # factor it takes longer to walk than to drive
-'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
-'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
-'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
-'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
-}
-
-'''State the various GA input parameters for frequency setting''' 
-parameters_GA_route_design={
-"method" : "GA",
-"population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-"generations" : 200, # STANDARD: 200 (John 2016)
-"number_of_runs" : 20, # STANDARD: 20 (John 2016)
-"crossover_probability" : 0.6, 
-"crossover_distribution_index" : 5,
-"mutation_probability" : 1, # John: 1/|Route set| -> set later
-"mutation_distribution_index" : 10,
-"tournament_size" : 2,
-"termination_criterion" : "StoppingByEvaluations",
-"max_evaluations" : 25000,
-"number_of_variables" : parameters_constraints["con_r"],
-"number_of_objectives" : 2, # this could still be automated in the future
-"Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
-}
+# Load the respective input data (dictionaries) for the instance
+if Decisions["Choice_import_dictionaries"]:
+    parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
+    parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
+    parameters_GA_route_design = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_route_design.json"))
+ 
+else:    
+    '''State the various parameter constraints''' 
+    parameters_constraints = {
+    'con_r' : 12,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
+    'con_minNodes' : 2,                        # minimum nodes in a route
+    'con_maxNodes' : 15,                       # maximum nodes in a route
+    'con_N_nodes' : len(mx_dist),              # number of nodes in the network
+    'con_fleet_size' : 40,                     # number of vehicles that are allowed
+    'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
+    'con_lower_bound' : 0,                 # the lower bound for the problem
+    'con_upper_bound' : 1                 # the upper bound for the problem
+    }
+    
+    '''State the various input parameter''' 
+    parameters_input = {
+    'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
+    'n' : len(mx_dist), # total number of nodes
+    'wt' : 0, # waiting time [min]
+    'tp' : 5, # transfer penalty [min]
+    'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
+    'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
+    'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
+    'ref_point_min_f2_TRT' : 94, # min f2_TRT for the Hypervolume calculations
+    'walkFactor' : 3, # factor it takes longer to walk than to drive
+    'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
+    'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
+    'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
+    'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
+    }
+    
+    '''State the various GA input parameters for frequency setting''' 
+    parameters_GA_route_design={
+    'Problem_name' : f"{name_input_data}_UTRP_NSGAII", # Specify the name of the problem currently being addresses
+    "method" : "GA",
+    "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 2, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "crossover_probability" : 0.6, 
+    "crossover_distribution_index" : 5,
+    "mutation_probability" : 1, # John: 1/|Route set| -> set later
+    "mutation_distribution_index" : 10,
+    "mutation_ratio" : 0.9, # Ratio used for the probabilites of mutations applied
+    "tournament_size" : 2,
+    "termination_criterion" : "StoppingByEvaluations",
+    "max_evaluations" : 25000,
+    "number_of_variables" : parameters_constraints["con_r"],
+    "number_of_objectives" : 2, # this could still be automated in the future
+    "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
+    }
 
 
 '''Set the reference point for the Hypervolume calculations'''
@@ -237,6 +249,7 @@ def main(UTNDP_problem_1):
         print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)   
         pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
+        #pop_1.generate_initial_population(UTNDP_problem_1, fn_obj_2) 
         pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
         
         data_for_analysis = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str)]) # create an object to contain all the data for analysis
@@ -291,14 +304,14 @@ def main(UTNDP_problem_1):
         
             
         #%% Save the results
-        if Choice_print_results:
+        if Decisions["Choice_print_results"]:
             
             '''Write all results and parameters to files'''
             '''Main folder path'''
             path_parent_folder = Path(os.path.dirname(os.getcwd()))
             path_results = path_parent_folder / ("Results/Results_"+
-                                                 parameters_input['Problem_name']+
-                                                 "/"+parameters_input['Problem_name']+
+                                                 parameters_GA_route_design['Problem_name']+
+                                                 "/"+parameters_GA_route_design['Problem_name']+
                                                  "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                                  " "+parameters_GA_route_design['method']+
                                                  f"_{UTNDP_problem_1.add_text}")
@@ -407,7 +420,7 @@ def main(UTNDP_problem_1):
     del HV, i_generation, mutated_variables, offspring_variables, pop_size, survivor_indices
     
     # %% Save results after all runs
-    if Choice_print_results:
+    if Decisions["Choice_print_results"]:
         '''Save the summarised results'''
         df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
         df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
@@ -480,7 +493,7 @@ def main(UTNDP_problem_1):
 # Single Thread
 if __name__ == "__main__":
     
-    if Choice_conduct_sensitivity_analysis:
+    if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()
         ''' Create copies of the original input data '''
         #original_UTNDP_problem_1 = copy.deepcopy(UTNDP_problem_1)    
@@ -493,26 +506,42 @@ if __name__ == "__main__":
                             [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
                             [parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
-                            [parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1]
+                            [parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1],
+                            [parameters_GA_route_design, "mutation_ratio", 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
                             ]
         
-        sensitivity_list = [
+        #sensitivity_list = [
                             #[parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300], 
                             #[parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
                             #[parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8],
                             #[parameters_GA_route_design, "crossover_probability", 0.9, 0.95, 1],
                             #[parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3],                   
-                            [parameters_GA_route_design, "mutation_probability", 0.5, 0.7, 0.9, 1]
-                            ]
+                            #[parameters_GA_route_design, "mutation_probability", 0.5, 0.7, 0.9, 1],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.1, 0.2]
+                            #]
         
-        #sensitivity_list = [#[parameters_GA_route_design, "population_size", 20, 400], 
+        sensitivity_list = [
+                            #[parameters_GA_route_design, "population_size", 20, 400], 
                             #[parameters_GA_route_design, "generations", 20, 400],
                             #[parameters_GA_route_design, "crossover_probability", 0.1],
                             #[parameters_GA_route_design, "crossover_probability", 1],
                             #[parameters_GA_route_design, "mutation_probability", 0.05], 
                             #[parameters_GA_route_design, "mutation_probability", 0.9],
                             #[parameters_GA_route_design, "mutation_probability", 1],  
-                            #]
+                            
+                            [parameters_GA_route_design, "mutation_ratio", 0.01],
+                            [parameters_GA_route_design, "mutation_ratio", 0.05],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.1],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.2],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.3],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.4],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.5],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.6],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.7],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.8],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.9],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.95],
+                            ]
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]

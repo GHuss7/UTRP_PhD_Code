@@ -120,26 +120,28 @@ class Routes():
     
     def return_feasible_route_robust(UTNDP_problem_input):
         """Generate feasible route based on appending random shortest paths"""
-        
-        '''Create the transit network graph'''
-        g_tn = gf.create_igraph_from_dist_mx(UTNDP_problem_input.problem_data.mx_dist)
-
-        paths_shortest_all = gf.get_all_shortest_paths(g_tn) # Generate all the shortest paths
-
-        """Remove duplicate lists in reverse order""" #can be added for efficiency, but not that neccessary
-        
-        # Shorten the candidate routes according to the constraints
-        for i in range(len(paths_shortest_all)-1, -1, -1):
-            if len(paths_shortest_all[i]) < UTNDP_problem_input.problem_constraints.con_minNodes or len(paths_shortest_all[i]) > UTNDP_problem_input.problem_constraints.con_maxNodes:  
-                del paths_shortest_all[i]
-        
-        initial_route_set = gf.routes_generation_unseen_prob(paths_shortest_all, paths_shortest_all, UTNDP_problem_input.problem_constraints.con_r)
-        
-        if gf.test_all_four_constraints(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
-        
-            routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)    
-        
-        return routes_R
+        for try_number in range(1000):
+            '''Create the transit network graph'''
+            g_tn = gf.create_igraph_from_dist_mx(UTNDP_problem_input.problem_data.mx_dist)
+    
+            paths_shortest_all = gf.get_all_shortest_paths(g_tn) # Generate all the shortest paths
+    
+            """Remove duplicate lists in reverse order""" #can be added for efficiency, but not that neccessary
+            
+            # Shorten the candidate routes according to the constraints
+            for i in range(len(paths_shortest_all)-1, -1, -1):
+                if len(paths_shortest_all[i]) < UTNDP_problem_input.problem_constraints.con_minNodes or len(paths_shortest_all[i]) > UTNDP_problem_input.problem_constraints.con_maxNodes:  
+                    del paths_shortest_all[i]
+            
+            initial_route_set = gf.routes_generation_unseen_prob(paths_shortest_all, paths_shortest_all, UTNDP_problem_input.problem_constraints.con_r)
+            
+            if gf.test_all_four_constraints_debug(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
+                return initial_route_set
+                
+            else:
+                routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)
+                if gf.test_all_four_constraints_debug(routes_R, UTNDP_problem_input.problem_constraints.__dict__):
+                    return routes_R
          
     
     def plot_routes(self, main_problem):

@@ -1,0 +1,1 @@
+{"total_demand": 7755.0, "n": 15, "Problem_name": "Mandl_Data_John_UTFSP_Best_passenger", "walkFactor": 100, "boardingTime": 0.1, "alightingTime": 0.1, "large_dist": 10000, "alpha_const_inter": 0.5, "ref_point_min_f1_AETT": 15.433139909735655, "ref_point_max_f2_TBR": 25.200000000000003, "ref_point_max_f1_AETT": 32.0675693101225, "ref_point_min_f2_TBR": 4.2}

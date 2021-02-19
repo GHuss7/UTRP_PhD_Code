@@ -296,6 +296,14 @@ def routes_generation_unseen_prob(parent_i, parent_j, solution_len):
     
     return child_i
 
+def normalise_route_set(R_x):
+    all_nodes = [y for x in R_x for y in x]
+    if 0 not in all_nodes:
+        for i in range(len(R_x)): # get routes in the correct format
+            R_x[i] = [x - 1 for x in R_x[i]] # subtract 1 from each element in the list
+        del i
+    return R_x
+
 # %% Try to generate a feasible solution 
 def generate_solution(paths_shortest_all, con_r, N , iterations):
     # Generate a feasible solution where all routes are connected

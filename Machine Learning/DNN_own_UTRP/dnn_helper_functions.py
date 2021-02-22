@@ -104,6 +104,7 @@ def load_data():
 
 def load_data_UTFSP_frequencies(file_location, num_test_data):
     data = np.array(pd.read_csv(file_location))
+    np.random.shuffle(data)
     train_x_orig = data[:-num_test_data,3:].T
     train_y = data[:-num_test_data,1]
     train_y = train_y.reshape(train_y.shape[0],1).T
@@ -116,15 +117,13 @@ def load_data_UTFSP_frequencies(file_location, num_test_data):
 
 def load_data_UTRP_routes(file_location, num_test_data, name_input_data):
 
-    # %% Load the respective files
-    name_input_data = "Mandl_Data"      # set the name of the input data
-    file_location="Data_for_analysis.csv"
-    
+    # %% Load the respective files   
     mx_dist = pd.read_csv("../../Input_Data/"+name_input_data+"/Distance_Matrix.csv")
     mx_dist = mx_dist.iloc[:,1:mx_dist.shape[1]]
     mx_dist = mx_dist.values
     
     data = pd.read_csv(file_location)
+    data = data.sample(frac=1)
     
     edge_list, edge_weights = get_links_list_and_distances(mx_dist)
     
@@ -152,6 +151,43 @@ def load_data_UTRP_routes(file_location, num_test_data, name_input_data):
     test_y = test_y.reshape(test_y.shape[0],1).T
     
     return train_x_orig, train_y, test_x_orig, test_y
+
+def load_data_UTRP_data(file_location, name_input_data):
+
+    # %% Load the respective files
+    name_input_data = "Mandl_Data"      # set the name of the input data
+    file_location="Data_for_analysis.csv"
+    
+    mx_dist = pd.read_csv("../../Input_Data/"+name_input_data+"/Distance_Matrix.csv")
+    mx_dist = mx_dist.iloc[:,1:mx_dist.shape[1]]
+    mx_dist = mx_dist.values
+    
+    data = pd.read_csv(file_location)
+    data = data.sample(frac=1)
+    
+    edge_list, edge_weights = get_links_list_and_distances(mx_dist)
+    
+    recast_decision_variable = np.zeros((len(edge_list)*6, data.shape[0]))
+    
+    num_edges = len(edge_list)
+    
+    for m_example in range(data.shape[0]): 
+        temp_route_set = convert_routes_str2list(data.iloc[m_example,3])
+        for route_nr, route in enumerate(temp_route_set): 
+            for edge_nr in range(len(route) - 1):
+                if route[edge_nr]<route[edge_nr+1]:
+                    temp_edge = (route[edge_nr],route[edge_nr+1])
+                else:
+                    temp_edge = (route[edge_nr+1],route[edge_nr])
+                    
+                recast_decision_variable[route_nr*num_edges + edge_list.index(temp_edge),m_example] = 1
+    
+    data_x_orig = recast_decision_variable
+    data_y = np.array(data.iloc[:,1])
+    data_y = data_y.reshape(data_y.shape[0],1).T
+    
+    
+    return data_x_orig, data_y
 
 def get_links_list_and_distances(matrix_dist):
     # Creates a list of all the links in a given adjacency matrix and a 

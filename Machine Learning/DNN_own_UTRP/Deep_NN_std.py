@@ -33,6 +33,8 @@ plt.rcParams['image.cmap'] = 'gray'
 
 train_x_orig, train_y, test_x_orig, test_y = hf.load_data_UTRP_routes("Data_for_analysis.csv", 6000, "Mandl_Data")
 
+X, Y = hf.load_data_UTRP_data("Data_for_analysis.csv", "Mandl_Data")
+
 # Explore your dataset 
 m_train = train_x_orig.shape[1]
 m_test = test_x_orig.shape[1]
@@ -196,10 +198,18 @@ if True:
     experiment_costs_df.to_csv("Analyses/NN_analysis_results_"+time_stamp+"_costs.csv")
     print(time_stamp)
     
+    # Plot the legend entries
+    combined_list = []
+    for ld in layers_dims_configs:
+        for lr in learning_rates:
+            combined_list.append(str(ld) +" "+ str(lr))
+    print(combined_list)
+    plt.legend(combined_list)
+    
 if False:
     t1 = time.time()
     parameters, costs = L_layer_model(train_x, train_y, layers_dims=[train_x_orig.shape[0], 21, 30, 15, 1], learning_rate=0.01, 
-                                       num_iterations=1000, print_cost=False, return_cost=True) # best config so far
+                                       num_iterations=2000, print_cost=False, return_cost=True) # best config so far
     t2 = time.time()
             
     pred_train = hf.predict_real_numbers(train_x, train_y, parameters)
@@ -211,3 +221,4 @@ if False:
     accuracy = round(1 - mae/np.average(test_y),4)
     training_time = round(t2-t1, 6)            
     print (f"Test {str(layers_dims)} HL given LR of {learning_rate}:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse} [{training_time}s]")
+

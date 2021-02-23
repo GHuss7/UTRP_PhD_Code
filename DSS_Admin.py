@@ -341,6 +341,15 @@ def get_sens_tests_stats_from_UTFSP_GA_runs(path_to_main_folder):
 def add_row_to_df(dataframe,dict_entry):
     dataframe.append(dict_entry)
     
+def add_UTRFSP_analysis_data(data_for_analysis, pop_1):
+    for index_i in range(len(pop_1.variables_routes_str)):
+        data_row = [pop_1.variables_routes_str[index_i]]
+        data_row.extend(list(pop_1.variables_freq[index_i,:]))
+        data_row.extend(list(pop_1.objectives[index_i,:]))
+        data_for_analysis.loc[len(data_for_analysis)] = data_row
+         
+    return data_for_analysis
+    
     
 # %% List into a list of lists 
 """List comprehension is an efficient approach as it doesn’t make use of extra space. 

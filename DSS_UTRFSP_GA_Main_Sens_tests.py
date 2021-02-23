@@ -53,7 +53,6 @@ from pymoo.operators.mutation.polynomial_mutation import PolynomialMutation
 from pymoo.operators.sampling.random_sampling import FloatRandomSampling
 from pymoo.operators.selection.tournament_selection import compare, TournamentSelection
 from pymoo.util.display import MultiObjectiveDisplay
-from pymoo.util.dominator import Dominator
 from pymoo.util.misc import find_duplicates, has_feasible
 #from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from pymoo.util.randomized_argsort import randomized_argsort
@@ -115,13 +114,17 @@ else:
     'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
     'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
     'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
-    'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
+    'alpha_const_inter' : 0.5, # constant for interarrival times relationship 0.5 (Spiess 1989)
+    'ref_point_min_f1_AETT' : 10,
+    'ref_point_max_f2_TBR' : 50,
+    'ref_point_max_f1_AETT' : 40,
+    'ref_point_min_f2_TBR' : 4
     }
     
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 2, #should be an even number, John: 200
+    "population_size" : 8, #should be an even number, John: 200
     "generations" : 2, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability" : 0.7,  # John: 0.9 BEST: 0.8
@@ -171,31 +174,34 @@ F_x = F_frequencies.frequencies
 
 parameters_GA["number_of_variables"] = len(F_x)
 
-#%% Define the UTFSP Problem      
-UTFSP_problem_1 = gf2.UTFSP_problem()
-UTFSP_problem_1.problem_data = gf2.Problem_data(mx_dist, mx_demand, mx_coords, mx_walk)
-UTFSP_problem_1.problem_constraints = gf2.Problem_constraints(parameters_constraints)
-UTFSP_problem_1.problem_inputs = gf2.Problem_inputs(parameters_input)
-UTFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA)
-UTFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
-UTFSP_problem_1.R_routes = R_routes
-UTFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
-UTFSP_problem_1.add_text = "" # define the additional text for the file name
+#%% Define the UTRFSP Problem      
+UTRFSP_problem_1 = gf2.UTFSP_problem()
+UTRFSP_problem_1.problem_data = gf2.Problem_data(mx_dist, mx_demand, mx_coords, mx_walk)
+UTRFSP_problem_1.problem_constraints = gf2.Problem_constraints(parameters_constraints)
+UTRFSP_problem_1.problem_inputs = gf2.Problem_inputs(parameters_input)
+UTRFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA)
+UTRFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
+UTRFSP_problem_1.R_routes = R_routes
+UTRFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
+UTRFSP_problem_1.add_text = "" # define the additional text for the file name
 
 #%% Define the Transit network
-TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) 
+TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) # for debugging
             
 
-# %% Class: PopulationFreq
-class PopulationFreq(gf2.Frequencies):
+# %% Class: PopulationRouteFreq
+class PopulationRouteFreq(gf2.Frequencies):
     """A class for storing the population consisting of arrays"""
     def __init__(self, main_problem):
         super(gf2.Frequencies, self).__init__()
         self.population_size = main_problem.problem_GA_parameters.population_size
-        self.variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
+        self.variable_freq_args = np.empty([main_problem.problem_GA_parameters.population_size,
                                    main_problem.problem_GA_parameters.number_of_variables]).astype(int)
-        self.variables = np.empty([main_problem.problem_GA_parameters.population_size,
+        self.variables_freq = np.empty([main_problem.problem_GA_parameters.population_size,
                                    main_problem.problem_GA_parameters.number_of_variables])
+        self.variables_routes = [None] * main_problem.problem_GA_parameters.population_size
+        self.variables_routes_str = [None] * main_problem.problem_GA_parameters.population_size
+        
         self.objectives = np.empty([main_problem.problem_GA_parameters.population_size,
                                    main_problem.problem_GA_parameters.number_of_objectives])
         self.rank = np.empty([main_problem.problem_GA_parameters.population_size,
@@ -206,34 +212,40 @@ class PopulationFreq(gf2.Frequencies):
     
     def generate_initial_population(self, main_problem, fn_obj):
         for i in range(self.population_size):
-            self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
-            self.variables[i,] = 1/gf2.Frequencies.theta_set[self.variable_args[i,]]
-            self.objectives[i,] = fn_obj(self.variables[i,], main_problem)
+            self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+            self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
+            self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
+            self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
+            self.objectives[i,] = fn_obj_f3_f4(self.variables_routes[i], self.variables_freq[i], main_problem)
             
-            # get the objective space values and objects
-            # F = pop.get("F").astype(np.float, copy=False)
-            F = self.objectives
-        
-            # do the non-dominated sorting until splitting front
-            fronts = NonDominated_Sorting().do(F)
+        # get the objective space values and objects
+        # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+    
+        # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
 
-            for k, front in enumerate(fronts):
-        
-                # calculate the crowding distance of the front
-                crowding_of_front = calc_crowding_distance(F[front, :])
-        
-                # save rank and crowding in the individual class
-                for j, i in enumerate(front):
-                    self.rank[i] = k
-                    self.crowding_dist[i] = crowding_of_front[j]
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
                     
             
     def get_summary(self):
         df_summary = pd.DataFrame()
+        freq_list = [str(x) for x in self.variables_freq]
+        
         df_summary = df_summary.assign(f_1 = self.objectives[:,0],
                           f_2 = self.objectives[:,1],
                           rank = self.rank[:,0],
-                          crowding_dist = self.crowding_dist[:,0])
+                          crowding_dist = self.crowding_dist[:,0],
+                          routes = self.variables_routes_str,
+                          frequencies = freq_list)
         
         df_summary = df_summary.sort_values(by='f_1', ascending=True)
         return df_summary
@@ -493,8 +505,8 @@ def crossover_pop_uniform_as_is(pop, main_problem):
                                    main_problem.R_routes.number_of_routes]).astype(int)
     
     for i in range(0,int(main_problem.problem_GA_parameters.population_size/2)):
-        parent_A = pop.variable_args[selection[i,0]]
-        parent_B = pop.variable_args[selection[i,1]]
+        parent_A = pop.variable_freq_args[selection[i,0]]
+        parent_B = pop.variable_freq_args[selection[i,1]]
     
         offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
             crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
@@ -535,8 +547,8 @@ def mutate_pop_args(offspring_variable_args, variable_len, mutation_probability)
 
 def keep_individuals(pop, survivor_indices):
     # Function that only keeps to individuals with the specified indices
-    pop.variable_args = pop.variable_args[survivor_indices,]
-    pop.variables = pop.variables[survivor_indices,]
+    pop.variable_freq_args = pop.variable_freq_args[survivor_indices,]
+    pop.variables_freq = pop.variables_freq[survivor_indices,]
     pop.objectives = pop.objectives[survivor_indices,]  
     pop.rank = pop.rank[survivor_indices]
     pop.crowding_dist = pop.crowding_dist[survivor_indices]
@@ -576,408 +588,411 @@ def generate_data_analysis_labels(num_objectives, num_variables):
 
 # %% BEGIN MAIN #######################################################
 
-def main(UTFSP_problem_1):
+#def main(UTRFSP_problem_1):
 
-    """ Keep track of the stats """
-    stats_overall = {
-        'execution_start_time' : datetime.datetime.now()} # enter the begin time
+""" Keep track of the stats """
+stats_overall = {
+    'execution_start_time' : datetime.datetime.now()} # enter the begin time
 
-    stats = {} # define the stats dictionary
+stats = {} # define the stats dictionary
+
+#%% Define the Objective functions
+def fn_obj(frequencies, UTFSP_problem_input):
+    return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
+                       frequencies, 
+                       UTFSP_problem_input.problem_data.mx_dist, 
+                       UTFSP_problem_input.problem_data.mx_demand, 
+                       UTFSP_problem_input.problem_inputs.__dict__,
+                       UTFSP_problem_input.problem_data.mx_walk), #f3_ETT
+            gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
+                       frequencies, 
+                       UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+
+def fn_obj_row(frequencies):
     
-    #%% Define the Objective functions
-    def fn_obj(frequencies, UTFSP_problem_input):
-        return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
-                           frequencies, 
-                           UTFSP_problem_input.problem_data.mx_dist, 
-                           UTFSP_problem_input.problem_data.mx_demand, 
-                           UTFSP_problem_input.problem_inputs.__dict__,
-                           UTFSP_problem_input.problem_data.mx_walk), #f3_ETT
-                gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
-                           frequencies, 
-                           UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+    return (gf2.f3_ETT(UTRFSP_problem_1.R_routes.routes,
+                       frequencies, 
+                       UTRFSP_problem_1.problem_data.mx_dist, 
+                       UTRFSP_problem_1.problem_data.mx_demand, 
+                       UTRFSP_problem_1.problem_inputs.__dict__,
+                       UTRFSP_problem_1.problem_data.mx_walk), #f3_ETT
+            gf2.f4_TBR(UTRFSP_problem_1.R_routes.routes, 
+                       frequencies, 
+                       UTRFSP_problem_1.problem_data.mx_dist)) #f4_TBR
+
+def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+    return (gf2.f3_ETT(routes,
+                       frequencies, 
+                       UTRFSP_problem_input.problem_data.mx_dist, 
+                       UTRFSP_problem_input.problem_data.mx_demand, 
+                       UTRFSP_problem_input.problem_inputs.__dict__,
+                       UTRFSP_problem_input.problem_data.mx_walk), #f3_ETT
+            gf2.f4_TBR(routes, 
+                       frequencies, 
+                           UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+
+'''Set the reference point for the Hypervolume calculations'''
+# parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTRFSP_problem_1.problem_constraints.con_r), 1/5)[0],UTRFSP_problem_1)
+# parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = fn_obj(np.full((1,UTRFSP_problem_1.problem_constraints.con_r), 1/30)[0],UTRFSP_problem_1)
+UTRFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
+UTRFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']]) 
+
+#%% Function: Add/Delete individuals to/from population
+def combine_offspring_with_pop(pop, offspring_variable_args):
+    # Function to combine the offspring with the population
+    len_pop = len(pop.objectives)
+    pop.variable_freq_args = np.vstack([pop.variable_freq_args, offspring_variable_args])
     
-    def fn_obj_row(frequencies):
-        
-        return (gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
-                           frequencies, 
-                           UTFSP_problem_1.problem_data.mx_dist, 
-                           UTFSP_problem_1.problem_data.mx_demand, 
-                           UTFSP_problem_1.problem_inputs.__dict__,
-                           UTFSP_problem_1.problem_data.mx_walk), #f3_ETT
-                gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, 
-                           frequencies, 
-                           UTFSP_problem_1.problem_data.mx_dist)) #f4_TBR
+    # Filter out duplicates
+    is_unique = np.where(np.logical_not(find_duplicates(pop.variable_freq_args, epsilon=1e-24)))[0]
+    pop.variable_freq_args = pop.variable_freq_args[is_unique]
     
-    '''Set the reference point for the Hypervolume calculations'''
-    parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/5)[0],UTFSP_problem_1)
-    parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0],UTFSP_problem_1)
-    UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
-    UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
+    # Only evaluate the offspring
+    offspring_variables = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]]
+    offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables)
+
+    # Add evaluated offspring to population
+    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables])
+    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
     
-    # TODO: Test errors
-    # '''Set the reference point for the Hypervolume calculations'''
-    # parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = 12, 25
-    # parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = 35, 4.2 
-    # UTFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
-    # UTFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']])
+    # This continues as normal
+    pop.rank = np.empty([pop.variable_freq_args.shape[0], 1])
+    pop.crowding_dist = np.empty([pop.variable_freq_args.shape[0], 1])
     
+    # get the objective space values and objects
+    F = pop.objectives
+
+    # do the non-dominated sorting until splitting front
+    fronts = NonDominated_Sorting().do(F)
+
+    for k, front in enumerate(fronts):
+
+        # calculate the crowding distance of the front
+        crowding_of_front = calc_crowding_distance(F[front, :])
+
+        # save rank and crowding in the individual class
+        for j, i in enumerate(front):
+            pop.rank[i] = k
+            pop.crowding_dist[i] = crowding_of_front[j]
+
+def combine_offspring_with_pop_multi(pop, offspring_variable_args):
+    # Function to combine the offspring with the population
+    len_pop = len(pop.objectives)
+    pop.variable_freq_args = np.vstack([pop.variable_freq_args, offspring_variable_args])
     
-    #%% Function: Add/Delete individuals to/from population
-    def combine_offspring_with_pop(pop, offspring_variable_args):
-        # Function to combine the offspring with the population
-        len_pop = len(pop.objectives)
-        pop.variable_args = np.vstack([pop.variable_args, offspring_variable_args])
-        
-        # Filter out duplicates
-        is_unique = np.where(np.logical_not(find_duplicates(pop.variable_args, epsilon=1e-24)))[0]
-        pop.variable_args = pop.variable_args[is_unique]
-        
-        # Only evaluate the offspring
-        offspring_variables = 1/gf2.Frequencies.theta_set[pop.variable_args[len_pop:,]]
-        offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables)
+    # Filter out duplicates
+    is_unique = np.where(np.logical_not(find_duplicates(pop.variable_freq_args, epsilon=1e-24)))[0]
+    pop.variable_freq_args = pop.variable_freq_args[is_unique]
     
-        # Add evaluated offspring to population
-        pop.variables = np.vstack([pop.variables, offspring_variables])
-        pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
-        
-        # This continues as normal
-        pop.rank = np.empty([pop.variable_args.shape[0], 1])
-        pop.crowding_dist = np.empty([pop.variable_args.shape[0], 1])
-        
-        # get the objective space values and objects
-        F = pop.objectives
-    
-        # do the non-dominated sorting until splitting front
-        fronts = NonDominated_Sorting().do(F)
-    
-        for k, front in enumerate(fronts):
-    
-            # calculate the crowding distance of the front
-            crowding_of_front = calc_crowding_distance(F[front, :])
-    
-            # save rank and crowding in the individual class
-            for j, i in enumerate(front):
-                pop.rank[i] = k
-                pop.crowding_dist[i] = crowding_of_front[j]
-    
-    def combine_offspring_with_pop_multi(pop, offspring_variable_args):
-        # Function to combine the offspring with the population
-        len_pop = len(pop.objectives)
-        pop.variable_args = np.vstack([pop.variable_args, offspring_variable_args])
-        
-        # Filter out duplicates
-        is_unique = np.where(np.logical_not(find_duplicates(pop.variable_args, epsilon=1e-24)))[0]
-        pop.variable_args = pop.variable_args[is_unique]
-        
-        # Only evaluate the offspring
-        offspring_variables = 1/gf2.Frequencies.theta_set[pop.variable_args[len_pop:,]]
-        # offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables)  
-    
-        # could put offspring variables in a list:
-        #     multi_list = []
-        # for offspring_variable in offspring_variables:
-        #     multi_list.append(offspring_variable)
-    
-        # with concurrent.futures.ProcessPoolExecutor() as executor:
-        #     offspring_objectives = executor.map(fn_obj_row, multi_list) # map returns processes in order they were started
-                
-    
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-                offspring_objectives = executor.map(fn_obj_row, offspring_variables) # map returns processes in order they were started
+    # Only evaluate the offspring
+    offspring_variables = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]]
+    # offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables)  
+
+    # could put offspring variables in a list:
+    #     multi_list = []
+    # for offspring_variable in offspring_variables:
+    #     multi_list.append(offspring_variable)
+
+    # with concurrent.futures.ProcessPoolExecutor() as executor:
+    #     offspring_objectives = executor.map(fn_obj_row, multi_list) # map returns processes in order they were started
             
-                for result in offspring_objectives:
-                    print(result)
-    
-    
-        # Add evaluated offspring to population
-        pop.variables = np.vstack([pop.variables, offspring_variables])
-        pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+            offspring_objectives = executor.map(fn_obj_row, offspring_variables) # map returns processes in order they were started
         
-        # This continues as normal
-        pop.rank = np.empty([pop.variable_args.shape[0], 1])
-        pop.crowding_dist = np.empty([pop.variable_args.shape[0], 1])
+            for result in offspring_objectives:
+                print(result)
+
+
+    # Add evaluated offspring to population
+    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables])
+    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
+    
+    # This continues as normal
+    pop.rank = np.empty([pop.variable_freq_args.shape[0], 1])
+    pop.crowding_dist = np.empty([pop.variable_freq_args.shape[0], 1])
+    
+    # get the objective space values and objects
+    F = pop.objectives
+
+    # do the non-dominated sorting until splitting front
+    fronts = NonDominated_Sorting().do(F)
+
+    for k, front in enumerate(fronts):
+
+        # calculate the crowding distance of the front
+        crowding_of_front = calc_crowding_distance(F[front, :])
+
+        # save rank and crowding in the individual class
+        for j, i in enumerate(front):
+            pop.rank[i] = k
+            pop.crowding_dist[i] = crowding_of_front[j]
+    
+#%% GA Implementation UTRFSP
+
+for run_nr in range(0, parameters_GA["number_of_runs"]):
+
+    # Create the initial populations   
+    stats['begin_time'] = datetime.datetime.now() # enter the begin time
+    print("######################### RUN {0} #########################".format(run_nr+1))
+    print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+    pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
+    pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj) 
+    pop_generations = np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),0)])
+    
+    if Decisions["Choice_print_full_data_for_analysis"]:
+        columns_list = ["R_x", "F_3", "F_4"]
+        columns_list[1:1] = ["f_"+str(x) for x in range(UTRFSP_problem_1.problem_constraints.con_r)]
+        df_data_for_analysis = pd.DataFrame(columns=columns_list)
+        df_data_for_analysis = ga.add_UTRFSP_analysis_data(df_data_for_analysis, pop_1) 
+              
+    df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
+    df_data_generations.loc[0] = [0, gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)]
         
-        # get the objective space values and objects
-        F = pop.objectives
     
-        # do the non-dominated sorting until splitting front
-        fronts = NonDominated_Sorting().do(F)
+    stats['end_time'] = datetime.datetime.now() # enter the begin time
+    HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
+                                                    ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
+                                                    round(HV, 4)))
     
-        for k, front in enumerate(fronts):
-    
-            # calculate the crowding distance of the front
-            crowding_of_front = calc_crowding_distance(F[front, :])
-    
-            # save rank and crowding in the individual class
-            for j, i in enumerate(front):
-                pop.rank[i] = k
-                pop.crowding_dist[i] = crowding_of_front[j]
+    """Run each generation"""
+    for i_generation in range(UTRFSP_problem_1.problem_GA_parameters.generations):    
+        # Some stats
+        stats['begin_time_run'] = datetime.datetime.now() # enter the begin time
+        stats['generation'] = i_generation + 1
+        print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         
-    #%% GA Implementation UTFSP
+        # Crossover amd Mutation
+        offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTRFSP_problem_1)
+        
+        mutated_variable_args = mutate_pop_args(offspring_variable_args, 
+                   UTRFSP_problem_1.R_routes.number_of_routes,
+                   UTRFSP_problem_1.problem_GA_parameters.mutation_probability)
+        
+        # Combine offspring with population
+        combine_offspring_with_pop(pop_1, mutated_variable_args)
+#TODO: Continue with only adding the offspring population to the data analysis       
+        pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
+        if Decisions["Choice_print_full_data_for_analysis"]:
+            df_data_for_analysis = ga.add_UTRFSP_analysis_data(df_data_for_analysis, pop_1)
+          
+        # Get new generation
+        survivor_indices = get_survivors(pop_1, pop_size)
+        keep_individuals(pop_1, survivor_indices)
     
-    for run_nr in range(0, parameters_GA["number_of_runs"]):
+        # Calculate the HV Quality Measure
+        HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+        df_data_generations.loc[i_generation+1] = [i_generation+1, HV]
     
-        # Create the initial populations   
-        stats['begin_time'] = datetime.datetime.now() # enter the begin time
-        print("######################### RUN {0} #########################".format(run_nr+1))
-        print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
-        pop_1 = PopulationFreq(UTFSP_problem_1)   
-        pop_1.generate_initial_population(UTFSP_problem_1, fn_obj) 
-        pop_generations = np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),0)])
+        pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),i_generation+1)])]) # add the population to the generations
+        
+        stats['end_time_run'] = datetime.datetime.now() # save the end time of the run
+        print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation+1)),
+                                                    ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
+                                                    round(HV, 4)))
+        
+    #%% Stats updates
+    stats['end_time'] = datetime.datetime.now() # save the end time of the run
+    stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
+    stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
+    stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
+    stats['HV obtained'] = HV
+    
+    
+    #%% Save the results
+    if Decisions["Choice_print_results"]:
+    
+        '''Write all results and parameters to files'''
+        '''Main folder path'''
+        path_parent_folder = Path(os.path.dirname(os.getcwd()))
+        path_results = path_parent_folder / ("Results/Results_"+
+                                             parameters_input['Problem_name']+
+                                             "/"+parameters_input['Problem_name']+
+                                             "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
+                                             " "+parameters_GA['method']+
+                                             f"_{UTRFSP_problem_1.add_text}")
+        
+        '''Sub folder path'''
+        path_results_per_run = path_results / ("Run_"+str(run_nr+1))
+        if not path_results_per_run.exists():
+            os.makedirs(path_results_per_run)
+        
+        # Create and save the dataframe 
+        df_pop_generations = create_df_from_pop(pop_generations)
+        
+        df_non_dominated_set = pd.DataFrame(data=np.hstack([pop_1.objectives, pop_1.variables_freq]),
+                                            columns=generate_data_analysis_labels(UTRFSP_problem_1.problem_GA_parameters.number_of_objectives,
+                                                                                  UTRFSP_problem_1.problem_constraints.con_r))
+        df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set.values, True)]
+        df_non_dominated_set = df_non_dominated_set.sort_values(by='f_1', ascending=True) # sort
         
         if Decisions["Choice_print_full_data_for_analysis"]:
-            data_for_analysis = np.hstack([pop_1.objectives, pop_1.variables]) # create an object to contain all the data for analysis
-        df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
-        df_data_generations.loc[0] = [0, gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)]
-            
+            df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
         
-        stats['end_time'] = datetime.datetime.now() # enter the begin time
-        HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-        print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
-                                                        ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
-                                                        round(HV, 4)))
-        
-        """Run each generation"""
-        for i_generation in range(UTFSP_problem_1.problem_GA_parameters.generations):    
-            # Some stats
-            stats['begin_time_run'] = datetime.datetime.now() # enter the begin time
-            stats['generation'] = i_generation + 1
-            print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
-            
-            # Crossover amd Mutation
-            offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTFSP_problem_1)
-            
-            mutated_variable_args = mutate_pop_args(offspring_variable_args, 
-                       UTFSP_problem_1.R_routes.number_of_routes,
-                       UTFSP_problem_1.problem_GA_parameters.mutation_probability)
-            
-            # Combine offspring with population
-            combine_offspring_with_pop(pop_1, mutated_variable_args)
-            
-            pop_size = UTFSP_problem_1.problem_GA_parameters.population_size
-            if Decisions["Choice_print_full_data_for_analysis"]:
-                data_for_analysis = np.vstack([data_for_analysis, np.hstack([pop_1.objectives[pop_size:,], pop_1.variables[pop_size:,]])])
-              
-            # Get new generation
-            survivor_indices = get_survivors(pop_1, pop_size)
-            keep_individuals(pop_1, survivor_indices)
-        
-            # Calculate the HV Quality Measure
-            HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-            df_data_generations.loc[i_generation+1] = [i_generation+1, HV]
-        
-            pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),i_generation+1)])]) # add the population to the generations
-            
-            stats['end_time_run'] = datetime.datetime.now() # save the end time of the run
-            print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation+1)),
-                                                        ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
-                                                        round(HV, 4)))
-            
-        #%% Stats updates
-        stats['end_time'] = datetime.datetime.now() # save the end time of the run
-        stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
-        stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
-        stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
-        stats['HV obtained'] = HV
+        df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
+        df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
         
         
-        #%% Save the results
-        if Decisions["Choice_print_results"]:
+        df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('generation', as_index=False)['f_1'].mean().iloc[:,1],
+                               mean_f_2=df_pop_generations.groupby('generation', as_index=False)['f_2'].mean().iloc[:,1])
+        df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
         
-            '''Write all results and parameters to files'''
-            '''Main folder path'''
-            path_parent_folder = Path(os.path.dirname(os.getcwd()))
-            path_results = path_parent_folder / ("Results/Results_"+
-                                                 parameters_input['Problem_name']+
-                                                 "/"+parameters_input['Problem_name']+
-                                                 "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
-                                                 " "+parameters_GA['method']+
-                                                 f"_{UTFSP_problem_1.add_text}")
-            
-            '''Sub folder path'''
-            path_results_per_run = path_results / ("Run_"+str(run_nr+1))
-            if not path_results_per_run.exists():
-                os.makedirs(path_results_per_run)
-            
-            # Create and save the dataframe 
-            df_pop_generations = create_df_from_pop(pop_generations)
-            
-            df_non_dominated_set = pd.DataFrame(data=np.hstack([pop_1.objectives, pop_1.variables]),
-                                                columns=generate_data_analysis_labels(UTFSP_problem_1.problem_GA_parameters.number_of_objectives,
-                                                                                      UTFSP_problem_1.problem_constraints.con_r))
-            df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set.values, True)]
-            df_non_dominated_set = df_non_dominated_set.sort_values(by='f_1', ascending=True) # sort
-            
-            if Decisions["Choice_print_full_data_for_analysis"]:
-                df_data_for_analysis = pd.DataFrame(data=data_for_analysis,
-                                                    columns=generate_data_analysis_labels(UTFSP_problem_1.problem_GA_parameters.number_of_objectives,
-                                                                                          UTFSP_problem_1.problem_constraints.con_r))
-                df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
-                del data_for_analysis
-            
-            df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
-            df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
-            
-            
-            df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('generation', as_index=False)['f_1'].mean().iloc[:,1],
-                                   mean_f_2=df_pop_generations.groupby('generation', as_index=False)['f_2'].mean().iloc[:,1])
-            df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
-            
-            json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
-            json.dump(parameters_constraints, open(path_results_per_run / "parameters_constraints.json", "w"))
-            json.dump(parameters_GA, open(path_results_per_run / "parameters_GA.json", "w"))
-            pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
-            
-            with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
-                w = csv.writer(archive_file)
-                for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
-                    w.writerow([key, val])
-                del key, val
-            
-            print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
-            
-            # Visualise the generations
-            if False: # becomes useless when more than 10 generations
-                plot_generations_objectives(pop_generations)
-                
-                manager = plt.get_current_fig_manager()
-                manager.window.showMaximized()
-                plt.show()
-                plt.savefig(path_results_per_run / "Results_combined.pdf", bbox_inches='tight')
-                manager.window.close()
-            
-            #%% Print and save result summary figures:
-                            
-            if True:   
-                if False:
-                    '''Print Archive'''   
-                    fig = plt.figure()
-                    ax1 = fig.add_subplot(111)
-                    ax1.scatter( df_non_dominated_set["f_1"], df_non_dominated_set["f_2"], s=1, c='b', marker="o", label='Non-dominated set')
-                    #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
-                    #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
-                    plt.legend(loc='upper left');
-                    plt.show()
-                    
-                '''Load validation data'''
-                #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                #John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
-            
-                if True:
-                    '''Print Objective functions over time, all solutions and pareto set obtained'''
-                    fig, axs = plt.subplots(2, 2)
-                    fig.set_figheight(15)
-                    fig.set_figwidth(20)
-                    axs[0, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_1"], s=1, c='r', marker="o", label='f1_AETT')
-                    axs[0, 0].set_title('Mean AETT over all generations')
-                    axs[0, 0].set(xlabel='Generations', ylabel='f1_AETT')
-                    axs[0, 0].legend(loc="upper right")
-                    
-                    axs[1, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_2"], s=1, c='b', marker="o", label='f2_TBR')
-                    axs[1, 0].set_title('Mean TBR over all generations')
-                    axs[1, 0].set(xlabel='Generations', ylabel='f2_TBR')
-                    axs[1, 0].legend(loc="upper right") 
-                    
-                    axs[0, 1].scatter(df_data_generations["Generation"], df_data_generations["HV"], s=1, c='r', marker="o", label='HV obtained')
-                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs),\
-                    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
-                    axs[0, 1].set_title('HV over all generations')
-                    axs[0, 1].set(xlabel='Generations', ylabel='%')
-                    axs[0, 1].legend(loc="upper right")
-                    
-                    #axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
-                    axs[1, 1].scatter(df_non_dominated_set["f_2"], df_non_dominated_set["f_1"], s=10, c='r', marker="o", label='Non-dom set obtained')
-                    #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
-                    #axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
-                    axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
-                    axs[1, 1].set(xlabel='f2_TBR', ylabel='f1_AETT')
-                    axs[1, 1].legend(loc="upper right")
-                    
-                    manager = plt.get_current_fig_manager()
-                    manager.window.showMaximized()
-                    plt.show()
-                    plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
-                
-                    manager.window.close()
-                    
-    del i_generation, pop_size, survivor_indices
-
-    # %% Save results after all runs
-    if Decisions["Choice_print_results"]:
-        '''Save the summarised results'''
-        df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
-        df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
-        df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
-        df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+        json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
+        json.dump(parameters_constraints, open(path_results_per_run / "parameters_constraints.json", "w"))
+        json.dump(parameters_GA, open(path_results_per_run / "parameters_GA.json", "w"))
+        pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
         
-        
-        '''Save the stats for all the runs'''
-        # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
-        df_durations = ga.get_stats_from_model_runs(path_results)
-        
-        stats_overall['execution_end_time'] =  datetime.datetime.now()
-        
-        stats_overall['total_model_runs'] = run_nr + 1
-        stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
-        stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
-        stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-        stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-        #stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-        
-        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
-        df_durations.to_csv(path_results / "Run_durations.csv")
-        del df_durations
-        
-        with open(path_results / "Stats_overall.csv", "w") as archive_file:
+        with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
             w = csv.writer(archive_file)
-            for key, val in {**stats_overall,
-                             **UTFSP_problem_1.problem_inputs.__dict__, 
-                             **UTFSP_problem_1.problem_constraints.__dict__, 
-                             **UTFSP_problem_1.problem_GA_parameters.__dict__}.items():
+            for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
                 w.writerow([key, val])
             del key, val
-            
-        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
-        # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
         
-        # %% Plot analysis graph
-        '''Plot the analysis graph'''
-        if True:
-            fig, axs = plt.subplots(1,1)
-            fig.set_figheight(15)
-            fig.set_figwidth(20)
-            
-            # axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='b', marker="o", label='Initial route sets')
-            axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-            #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
-            #axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
-            axs.set_title('Pareto front obtained vs Mumford Results')
-            axs.set(xlabel='f2_TBR', ylabel='f1_AETT')
-            axs.legend(loc="upper right")
-            del axs
+        print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+        
+        # Visualise the generations
+        if False: # becomes useless when more than 10 generations
+            plot_generations_objectives(pop_generations)
             
             manager = plt.get_current_fig_manager()
             manager.window.showMaximized()
             plt.show()
-            plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+            plt.savefig(path_results_per_run / "Results_combined.pdf", bbox_inches='tight')
             manager.window.close()
-            del fig, manager
-        del archive_file, df_non_dominated_set, path_parent_folder, path_results, path_results_per_run, pop_generations, w
         
-    del run_nr
+        #%% Print and save result summary figures:
+                        
+        if True:   
+            if False:
+                '''Print Archive'''   
+                fig = plt.figure()
+                ax1 = fig.add_subplot(111)
+                ax1.scatter( df_non_dominated_set["f_1"], df_non_dominated_set["f_2"], s=1, c='b', marker="o", label='Non-dominated set')
+                #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
+                #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
+                plt.legend(loc='upper left');
+                plt.show()
+                
+            '''Load validation data'''
+            #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
+            #John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
+        
+            if True:
+                '''Print Objective functions over time, all solutions and pareto set obtained'''
+                fig, axs = plt.subplots(2, 2)
+                fig.set_figheight(15)
+                fig.set_figwidth(20)
+                axs[0, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_1"], s=1, c='r', marker="o", label='f1_AETT')
+                axs[0, 0].set_title('Mean AETT over all generations')
+                axs[0, 0].set(xlabel='Generations', ylabel='f1_AETT')
+                axs[0, 0].legend(loc="upper right")
+                
+                axs[1, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_2"], s=1, c='b', marker="o", label='f2_TBR')
+                axs[1, 0].set_title('Mean TBR over all generations')
+                axs[1, 0].set(xlabel='Generations', ylabel='f2_TBR')
+                axs[1, 0].legend(loc="upper right") 
+                
+                axs[0, 1].scatter(df_data_generations["Generation"], df_data_generations["HV"], s=1, c='r', marker="o", label='HV obtained')
+                #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs),\
+                #   s=1, c='g', marker="o", label='HV Mumford (2013)')
+                axs[0, 1].set_title('HV over all generations')
+                axs[0, 1].set(xlabel='Generations', ylabel='%')
+                axs[0, 1].legend(loc="upper right")
+                
+                #axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
+                axs[1, 1].scatter(df_non_dominated_set["f_2"], df_non_dominated_set["f_1"], s=10, c='r', marker="o", label='Non-dom set obtained')
+                #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
+                #axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+                axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
+                axs[1, 1].set(xlabel='f2_TBR', ylabel='f1_AETT')
+                axs[1, 1].legend(loc="upper right")
+                
+                manager = plt.get_current_fig_manager()
+                manager.window.showMaximized()
+                plt.show()
+                plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+            
+                manager.window.close()
+                
+del i_generation, pop_size, survivor_indices
+
+# %% Save results after all runs
+if Decisions["Choice_print_results"]:
+    '''Save the summarised results'''
+    df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
+    df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
+    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
+    df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+    
+    
+    '''Save the stats for all the runs'''
+    # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
+    df_durations = ga.get_stats_from_model_runs(path_results)
+    
+    stats_overall['execution_end_time'] =  datetime.datetime.now()
+    
+    stats_overall['total_model_runs'] = run_nr + 1
+    stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
+    stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
+    stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
+    stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
+    #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    #stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    
+    df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
+    df_durations.to_csv(path_results / "Run_durations.csv")
+    del df_durations
+    
+    with open(path_results / "Stats_overall.csv", "w") as archive_file:
+        w = csv.writer(archive_file)
+        for key, val in {**stats_overall,
+                         **UTRFSP_problem_1.problem_inputs.__dict__, 
+                         **UTRFSP_problem_1.problem_constraints.__dict__, 
+                         **UTRFSP_problem_1.problem_GA_parameters.__dict__}.items():
+            w.writerow([key, val])
+        del key, val
+        
+    ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
+    # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
+    
+    # %% Plot analysis graph
+    '''Plot the analysis graph'''
+    if True:
+        fig, axs = plt.subplots(1,1)
+        fig.set_figheight(15)
+        fig.set_figwidth(20)
+        
+        # axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='b', marker="o", label='Initial route sets')
+        axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+        #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
+        #axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+        axs.set_title('Pareto front obtained vs Mumford Results')
+        axs.set(xlabel='f2_TBR', ylabel='f1_AETT')
+        axs.legend(loc="upper right")
+        del axs
+        
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
+        plt.show()
+        plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+        manager.window.close()
+        del fig, manager
+    del archive_file, df_non_dominated_set, path_parent_folder, path_results, path_results_per_run, pop_generations, w
+    
+del run_nr
 
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''
 
 # Single Thread
-if __name__ == "__main__":
+if False: #__name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()
         ''' Create copies of the original input data '''
-        #original_UTFSP_problem_1 = copy.deepcopy(UTFSP_problem_1)    
+        #original_UTRFSP_problem_1 = copy.deepcopy(UTRFSP_problem_1)    
         #original_parameters_constraints = copy.deepcopy(parameters_constraints)  
         #original_parameters_GA = copy.deepcopy(parameters_GA)  
         
@@ -1031,7 +1046,7 @@ if __name__ == "__main__":
                 
                 print("Test: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
                 
-                UTFSP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
+                UTRFSP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
                 
                 temp_storage = parameter_dict[dict_entry]
                 
@@ -1039,11 +1054,11 @@ if __name__ == "__main__":
                 parameter_dict[dict_entry] = sensitivity_test[test_counter]
     
                 # Update problem instance
-                UTFSP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
-                UTFSP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
+                UTRFSP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
+                UTRFSP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
                 
                 # Run model
-                main(UTFSP_problem_1)
+                main(UTRFSP_problem_1)
                 
                 # Reset the original parameters
                 parameter_dict[dict_entry] = temp_storage
@@ -1054,552 +1069,4 @@ if __name__ == "__main__":
      
     else:
         print(f'Normal run initiated')
-        main(UTFSP_problem_1)
-
-
-
-
-# %% TESTS: 
-
-if False:  
-    
-    def fn_obj(frequencies, UTFSP_problem_input):
-        return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
-                           frequencies, 
-                           UTFSP_problem_input.problem_data.mx_dist, 
-                           UTFSP_problem_input.problem_data.mx_demand, 
-                           UTFSP_problem_input.problem_inputs.__dict__), #f3_ETT
-                gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
-                           frequencies, 
-                           UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
-    
-    def fn_obj_row(frequencies):
-        
-        return (gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
-                           frequencies, 
-                           UTFSP_problem_1.problem_data.mx_dist, 
-                           UTFSP_problem_1.problem_data.mx_demand, 
-                           UTFSP_problem_1.problem_inputs.__dict__), #f3_ETT
-                gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, 
-                           frequencies, 
-                           UTFSP_problem_1.problem_data.mx_dist)) #f4_TBR
-       
-
-    offspring_variables = np.array([[1/5, 1/5, 1/7, 1/5, 1/5, 1/5],
-                                    [1/30, 1/30, 1/30, 1/30, 1/30, 1/30]])
-    
-    F_x = offspring_variables[1,]
-    
-    # offspring_variables = df_res[1:,3:]
-       
-    
-    # start = time.perf_counter()
-    # offspring_objectives = np.apply_along_axis(fn_obj_row, 1, offspring_variables)
-    # finish = time.perf_counter()
-    # print(f'Finished in {round(finish-start, 2)} second(s): apply_along_axis')
-    if True:
-        start = time.perf_counter()
-        offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables) # takses about 6 seconds for one evaluation   
-        finish = time.perf_counter()
-        print(f'Finished in {round(finish-start, 2)} second(s): for loop')
-        
-        print(f'Freq: 1/5 \t f_1: {round(offspring_objectives[0,0], 3)} | 15.189 \t f_2: {round(offspring_objectives[0,1], 3)} | 24.286')
-        print(f'Freq: 1/30 \t f_1: {round(offspring_objectives[1,0], 3)} | 31.814 \t f_2: {round(offspring_objectives[1,1], 3)} | 4.2')
-
-    
-
-A_link_volumes = TN.mx_volumes_links
-A_mx_C_a = TN.mx_C_a
-# fn_obj(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/10)[0],UTFSP_problem_1)
-#TN.R_routes
-#gv.plotUTFSPAndSavePDF(mx_dist,routes_R, mx_coords, name)
-
-
-"""
-self.R_routes_named = R_routes_named
-self.names_of_transit_routes = names_of_transit_routes
-self.names_all_transit_nodes = names_all_transit_nodes
-self.n_transit_nodes = n_transit_nodes
-self.dict_all_nodes = dict_all_nodes
-self.mx_transit_network = mx_transit_network
-self.mx_C_a = mx_C_a
-self.mx_f_a = mx_f_a
-"""
-
-
-
-#%% Tests for f_3
-if False:    
-    R_routes_list = R_routes.routes
-    #R_routes, F_x, mx_dist, mx_demand, parameters_input
-    '''Create the transit network'''
-    R_routes_named = gf2.format_routes_with_letters(R_routes_list)
-    names_of_transit_routes = gf2.get_names_of_routes_as_list(R_routes_named)
-    names_all_transit_nodes = list(map(str, range(parameters_input['n'])))+names_of_transit_routes
-    n_transit_nodes = len(names_all_transit_nodes)
-    
-    vec_nodes_u_i_ALL_array = np.empty((n_transit_nodes,parameters_input['n']))
-    
-    dict_all_nodes = dict() # creates a dictionary to map all the transit nodes to numbers
-    for i in range(len(names_all_transit_nodes)):
-        dict_all_nodes[names_all_transit_nodes[i]] = i
-         
-    mx_transit_network = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
-    mx_C_a = parameters_input['large_dist']*np.ones(shape=(n_transit_nodes, n_transit_nodes))
-    mx_f_a = np.zeros(shape=(n_transit_nodes, n_transit_nodes))
-    
-    
-    # Did not  name the numpy arrays
-    
-    '''Fill in the walk links that are present in the graph'''
-    for i in range(parameters_input['n']):  
-        for j in range(parameters_input['n']):
-            if mx_dist[i,j] == parameters_input['large_dist']:
-                mx_C_a[i,j] = mx_dist[i,j]
-            else:
-                if mx_dist[i,j] == 0:
-                    mx_transit_network[i,j] = 0
-                    mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                    mx_f_a[i,j] = 0
-                else:
-                    """Test for weird results"""
-                    mx_transit_network[i,j] = 0
-                    mx_C_a[i,j] = parameters_input['large_dist']
-                    mx_f_a[i,j] = 0
-                # else:
-                #     mx_transit_network[i,j] = 1
-                #     mx_C_a[i,j] = parameters_input['walkFactor']*mx_dist[i,j]
-                #     mx_f_a[i,j] = inf
-    
-    
-    ''''Fill in the boarding links characteristics'''
-    counter = 0
-    
-    for i in range(len(R_routes_list)): 
-        for j in range(len(R_routes_list[i])):       
-            i_index =  int(re.findall(r'\d+', names_of_transit_routes[counter])[0]) # number of the transit node
-            j_index = names_all_transit_nodes.index(names_of_transit_routes[counter]) # position of the transit node in network graph
-    
-            mx_transit_network[i_index, j_index] = 1   
-            mx_C_a[i_index, j_index] = parameters_input['boardingTime'] # sets the boarding
-            mx_f_a[i_index, j_index] = F_x[i] # set the frequencies per transit line
-      
-            counter = counter + 1  
-    
-    '''Fill in the alighting links characteristics'''
-    counter = 0
-    
-    for i in range(len(R_routes_list)): 
-        for j in range(len(R_routes_list[i])):       
-            i_index =  int(re.findall(r'\d+', names_of_transit_routes[counter])[0]) # number of the transit node
-            j_index = names_all_transit_nodes.index(names_of_transit_routes[counter]) # position of the transit node in network graph
-    
-            mx_transit_network[j_index, i_index] = 1   
-            mx_C_a[j_index, i_index] = parameters_input['alightingTime'] # sets the alighting
-            mx_f_a[j_index, i_index] = inf # set the frequencies per transit line
-      
-            counter = counter + 1 
-     
-    '''Fill in the travel times using the transit lines / routes'''       
-    
-    for i in range(len(names_of_transit_routes) - 1):
-        if " ".join(re.findall("[a-zA-Z]+", names_of_transit_routes[i]))==\
-        " ".join(re.findall("[a-zA-Z]+", names_of_transit_routes[i+1])):
-             
-            i_index = names_all_transit_nodes.index(names_of_transit_routes[i])
-            j_index = names_all_transit_nodes.index(names_of_transit_routes[i+1])
-        
-            mx_transit_network[i_index, j_index] =\
-            mx_transit_network[j_index, i_index] = 1 
-           
-            mx_C_a[i_index, j_index] =\
-            mx_C_a[j_index, i_index] =\
-            mx_dist[int(re.findall(r'\d+', names_of_transit_routes[i])[0]),\
-            int(re.findall(r'\d+', names_of_transit_routes[i+1])[0])]
-        
-            mx_f_a[i_index, j_index] =\
-            mx_f_a[j_index, i_index] = inf
-      
-    '''Put all the links in one matrix'''  
-    df_transit_links = pd.DataFrame(columns = ["I_i", "I_j", "c_a","f_a"])
-    
-    counter = 0
-    for i in range(n_transit_nodes):
-        for j in range(n_transit_nodes):
-            if mx_transit_network[i,j]:
-          
-                df_transit_links.loc[counter] = [names_all_transit_nodes[i],\
-                                     names_all_transit_nodes[j], mx_C_a[i,j], mx_f_a[i,j]]                 
-                counter = counter + 1
-    
-    del counter, i, i_index, j, j_index    
-    
-    
-    '''Optimal strategy algorithm (Spiess, 1989)'''    
-    mx_volumes_nodes = np.zeros(n_transit_nodes) # create object to keep the node volumes
-    mx_volumes_links = np.zeros(shape=(n_transit_nodes, n_transit_nodes)) # create object to keep the arc volumes
-    names_main_nodes = names_all_transit_nodes[0:parameters_input['n']]
-    
-        # Overall loop to change the destinations
-    for i_destination in range(parameters_input['n']): 
-        
-        # Create the data frames to keep the answers in
-        df_opt_strat_alg = pd.DataFrame(columns = ["a=(i,","j)","f_a","u_j+c_a","a_in_A_bar"])
-        vec_nodes_u_i = np.ones(n_transit_nodes)*inf
-        vec_nodes_f_i = np.zeros(n_transit_nodes)
-        
-        # Set values of the first row
-        r_destination = i_destination
-        num_transit_links = len(df_transit_links)
-        vec_nodes_u_i[r_destination] = 0 # set the destination expected time
-        df_S_list = df_transit_links.copy() # creates a copy to work with
-        
-        for i in range(num_transit_links):
-            df_S_list.iloc[i,0] = dict_all_nodes[df_S_list.iloc[i,0]]
-            df_S_list.iloc[i,1] = dict_all_nodes[df_S_list.iloc[i,1]]
-        
-        mx_S_list = df_S_list.values # cast as numpy array for speed in calculations
-        mx_S_list = np.hstack((mx_S_list, np.arange(num_transit_links).reshape(num_transit_links,1))) #adds indices
-        
-        df_A_bar_strategy_lines = pd.DataFrame(columns = ["I_i", "I_j", "c_a","f_a"])
-        mx_A_bar_strategy_lines = np.empty(shape=(0,4))
-        
-        # repeats steps 6.2 and 6.3 until df_S_list is empty
-        
-        '''Get the next link'''
-        
-        for counter_S_list in range(num_transit_links-1, -1, -1):
-            
-            for i in range(counter_S_list+1): # loop through mx_S_list to find the minimum u_j + c_a
-              
-                if i == 0:
-                    u_j = vec_nodes_u_i[int(mx_S_list[i,1])]
-                    c_a = mx_S_list[i,2]
-                    min_u_j_and_c_a = u_j + c_a
-                    min_u_j_and_c_a_index = i
-                
-                else:
-                    u_j = vec_nodes_u_i[int(mx_S_list[i,1])]
-                    c_a = mx_S_list[i,2]
-                    
-                    if u_j + c_a <= min_u_j_and_c_a:
-                      
-                        min_u_j_and_c_a = u_j + c_a
-                        min_u_j_and_c_a_index = i
-                      
-            '''Update the node label'''
-            current_link = mx_S_list[min_u_j_and_c_a_index,:4] 
-        
-                
-            col_index_i = int(current_link[0])
-            u_i = vec_nodes_u_i[col_index_i]
-            f_i = vec_nodes_f_i[col_index_i]
-            f_a = current_link[3]
-            
-            ''''Test for optimal strategy'''
-            if u_i >= min_u_j_and_c_a:
-              
-                if f_a == inf or f_i == inf: # for the case where the modification is needed in Spiess (1989) for no waiting time
-                #if f_a == inf:
-                    vec_nodes_u_i[col_index_i] = min_u_j_and_c_a 
-                    vec_nodes_f_i[col_index_i] = inf
-                    mx_A_bar_strategy_lines = np.vstack((mx_A_bar_strategy_lines, current_link))
-                    df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
-                                        mx_S_list[min_u_j_and_c_a_index,1],\
-                                        f_a,\
-                                        min_u_j_and_c_a,\
-                                        True]
-              
-                else: # normal case when a link is added
-                    vec_nodes_u_i[col_index_i] =\
-                    (gf2.f_i_u_i_test(f_i,u_i, parameters_input['alpha_const_inter']) + f_a*(min_u_j_and_c_a))/(f_i+f_a)
-                    vec_nodes_f_i[col_index_i] = f_i + f_a
-                    mx_A_bar_strategy_lines = np.vstack((mx_A_bar_strategy_lines, current_link))
-                    df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
-                                mx_S_list[min_u_j_and_c_a_index,1],\
-                                f_a,\
-                                min_u_j_and_c_a,\
-                                True]
-                
-            else:
-                df_opt_strat_alg.loc[num_transit_links-counter_S_list] = [mx_S_list[min_u_j_and_c_a_index,0],\
-                                mx_S_list[min_u_j_and_c_a_index,1],\
-                                f_a,\
-                                min_u_j_and_c_a,\
-                                False]
-                
-            '''Remove the current link'''
-            mx_S_list = np.delete(mx_S_list, min_u_j_and_c_a_index, axis = 0) # remove the current link from S_list
-            
-        
-        '''Assign demand according to optimal strategy'''
-        # Initialise the algorithm
-        # load the volumes of demand per node, called V_i
-        
-        V_i = np.zeros(n_transit_nodes)
-        for i in range(parameters_input['n']):
-            V_i[i] = mx_demand[i,r_destination]
-        V_i[r_destination] = - sum(V_i)
-        
-        # NB this needs to hold to the conservation of flow requirements
-        # colnames(V_i) = names_all_nodes
-        # also the actual demand values can be input here
-        
-        df_opt_strat_alg.insert(5, "v_a", np.zeros(len(df_opt_strat_alg)))
-        
-        '''Load the links according to demand and frequencies'''
-        for i in range(len(df_opt_strat_alg)-1, -1, -1):  # for every link in decreasing order of u_j + c_a
-            if df_opt_strat_alg.iloc[i,4]:
-        
-                if not int(df_opt_strat_alg.iloc[i, 0]) == r_destination: # this restricts the alg to assign negative demand to 
-                      # the outgoing nodes from the node that is being evaluated
-                      # also note, errors might come in when demand is wrongfully assigned out, and in.
-                      
-                    # set the indices
-                    node_i_index = int(df_opt_strat_alg.iloc[i, 0])
-                    node_j_index = int(df_opt_strat_alg.iloc[i, 1])
-                    
-                    # assign the v_a values
-                    if not df_opt_strat_alg.iloc[i,2] == inf :
-                        df_opt_strat_alg.iloc[i, 5] = (df_opt_strat_alg.iloc[i,2]/\
-                                                          vec_nodes_f_i[node_i_index])*V_i[node_i_index]
-                    else:
-                        df_opt_strat_alg.iloc[i, 5] = V_i[node_i_index]
-                                
-                    # assign the V_j values                                                
-                    V_i[node_j_index] = V_i[node_j_index] + df_opt_strat_alg.iloc[i, 5]                                                                                        
-        
-        # Update the volumes overall
-        mx_volumes_nodes = mx_volumes_nodes + V_i
-        
-        counter_link = 0  
-        while counter_link < len(df_opt_strat_alg):
-            if df_opt_strat_alg.iloc[counter_link,4]:
-                mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] =\
-                mx_volumes_links[int(df_opt_strat_alg.iloc[counter_link,0]), int(df_opt_strat_alg.iloc[counter_link,1])] + df_opt_strat_alg.iloc[counter_link,5]
-        
-          
-            counter_link = counter_link + 1 
-        
-        """Adds all u_i end times to an array for final u_i times"""
-        vec_nodes_u_i_ALL_array[:,i_destination] = vec_nodes_u_i
-    # end the overall destination change for loop spanning from 6.)
-    
-      
-    #'''Add the volume per arc details to the list_transit_links object'''
-    # df_transit_links.insert(4, "v_a", np.zeros(len(df_transit_links)))
-    
-    # for i in range(len(df_transit_links)):
-    #     df_transit_links.iloc[i,4] = mx_volumes_links[int(dict_all_nodes[df_transit_links.iloc[i,0]]),\
-    #                          int(dict_all_nodes[df_transit_links.iloc[i,1]])]
-    
-    # # F3 Expected Travel Time
-    # print(sum(sum(mx_volumes_links*mx_C_a))/(parameters_input['total_demand']*2))
-    
-    
-    # %% Transit network tests
-    TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input) 
-    
-    B_df_opt_strat_alg = TN.df_opt_strat_alg
-    B_df_opt_strat_alg_named = TN.df_opt_strat_alg_named
-    B_mx_A_bar_strategy_lines = TN.mx_A_bar_strategy_lines
-    B_df_A_bar_strategy_lines = TN.df_A_bar_strategy_lines
-    
-    # B_df_opt_strat_alg[0].iloc[:,0]
-    
-    u_i_times = np.zeros(shape=(15,15))
-    
-    for destination_i_strategy, destination_i in zip(B_df_opt_strat_alg, range(15)):
-        for origin_j in range(15):
-            if origin_j != destination_i:
-                u_i_times[origin_j,destination_i] = destination_i_strategy[(destination_i_strategy.iloc[:,0] == origin_j) & destination_i_strategy.iloc[:,4]].iloc[0,3]
-                
-    print(sum(sum(mx_demand*u_i_times))/(parameters_input['total_demand']*2))
-    
-    
-    print(sum(sum(mx_demand*vec_nodes_u_i_ALL_array[:parameters_input['n'],:]))/(parameters_input['total_demand']*2))
-    
-    
-    
-    def fn_obj_test(frequencies, UTFSP_problem_input):
-        return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
-                           frequencies, 
-                           UTFSP_problem_input.problem_data.mx_dist, 
-                           UTFSP_problem_input.problem_data.mx_demand, 
-                           UTFSP_problem_input.problem_inputs.__dict__,
-                           UTFSP_problem_input.problem_data.mx_walk), #f3_ETT
-                gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
-                           frequencies, 
-                           UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
-    
-    fn_obj_test(np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], UTFSP_problem_1)
-    
-    
-    gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
-                           np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], 
-                           UTFSP_problem_1.problem_data.mx_dist, 
-                           UTFSP_problem_1.problem_data.mx_demand, 
-                           UTFSP_problem_1.problem_inputs.__dict__)
-    
-    
-    gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,
-                           np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0], 
-                           UTFSP_problem_1.problem_data.mx_dist, 
-                           UTFSP_problem_1.problem_data.mx_demand, 
-                           UTFSP_problem_1.problem_inputs.__dict__,
-                           UTFSP_problem_1.problem_data.mx_walk)
-
-# %% Post optimisation analysis:
-if False:
-    def objective_function_analysis(UTFSP_problem_1, F_x):
-        return(
-        f"{round(gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,F_x, UTFSP_problem_1.problem_data.mx_dist, UTFSP_problem_1.problem_data.mx_demand, UTFSP_problem_1.problem_inputs.__dict__),3)}"\
-        f" min & "\
-        f"{round(gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,F_x, UTFSP_problem_1.problem_data.mx_dist, UTFSP_problem_1.problem_data.mx_demand, UTFSP_problem_1.problem_inputs.__dict__, UTFSP_problem_1.problem_data.mx_walk),3)}"\
-        f" min & "\
-        f"{gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, F_x, UTFSP_problem_1.problem_data.mx_dist)}"
-        f" buses"
-        )
-    
-    F_x = np.array([1/5, 1/5, 1/7, 1/5, 1/5, 1/5, 1/5, 1/5])
-    F_x = np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0]
-    F_x = np.array([0.2,	0.2,	0.2,	0.2,	0.0333333333333333,	0.0333333333333333,	0.2,	0.2]) # case study
-    
-    1/F_x
-    
-    Route_lengths = gf.calc_seperate_route_length(R_x, mx_dist)  
-        
-    buses_required = gf2.f4_TBR(R_x, F_x, mx_dist, False)
-    
-    for i in range(len(buses_required)):  
-        buses_required[i] = math.ceil(buses_required[i])
-    
-    """ Print the routes with buses required and the frequencies """
-    print_str = ""
-    comma = ","
-    rowcol_boolean = True
-    for i in range(len(buses_required)): 
-        freq_temp = round(buses_required[i]/(Route_lengths[i]*2),3)
-        headway_temp = round(1/(buses_required[i]/(Route_lengths[i]*2)),3) 
-        
-        temp_str = f"{string.ascii_uppercase[i]} & $\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {Route_lengths[i]} & {math.ceil(buses_required[i])} & {freq_temp} & {headway_temp}\\\\"
-        if rowcol_boolean:
-            temp_str = "".join([temp_str, "\\rowcol"])
-        rowcol_boolean = not rowcol_boolean
-        print_str = "\n".join([print_str, temp_str])
-    
-    print(print_str)
-    
-    # Initial performance
-    objective_function_analysis(UTFSP_problem_1, F_x)
-    
-    # Actual performance 
-    F_x_achieved = buses_required/Route_lengths
-    objective_function_analysis(UTFSP_problem_1, F_x_achieved)
-    
-    
-    
-    TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) 
-    
-    mx_volumes_links = TN.mx_volumes_links
-    b = TN.mx_volumes_nodes
-    
-    c = TN.volumes_links_per_destination
-    
-    TN.volumes_nodes_per_destination_i[0]
-    
-    d = TN.df_opt_strat_alg_named[1]
-    
-    
-    
-    # %% Links Analysis for UTFSP
-    TN = gf2.Transit_network(R_x, F_x_achieved, mx_dist, mx_demand, parameters_input, mx_walk) 
-    
-    links_analysis_df = pd.DataFrame(columns = ["v_i", "v_j", "c_a","f_a","v_a"])
-    
-    for v_i in range(len(mx_volumes_links)):
-        for v_j in range(len(mx_volumes_links)):
-            if mx_volumes_links[v_i,v_j] != 0:
-                links_analysis_df.loc[len(links_analysis_df)] = [v_i, v_j, TN.mx_C_a[v_i,v_j], TN.mx_f_a[v_i,v_j], mx_volumes_links[v_i,v_j]]
-                
-    links_analysis_df_named = copy.deepcopy(links_analysis_df)
-    
-    for i in range(len(links_analysis_df)):
-        links_analysis_df_named.iloc[i,0] = TN.names_all_transit_nodes[int(links_analysis_df.iloc[i,0])]
-        links_analysis_df_named.iloc[i,1] = TN.names_all_transit_nodes[int(links_analysis_df.iloc[i,1])] 
-    
-    
-    """ Max usage per link """     
-    links_analysis_max_df = pd.DataFrame(columns = ["Route", "Max"])
-    
-    for index_i in range(len(TN.R_routes_named)):
-        temp_storage = 0 
-        for link_nr in range(len(links_analysis_df_named)):
-            if links_analysis_df_named.iloc[link_nr,0] in TN.R_routes_named[index_i] or links_analysis_df_named.iloc[link_nr,1] in TN.R_routes_named[index_i]:
-                if links_analysis_df_named.iloc[link_nr,4] > temp_storage:
-                    temp_storage = links_analysis_df_named.iloc[link_nr,4]
-        
-        links_analysis_max_df.loc[len(links_analysis_max_df)] = [string.ascii_uppercase[index_i], temp_storage]
-    
-    """ Walk usage for links """     
-    walk_analysis_max_df = pd.DataFrame(columns = ["v_i", "v_i", "Usage"])
-    
-    for link_nr in range(len(links_analysis_df_named)):
-        if links_analysis_df_named.iloc[link_nr,0] in TN.names_all_transit_nodes[0:len(TN.mapping_adjacent)] and links_analysis_df_named.iloc[link_nr,1] in TN.names_all_transit_nodes[0:len(TN.mapping_adjacent)]:
-            walk_analysis_max_df.loc[len(walk_analysis_max_df)] = [links_analysis_df_named.iloc[link_nr,0], links_analysis_df_named.iloc[link_nr,1], links_analysis_df_named.iloc[link_nr,4]]
-    
-    def inf_conversion(number_to_test): 
-        if number_to_test == inf:
-            return "\infty"
-        else:   
-            return round(number_to_test,3)
-    
-    """  Print links analysis for latex """
-    print_str = ""
-    rowcol_boolean = True
-    for i in range(len(links_analysis_df_named)):   
-        temp_str = f"{links_analysis_df_named.iloc[i,0]} & {links_analysis_df_named.iloc[i,1]} & {links_analysis_df_named.iloc[i,2]} & ${inf_conversion(links_analysis_df_named.iloc[i,3])}$ & {round(links_analysis_df_named.iloc[i,4],3)}\\\\"
-        if rowcol_boolean:
-            temp_str = "".join([temp_str, "\\rowcol"])
-        rowcol_boolean = not rowcol_boolean
-        
-        print_str = "\n".join([print_str, temp_str])
-        
-    print(print_str)
-    
-    
-    """  Print max route usage for latex """
-    print_str = ""
-    rowcol_boolean = True
-    for i in range(len(links_analysis_max_df)):   
-        temp_str = f"{links_analysis_max_df.iloc[i,0]} & $\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {round(links_analysis_max_df.iloc[i,1],3)}\\\\"
-        if rowcol_boolean:
-            temp_str = "".join([temp_str, "\\rowcol"])
-        rowcol_boolean = not rowcol_boolean
-        
-        print_str = "\n".join([print_str, temp_str])
-        
-    print(print_str)
-    
-    """  Print walk links usage for latex """
-    print_str = ""
-    rowcol_boolean = True
-    for i in range(len(walk_analysis_max_df)):   
-        temp_str = f"{walk_analysis_max_df.iloc[i,0]} & {walk_analysis_max_df.iloc[i,1]} & {round(walk_analysis_max_df.iloc[i,2],3)}\\\\"
-        if rowcol_boolean:
-            temp_str = "".join([temp_str, "\\rowcol"])
-        rowcol_boolean = not rowcol_boolean
-        
-        print_str = "\n".join([print_str, temp_str])
-        
-    print(print_str)
-    
-    # %% Final performance
-    buses_required_final = copy.deepcopy(buses_required)
-    F_x_achieved = buses_required_final/Route_lengths
-    F_x_achieved[4] = 1/100000
-    F_x_achieved[5] = 1/100000
-    objective_function_analysis(UTFSP_problem_1, F_x_achieved)
-    
-    # Matie Bus Evaluations
-    UTFSP_problem_matie_bus_routes = copy.deepcopy(UTFSP_problem_1)
+        main(UTRFSP_problem_1)

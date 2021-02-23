@@ -208,22 +208,22 @@ class PopulationFreq(gf2.Frequencies):
             self.variables[i,] = 1/gf2.Frequencies.theta_set[self.variable_args[i,]]
             self.objectives[i,] = fn_obj(self.variables[i,], main_problem)
             
-            # get the objective space values and objects
-            # F = pop.get("F").astype(np.float, copy=False)
-            F = self.objectives
-        
-            # do the non-dominated sorting until splitting front
-            fronts = NonDominated_Sorting().do(F)
+        # get the objective space values and objects
+        # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+    
+        # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
 
-            for k, front in enumerate(fronts):
-        
-                # calculate the crowding distance of the front
-                crowding_of_front = calc_crowding_distance(F[front, :])
-        
-                # save rank and crowding in the individual class
-                for j, i in enumerate(front):
-                    self.rank[i] = k
-                    self.crowding_dist[i] = crowding_of_front[j]
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
                     
             
     def get_summary(self):

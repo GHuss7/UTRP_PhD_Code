@@ -15,7 +15,7 @@ import random
 from itertools import compress
 import networkx as nx
 import copy
-import pygmo as pg
+#import pygmo as pg
 from math import inf
 
 import DSS_UTNDP_Functions as gf

@@ -16,13 +16,15 @@ from itertools import compress
 import networkx as nx
 import copy
 import datetime
-import pygmo as pg
+# import pygmo as pg
 
 from pymoo.util.misc import find_duplicates, has_feasible
 from pymoo.util.dominator import Dominator
 from pymoo.operators.selection.tournament_selection import compare, TournamentSelection
 from pymoo.util.randomized_argsort import randomized_argsort
 from pymoo.util.misc import random_permuations
+from pymoo.factory import get_performance_indicator
+
 
 import DSS_UTNDP_Classes as gc
 import EvaluateRouteSet as ev
@@ -1149,8 +1151,8 @@ def norm_and_calc_2d_hv(df_norm, max_objs, min_objs):
     df_norm_copy[df_norm_copy < 0] = 0 # to avoid errors in HV computation
     df_norm_copy[df_norm_copy > 1] = 1 # to avoid errors in HV computation
         
-    hv = pg.hypervolume(points = df_norm_copy.tolist()) # create the HV object
-    return hv.compute((1,1)) # assume minimisation and compute
+    hv = get_performance_indicator("hv", ref_point=np.array([1, 1])) # create the HV object
+    return hv.calc(df_norm_copy.tolist()) # assume minimisation and compute
     
 def norm_and_calc_2d_hv_np(numpy_objs, max_objs, min_objs):
     """Use this when input values are numpy arrays"""
@@ -1158,9 +1160,9 @@ def norm_and_calc_2d_hv_np(numpy_objs, max_objs, min_objs):
     # take note, the df has now changed to a numpy array
     numpy_objs_copy[numpy_objs_copy < 0] = 0 # to avoid errors in HV computation
     numpy_objs_copy[numpy_objs_copy > 1] = 1 # to avoid errors in HV computation
-        
-    hv = pg.hypervolume(points = numpy_objs_copy) # create the HV object
-    return hv.compute((1,1)) # assume minimisation and compute
+      
+    hv = get_performance_indicator("hv", ref_point=np.array([1, 1]))    
+    return hv.calc(numpy_objs_copy) # assume minimisation and compute
     
 ''' Calculate Hypervolume using Pygmo ''' 
 def calc_hv_from_df(df_archive):

@@ -60,10 +60,10 @@ from pymoo.util.randomized_argsort import randomized_argsort
 
 from pymoo.model.selection import Selection
 from pymoo.util.misc import random_permuations
+from pymoo.factory import get_performance_indicator
     
 # %% Load the respective files
-#name_input_data = "SSML_STB_1700_UTFSP"      # set the name of the input data
-name_input_data = "SSML_STB_1200_UTFSP"      # set the name of the input data
+name_input_data = ["Mandl_UTRFSP"][0]  # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
@@ -77,7 +77,7 @@ Decisions = {
 #"Choice_generate_initial_set" : True, 
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
-"Choice_consider_walk_links" : True,
+"Choice_consider_walk_links" : False,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
@@ -91,7 +91,7 @@ if not(Decisions["Choice_consider_walk_links"]):
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
-    parameters_GA_frequencies = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_frequencies.json"))
+    parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
 
 else:
     '''State the various parameter constraints''' 
@@ -119,10 +119,10 @@ else:
     }
     
     '''State the various GA input parameters for frequency setting''' 
-    parameters_GA_frequencies={
+    parameters_GA={
     "method" : "GA",
-    "population_size" : 4, #should be an even number, John: 200
-    "generations" : 2, # John: 200
+    "population_size" : 2, #should be an even number, John: 200
+    "generations" : 1, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability" : 0.7,  # John: 0.9 BEST: 0.8
     "crossover_distribution_index" : 5,
@@ -159,7 +159,7 @@ if 0 not in set([y for x in R_x for y in x]): # NB: test whether the route is in
     del i
 R_routes = gf2.Routes(R_x)
 
-parameters_GA_frequencies["mutation_probability"] = 1/(len(R_routes.routes))
+parameters_GA["mutation_probability"] = 1/(len(R_routes.routes))
 
 # %% Initialise the decision variables
 '''Initialise the decision variables'''
@@ -169,15 +169,17 @@ F_frequencies.set_frequencies(np.full(len(R_x), 1/5))
     
 F_x = F_frequencies.frequencies
 
-parameters_GA_frequencies["number_of_variables"] = len(F_x)
+parameters_GA["number_of_variables"] = len(F_x)
 
 #%% Define the UTFSP Problem      
 UTFSP_problem_1 = gf2.UTFSP_problem()
 UTFSP_problem_1.problem_data = gf2.Problem_data(mx_dist, mx_demand, mx_coords, mx_walk)
 UTFSP_problem_1.problem_constraints = gf2.Problem_constraints(parameters_constraints)
 UTFSP_problem_1.problem_inputs = gf2.Problem_inputs(parameters_input)
-UTFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA_frequencies)
+UTFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA)
+UTFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTFSP_problem_1.R_routes = R_routes
+UTFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
 UTFSP_problem_1.add_text = "" # define the additional text for the file name
 
 #%% Define the Transit network
@@ -713,7 +715,7 @@ def main(UTFSP_problem_1):
         
     #%% GA Implementation UTFSP
     
-    for run_nr in range(0, parameters_GA_frequencies["number_of_runs"]):
+    for run_nr in range(0, parameters_GA["number_of_runs"]):
     
         # Create the initial populations   
         stats['begin_time'] = datetime.datetime.now() # enter the begin time
@@ -787,7 +789,7 @@ def main(UTFSP_problem_1):
                                                  parameters_input['Problem_name']+
                                                  "/"+parameters_input['Problem_name']+
                                                  "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
-                                                 " "+parameters_GA_frequencies['method']+
+                                                 " "+parameters_GA['method']+
                                                  f"_{UTFSP_problem_1.add_text}")
             
             '''Sub folder path'''
@@ -821,12 +823,12 @@ def main(UTFSP_problem_1):
             
             json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
             json.dump(parameters_constraints, open(path_results_per_run / "parameters_constraints.json", "w"))
-            json.dump(parameters_GA_frequencies, open(path_results_per_run / "parameters_GA_frequencies.json", "w"))
+            json.dump(parameters_GA, open(path_results_per_run / "parameters_GA.json", "w"))
             pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
             
             with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
                 w = csv.writer(archive_file)
-                for key, val in {**parameters_input, **parameters_constraints, **parameters_GA_frequencies, **stats}.items():
+                for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
                     w.writerow([key, val])
                 del key, val
             
@@ -935,7 +937,7 @@ def main(UTFSP_problem_1):
                 w.writerow([key, val])
             del key, val
             
-        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA_frequencies["number_of_runs"]) # prints the runs summary
+        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
         # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
         
         # %% Plot analysis graph
@@ -975,47 +977,47 @@ if __name__ == "__main__":
         ''' Create copies of the original input data '''
         #original_UTFSP_problem_1 = copy.deepcopy(UTFSP_problem_1)    
         #original_parameters_constraints = copy.deepcopy(parameters_constraints)  
-        #original_parameters_GA_frequencies = copy.deepcopy(parameters_GA_frequencies)  
+        #original_parameters_GA = copy.deepcopy(parameters_GA)  
         
         # Set up the list of parameters to test
-        sensitivity_list = [[parameters_GA_frequencies, "population_size", 10, 20, 50, 100, 150, 200, 300],
-                            [parameters_GA_frequencies, "generations", 5, 10, 15, 20, 25, 50],
-                            [parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
-                            [parameters_GA_frequencies, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+        sensitivity_list = [[parameters_GA, "population_size", 10, 20, 50, 100, 150, 200, 300],
+                            [parameters_GA, "generations", 5, 10, 15, 20, 25, 50],
+                            [parameters_GA, "crossover_probability", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
+                            [parameters_GA, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
                             ]
         
         # Set up the list of parameters to test
-        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 10, 20, 50, 100, 150],
-                            #[parameters_GA_frequencies, "population_size", 200],
+        sensitivity_list = [#[parameters_GA, "population_size", 10, 20, 50, 100, 150],
+                            #[parameters_GA, "population_size", 200],
                             
-                            #[parameters_GA_frequencies, "population_size", 300],
+                            #[parameters_GA, "population_size", 300],
                             
-                            #[parameters_GA_frequencies, "generations", 60],
-                            [parameters_GA_frequencies, "generations", 60],
+                            #[parameters_GA, "generations", 60],
+                            [parameters_GA, "generations", 60],
                             
-                            #[parameters_GA_frequencies, "crossover_probability", 0.7, 0.8, 0.9],
-                            #[parameters_GA_frequencies, "crossover_probability", 0.95, 1],
+                            #[parameters_GA, "crossover_probability", 0.7, 0.8, 0.9],
+                            #[parameters_GA, "crossover_probability", 0.95, 1],
                             
-                            #[parameters_GA_frequencies, "mutation_probability", 0.05, 0.1],
-                            #[parameters_GA_frequencies, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+                            #[parameters_GA, "mutation_probability", 0.05, 0.1],
+                            #[parameters_GA, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
                             ]
         # # Sensitivity analysis
-        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 200], # baseline
-                            #[parameters_GA_frequencies, "population_size", 10],
-                            [parameters_GA_frequencies, "population_size", 300],
-                            #[parameters_GA_frequencies, "generations", 5],
-                            #[parameters_GA_frequencies, "generations", 60],
-                            #[parameters_GA_frequencies, "crossover_probability", 0.5, 1],
-                            #[parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
+        sensitivity_list = [#[parameters_GA, "population_size", 200], # baseline
+                            #[parameters_GA, "population_size", 10],
+                            [parameters_GA, "population_size", 300],
+                            #[parameters_GA, "generations", 5],
+                            #[parameters_GA, "generations", 60],
+                            #[parameters_GA, "crossover_probability", 0.5, 1],
+                            #[parameters_GA, "mutation_probability", 0.01, 0.5],
                             ]
         
-        sensitivity_list = [#[parameters_GA_frequencies, "population_size", 200], # baseline
-                            #[parameters_GA_frequencies, "population_size", 10],
-                            [parameters_GA_frequencies, "population_size", 10],
-                            #[parameters_GA_frequencies, "generations", 5],
-                            #[parameters_GA_frequencies, "generations", 60],
-                            #[parameters_GA_frequencies, "crossover_probability", 0.5, 1],
-                            #[parameters_GA_frequencies, "mutation_probability", 0.01, 0.5],
+        sensitivity_list = [#[parameters_GA, "population_size", 200], # baseline
+                            #[parameters_GA, "population_size", 10],
+                            [parameters_GA, "population_size", 10],
+                            #[parameters_GA, "generations", 5],
+                            #[parameters_GA, "generations", 60],
+                            #[parameters_GA, "crossover_probability", 0.5, 1],
+                            #[parameters_GA, "mutation_probability", 0.01, 0.5],
                             ]
         
 
@@ -1036,7 +1038,7 @@ if __name__ == "__main__":
     
                 # Update problem instance
                 UTFSP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
-                UTFSP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA_frequencies)
+                UTFSP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
                 
                 # Run model
                 main(UTFSP_problem_1)

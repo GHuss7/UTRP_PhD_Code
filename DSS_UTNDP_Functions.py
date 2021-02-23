@@ -1152,7 +1152,7 @@ def norm_and_calc_2d_hv(df_norm, max_objs, min_objs):
     df_norm_copy[df_norm_copy > 1] = 1 # to avoid errors in HV computation
         
     hv = get_performance_indicator("hv", ref_point=np.array([1, 1])) # create the HV object
-    return hv.calc(df_norm_copy.tolist()) # assume minimisation and compute
+    return hv.calc(df_norm_copy) # assume minimisation and compute
     
 def norm_and_calc_2d_hv_np(numpy_objs, max_objs, min_objs):
     """Use this when input values are numpy arrays"""

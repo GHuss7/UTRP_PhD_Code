@@ -1710,6 +1710,56 @@ def crossover_routes_unseen_prob(parent_i, parent_j):
     
     return child_i
 
+def crossover_routes_unseen_prob_UTRFSP(parent_i_route, parent_j_route):
+    """Crossover function for routes based on Mumford 2013's Crossover function
+    for routes based on alternating between parents and including a route from
+    each parent that maximises the unseen vertices added to the child route
+    Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
+    parents = []  
+    parents.append(copy.deepcopy(parent_i_route))
+    parents.append(copy.deepcopy(parent_j_route))
+    parent_index = random.randint(0,1) # counter to help alternate between parents  
+    
+    child_i_route = [] # define child
+    parent_len = len(parent_i_route)
+    
+    # Randomly select the first seed solution for the child
+    random_index = random.randint(0,parent_len-1)
+    child_i_route.append(parents[parent_index][random_index]) # adds seed solution to parent
+    del(parents[parent_index][random_index]) # removes the route from parent so that it is not evaluated again
+    
+    # Alternates parent solutions
+    parent_index = looped_incrementor(parent_index, 1)
+    
+    
+    # Calculate the unseen proportions to select next route for inclusion into child
+    while len(child_i_route) < parent_len:
+        # Determines all nodes present in the child
+        all_nodes_present = set([y for x in child_i_route for y in x]) # flatten all the elements in child
+    
+        parent_curr = parents[parent_index] # sets the current parent
+        
+        proportions = []
+        for i_candidate in range(len(parent_curr)):
+            R_i = set(parent_curr[i_candidate])
+            if bool(R_i.intersection(all_nodes_present)): # test whether there is a common transfer point
+                proportions.append(len(R_i - all_nodes_present) / len(R_i)) # calculate the proportion of unseen vertices
+            else:
+                proportions.append(0) # set proportion to zero so that it won't be chosen
+        
+        # Get route that maximises the proportion of unseen nodes included
+        max_indices = set([i for i, j in enumerate(proportions) if j == max(proportions)]) # position of max proportion/s
+        max_index = random.sample(max_indices, 1)[0] # selects only one index randomly between a possible tie, else the only one
+        
+        # Add the route to the child
+        child_i_route.append(parent_curr[max_index]) # add max proportion unseen nodes route to the child
+        del(parents[parent_index][max_index]) # removes the route from parent so that it is not evaluated again
+        
+        # Alternates parent solutions
+        parent_index = looped_incrementor(parent_index, 1)
+    
+    return child_i_route
+
 
 def crossover_uniform_as_is(parent_A, parent_B, parent_length):
     x_index = random.randint(1,parent_length-1)
@@ -1790,6 +1840,37 @@ def crossover_pop_routes(pop, main_problem):
     
     else:
         return pop.variables
+    
+    
+def crossover_pop_routes_UTRFSP(pop, main_problem):
+    """Crossover function for entire route population"""
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
+    
+    if random.random() < main_problem.problem_GA_parameters.crossover_probability_routes:
+        offspring_variables_routes = [None] * main_problem.problem_GA_parameters.population_size
+    
+        
+        for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
+            parent_A = pop.variables_routes[selection[i,0]]
+            parent_B = pop.variables_routes[selection[i,1]]
+        
+            offspring_variables_routes[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+                # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+            
+            while not test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+                offspring_variables_routes[i] = repair_add_missing_from_terminal(offspring_variables_routes[i], 
+                                                                             main_problem.problem_inputs.n, 
+                                                                             main_problem.mapping_adjacent)
+                
+                if test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+                    continue
+                else:
+                    offspring_variables_routes[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+        
+        return offspring_variables_routes
+    
+    else:
+        return pop.variables_routes
         
     
 
@@ -1903,6 +1984,14 @@ def mutate_route_population(pop_variables_routes, main_problem):
     for i in range(len(pop_mutated_variables)):
          pop_mutated_variables[i] = mutate_overall_routes(pop_mutated_variables[i], main_problem, 
                           main_problem.problem_GA_parameters.mutation_probability)
+    return pop_mutated_variables
+
+def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
+    """A function to mutate over the entire population"""
+    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    for i in range(len(pop_mutated_variables)):
+         pop_mutated_variables[i] = mutate_overall_routes(pop_mutated_variables[i], main_problem, 
+                          main_problem.problem_GA_parameters.mutation_probability_routes)
     return pop_mutated_variables
 
 # %% Objective Functions

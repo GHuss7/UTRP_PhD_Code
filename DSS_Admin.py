@@ -340,14 +340,48 @@ def get_sens_tests_stats_from_UTFSP_GA_runs(path_to_main_folder):
 '''Add a row to a dataframe with a dictionary fast'''
 def add_row_to_df(dataframe,dict_entry):
     dataframe.append(dict_entry)
+      
+def add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1, data_for_analysis=False):
+    """
     
-def add_UTRFSP_analysis_data(data_for_analysis, pop_1):
-    for index_i in range(len(pop_1.variables_routes_str)):
-        data_row = [pop_1.variables_routes_str[index_i]]
-        data_row.extend(list(pop_1.variables_freq[index_i,:]))
-        data_row.extend(list(pop_1.objectives[index_i,:]))
-        data_for_analysis.loc[len(data_for_analysis)] = data_row
-         
+
+    Parameters
+    ----------
+    pop_1 : PopulationRoutesFreq object
+        Contains all the variables and objective function values.
+    UTRFSP_problem_1 : UTRFSP_problem object
+        Object containing the main UTRFSP details.
+    data_for_analysis : False or pandas.DataFrame, optional
+        The dataframe to contain the data analysis. If False, this is the fist 
+        time the Dataframe is created and then only add the first pop_size 
+        population of solutions. The default is False.
+
+    Returns
+    -------
+    data_for_analysis : pandas.DataFrame
+        The appended DataFrame.
+
+    """
+    pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
+    
+    if isinstance(data_for_analysis, pd.DataFrame):
+        for index_i in range(pop_size, pop_size*2):
+            data_row = [pop_1.variables_routes_str[index_i]]
+            data_row.extend(list(pop_1.variables_freq[index_i,:]))
+            data_row.extend(list(pop_1.objectives[index_i,:]))
+            data_for_analysis.loc[len(data_for_analysis)] = data_row
+            
+    else:
+        columns_list = ["R_x", "F_3", "F_4"]
+        columns_list[1:1] = ["f_"+str(x) for x in range(UTRFSP_problem_1.problem_constraints.con_r)]
+        data_for_analysis = pd.DataFrame(columns=columns_list)
+        
+        for index_i in range(pop_size):
+            data_row = [pop_1.variables_routes_str[index_i]]
+            data_row.extend(list(pop_1.variables_freq[index_i,:]))
+            data_row.extend(list(pop_1.objectives[index_i,:]))
+            data_for_analysis.loc[len(data_for_analysis)] = data_row
+            
     return data_for_analysis
     
     

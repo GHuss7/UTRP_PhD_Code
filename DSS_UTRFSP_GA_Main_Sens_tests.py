@@ -125,15 +125,13 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 4, #should be an even number, John: 200
-    "generations" : 1, # John: 200
+    "population_size" : 10, #should be an even number, John: 200
+    "generations" : 5, # John: 200
     "number_of_runs" : 1, # John: 20
-    #"crossover_probability" : 0.7,
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
-    #"mutation_probability" : 1/parameters_constraints["con_r"],
     "mutation_probability_routes" : 1,
-    "mutation_ratio" : 0.9, # Ratio used for the probabilites of mutations applied
+    "mutation_ratio" : 0.4, # Ratio used for the probabilites of mutations applied
     "mutation_probability_freq" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later BEST: 0.1 
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
@@ -274,6 +272,16 @@ class PopulationRouteFreq(gf2.Frequencies):
             for name, group in groups:
                 plt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
             plt.legend()
+            
+    def debug(self):
+        """Quick method to pring debug statements"""
+        print(f"Counts: \n \
+              Freq variables:\t {len(self.variables_freq)}\n \
+              Freq args variables:\t {len(self.variable_freq_args)}\n \
+              Route variables:\t {len(self.variables_routes)}\n \
+              Route str variables:\t {len(self.variables_routes_str)}\n \
+              Objectives:\t {len(self.objectives)}\n \
+              ")
     
 
 #%% Class: NonDominated_Sorting
@@ -552,6 +560,8 @@ def mutate_pop_args(offspring_variable_args, variable_len, mutation_probability)
 
 def keep_individuals(pop, survivor_indices):
     # Function that only keeps to individuals with the specified indices
+    pop.variables_routes = [pop.variables_routes[x] for x in survivor_indices]
+    pop.variables_routes_str = [pop.variables_routes_str[y] for y in survivor_indices]
     pop.variable_freq_args = pop.variable_freq_args[survivor_indices,]
     pop.variables_freq = pop.variables_freq[survivor_indices,]
     pop.objectives = pop.objectives[survivor_indices,]  
@@ -674,6 +684,54 @@ def combine_offspring_with_pop_routes(pop, offspring_variables_routes):
     # This continues as normal
     pop.rank = np.empty([len(pop.variables), 1])
     pop.crowding_dist = np.empty([len(pop.variables), 1])
+    
+    # get the objective space values and objects
+    F = pop.objectives
+
+    # do the non-dominated sorting until splitting front
+    fronts = gc.NonDominated_Sorting().do(F)
+
+    for k, front in enumerate(fronts):
+
+        # calculate the crowding distance of the front
+        crowding_of_front = gf.calc_crowding_distance(F[front, :])
+
+        # save rank and crowding in the individual class
+        for j, i in enumerate(front):
+            pop.rank[i] = k
+            pop.crowding_dist[i] = crowding_of_front[j]
+            
+def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, offspring_variables_freq_args, main_problem):
+    """Function to combine the offspring with the population for the UTNDP routes
+    NB: avoid casting lists to numpy arrays, keep it lists"""
+    
+    len_pop = len(pop.objectives)
+    pop.variables_routes = pop.variables_routes + offspring_variables_routes # adds two lists to each other
+    pop.variable_freq_args = np.vstack([pop.variable_freq_args, np.asarray(offspring_variables_freq_args)])
+    offspring_variables_freq = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]]
+    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables_freq])
+            
+    # Only evaluate the offspring
+    offspring_variables_routes = pop.variables_routes[len_pop:] # this is done so that if duplicates are removed, no redundant calculations are done
+    
+    len_offspring = len(offspring_variables_routes)
+    offspring_variables_routes_str = [None] * len_offspring
+    offspring_objectives = np.empty([len_offspring,
+                                   main_problem.problem_GA_parameters.number_of_objectives])
+    
+    for index_i in range(len_offspring):
+        # Adds the string representations
+        offspring_variables_routes_str[index_i] = gf.convert_routes_list2str(offspring_variables_routes[index_i])
+        # Calculates the objectives
+        offspring_objectives[index_i,] = fn_obj_f3_f4(offspring_variables_routes[index_i], offspring_variables_freq[index_i], main_problem) 
+
+    # Add evaluated offspring to population
+    pop.variables_routes_str = pop.variables_routes_str + offspring_variables_routes_str # adds two lists to each other
+    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
+    
+    # This continues as normal
+    pop.rank = np.empty([len(pop.objectives), 1])
+    pop.crowding_dist = np.empty([len(pop.objectives), 1])
     
     # get the objective space values and objects
     F = pop.objectives
@@ -814,19 +872,21 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         
         # Crossover amd Mutation for Routes
-        offspring_variables_route = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
-        mutated_variables = gf.mutate_route_population_UTRFSP(offspring_variables_route, UTRFSP_problem_1)
-        combine_offspring_with_pop_routes(pop_1, mutated_variables)
-        
+        offspring_variables_route, offspring_variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
+        mutated_variables_route = gf.mutate_route_population_UTRFSP(offspring_variables_route, UTRFSP_problem_1)
+        combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_route, offspring_variables_freq_args, UTRFSP_problem_1)
+                
         # Crossover amd Mutation for Frequencies
-        offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTRFSP_problem_1)
-        
-        mutated_variable_args = mutate_pop_args(offspring_variable_args, 
-                   UTRFSP_problem_1.R_routes.number_of_routes,
-                   UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
-        
-        # Combine offspring with population
-        combine_offspring_with_pop(pop_1, mutated_variable_args)
+        #TODO: Sort out the frequency aspects of cross and mut
+        if False:
+            offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTRFSP_problem_1)
+            
+            mutated_variable_args = mutate_pop_args(offspring_variable_args, 
+                       UTRFSP_problem_1.R_routes.number_of_routes,
+                       UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
+            
+            # Combine offspring with population
+            combine_offspring_with_pop(pop_1, mutated_variable_args)
         
         if Decisions["Choice_print_full_data_for_analysis"]:
             df_data_for_analysis = ga.add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1, df_data_for_analysis)
@@ -835,7 +895,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
         survivor_indices = get_survivors(pop_1, pop_size)
         keep_individuals(pop_1, survivor_indices)
-    
+
         # Calculate the HV Quality Measure
         HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
         df_data_generations.loc[i_generation+1] = [i_generation+1, HV]

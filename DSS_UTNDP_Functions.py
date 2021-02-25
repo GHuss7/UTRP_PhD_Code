@@ -1891,7 +1891,6 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
     offspring_variables_routes = [None] * main_problem.problem_GA_parameters.population_size
     offspring_variables_freq_args = [None] * main_problem.problem_GA_parameters.population_size
     
-    
     for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
         
         if random.random() < main_problem.problem_GA_parameters.crossover_probability_routes:
@@ -1912,7 +1911,7 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
                 if test_all_four_constraints_debug(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
                     continue
                 else:
-                    offspring_variables_routes[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
+                    offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
         
         else:
             # Randomly choose one of the parents as the offspring

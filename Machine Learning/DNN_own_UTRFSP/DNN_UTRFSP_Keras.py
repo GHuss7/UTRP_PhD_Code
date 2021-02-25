@@ -54,35 +54,40 @@ if False:
         model.fit(X[train], Y[train], epochs=10, verbose=1)
 
 #%% Model construction
-t1 = time.time()
-
 model = Sequential()
 model.add(Dense(21, input_dim=x_train.shape[1], activation='relu'))
 model.add(Dense(30, activation='relu'))
 model.add(Dense(15, activation='relu'))
-model.add(Dense(1, activation='relu'))
-model.compile(optimizer='adam', loss='mse', metrics=['mse'])
-model.fit(x_train, y_train, epochs=30, verbose=1, batch_size=10)
+model.add(Dense(2)) # default activation function is linear
+model.compile(optimizer='adam', loss='mse',
+              metrics=['mae',
+                       tf.keras.metrics.MeanAbsolutePercentageError()])
 
+#%% Model training
+t1 = time.time()
+tb_callback = tf.keras.callbacks.TensorBoard(
+    log_dir="logs",
+    histogram_freq=0,
+    write_graph=True,
+    write_images=False,
+    update_freq="epoch",
+    profile_batch=2,
+    embeddings_freq=0,
+    embeddings_metadata=None)
+
+model.fit(x_train, y_train, epochs=50, verbose=1, batch_size=10, callbacks=[tb_callback])
 t2 = time.time()
+print (f"Training time: {t2-t1:.2f}s")
 
 #%% Model evaluation
-_, performance_metric = model.evaluate(x_val, y_val)
-print('Performance_metric: %.2f' % (performance_metric*100))
+loss_mse, mae, mape = model.evaluate(x_val, y_val)
+print(f'Performance metrics (AVG): \tMSE: {loss_mse:.2f} \tMAE: {mae:.2f} \tMAPE: {mape:.2f}')
 
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-
-# make probability predictions with the model
-y_pred = model.predict(x_val)
-
-r2 = round(r2_score(y_val, y_pred),4)
-mae = round(mean_absolute_error(y_val, y_pred),4)
-mse = round(mean_squared_error(y_val, y_pred),4)
-accuracy = round(1 - mae/np.average(y_val),4)
-
-training_time = round(t2-t1, 6)            
-print (f"Test:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse} [{training_time}s]")
+#%% Model predictions and evaluations
+y_pred = model.predict(x_test)
+hf.print_evaluation(y_test, y_pred)
 
 #%% Results saving
 results_stacked = np.hstack([y_val, y_pred])
 np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", results_stacked, delimiter=",")
+

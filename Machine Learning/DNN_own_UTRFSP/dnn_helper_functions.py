@@ -5,6 +5,7 @@ import pandas as pd
 import datetime
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 
 def sigmoid(Z):
@@ -187,7 +188,7 @@ def load_data_UTRP_data(file_location, name_input_data):
     
     return data_x_orig, data_y
 
-def load_data_UTRFSP_data(file_location, name_input_data):
+def load_data_UTRFSP_data(file_location, name_input_data, load_all_y_values=True):
 
     mx_dist = pd.read_csv("../../Input_Data/"+name_input_data+"/Distance_Matrix.csv")
     mx_dist = mx_dist.iloc[:,1:mx_dist.shape[1]]
@@ -217,8 +218,12 @@ def load_data_UTRFSP_data(file_location, name_input_data):
         recast_decision_variable[-con_r:,m_example] = data.iloc[m_example, 2:con_r+2] # adds the frequencies
     
     data_x_orig = recast_decision_variable
-    data_y = np.array(data["F_3"])
-    data_y = data_y.reshape(data_y.shape[0],1)
+    if load_all_y_values:
+        data_y = np.array(data[["F_3","F_4"]])
+        data_y = data_y.reshape(data_y.shape[0],2)
+    else:
+        data_y = np.array(data["F_3"])
+        data_y = data_y.reshape(data_y.shape[0],1)
     
     return data_x_orig.T, data_y
 
@@ -299,6 +304,26 @@ def convert_routes_str2list(routes_R_str):
                 if routes_R_str[i] == "-":
                     flag_end_node = True
     return routes_R_list
+
+#%% Evaluation functions
+def print_evaluation(y_val, y_pred):
+    r2 = round(r2_score(y_val[:,0], y_pred[:,0]),4)
+    mae = round(mean_absolute_error(y_val[:,0], y_pred[:,0]),4)
+    mse = round(mean_squared_error(y_val[:,0], y_pred[:,0]),4)
+    accuracy = round(1 - mae/np.average(y_val[:,0]),4)
+    print (f"Test F_3:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
+    
+    r2 = round(r2_score(y_val[:,1], y_pred[:,1]),4)
+    mae = round(mean_absolute_error(y_val[:,1], y_pred[:,1]),4)
+    mse = round(mean_squared_error(y_val[:,1], y_pred[:,1]),4)
+    accuracy = round(1 - mae/np.average(y_val[:,1]),4)
+    print (f"Test F_4:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
+    
+    r2 = round(r2_score(y_val, y_pred),4)
+    mae = round(mean_absolute_error(y_val, y_pred),4)
+    mse = round(mean_squared_error(y_val, y_pred),4)
+    accuracy = round(1 - mae/np.average(y_val),4)       
+    print (f"Test AVG:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
 
 # %% Coursera course helper functions
 def initialize_parameters(n_x, n_h, n_y):

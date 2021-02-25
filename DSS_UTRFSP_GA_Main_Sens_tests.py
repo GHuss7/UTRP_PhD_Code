@@ -872,8 +872,9 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         
         # Crossover amd Mutation for Routes
-        offspring_variables_route, offspring_variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
-        mutated_variables_route = gf.mutate_route_population_UTRFSP(offspring_variables_route, UTRFSP_problem_1)
+        offspring_variables_routes, offspring_variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
+
+        mutated_variables_route = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
         combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_route, offspring_variables_freq_args, UTRFSP_problem_1)
                 
         # Crossover amd Mutation for Frequencies
@@ -1185,3 +1186,8 @@ if False: #__name__ == "__main__":
     else:
         print(f'Normal run initiated')
         main(UTRFSP_problem_1)
+
+#TODO: TESTS TO DELETE
+all_nodes = [y for x in pop_1.variables_routes for y in x]
+
+(len(set(all_nodes)) == 15)

@@ -28,6 +28,10 @@ import igraph as ig
 import networkx as nx
 import concurrent.futures
 
+from tensorflow import keras
+
+model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/Saved_models/Model_1') # load the ML prediction model
+
 # %% Import personal functions
 import DSS_Admin as ga
 import DSS_UTNDP_Functions as gf
@@ -79,6 +83,7 @@ Decisions = {
 "Choice_consider_walk_links" : False,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
+"Choice_use_NN_to_predict" : False,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
 
@@ -186,7 +191,7 @@ UTRFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA)
 UTRFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTRFSP_problem_1.R_routes = R_routes
 UTRFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
-UTRFSP_problem_1.add_text = "Data_Gen_Trials_3CMs_Pop_Gen_Upgrade" # define the additional text for the file name
+UTRFSP_problem_1.add_text = "NN_Trials" # define the additional text for the file name
 
 #%% Define the Transit network
 TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) # for debugging
@@ -659,7 +664,75 @@ def fn_obj_row(frequencies):
                        frequencies, 
                        UTRFSP_problem_1.problem_data.mx_dist)) #f4_TBR
 
-def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+def get_links_list_and_distances(matrix_dist):
+    # Creates a list of all the links in a given adjacency matrix and a 
+    # corresponding vector of distances associated with each link
+    #  Output: (links_list, links_distances) [list,float64]
+    
+    max_distance = matrix_dist.max().max() # gets the max value in the matrix
+    matrix_dist_shape = (len(matrix_dist),len(matrix_dist[0])) # row = entry 0, col = entry 1, stores the values (efficiency)
+    links_list_dist_mx = list() # create an empty list to store the links
+
+    # from the distance matrix, get the links list
+    for i in range(matrix_dist_shape[0]):
+        for j in range(matrix_dist_shape[1]):
+            val = matrix_dist[i,j]
+            if val != 0 and val != max_distance and i<j: # i > j yields only single edges, and not double arcs
+                links_list_dist_mx.append((i,j))
+
+    # Create the array to store all the links' distances
+    links_list_distances = np.int64(np.empty(shape=(len(links_list_dist_mx),1))) # create the array
+
+    # from the distance matrix, store the distances for each link
+    for i in range(len(links_list_dist_mx)): 
+        links_list_distances[i] = matrix_dist[links_list_dist_mx[i]]
+    
+    return links_list_dist_mx, links_list_distances
+
+def recast_decision_variable(routes, frequencies, UTRFSP_problem_1):
+    
+    mx_dist = UTRFSP_problem_1.problem_data.mx_dist
+    
+    edge_list, edge_weights = get_links_list_and_distances(mx_dist)
+    con_r = UTRFSP_problem_1.problem_constraints.con_r
+    
+    recast_decision_variable = np.zeros((len(edge_list)*con_r + con_r, 1))
+    
+    num_edges = len(edge_list)
+    
+    #temp_route_set = convert_routes_str2list(routes)
+    for route_nr, route in enumerate(routes): 
+        for edge_nr in range(len(route) - 1):
+            if route[edge_nr]<route[edge_nr+1]:
+                temp_edge = (route[edge_nr],route[edge_nr+1])
+            else:
+                temp_edge = (route[edge_nr+1],route[edge_nr])
+                
+            recast_decision_variable[route_nr*num_edges + edge_list.index(temp_edge),0] = 1
+    
+    recast_decision_variable[-con_r:,0] = frequencies # adds the frequencies
+    
+    return recast_decision_variable.T
+    
+
+if Decisions['Choice_use_NN_to_predict']:
+    def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+        """Objective function using the NN model to predict F_3 and F_4 values"""
+        return model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_1))
+
+else:
+    def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+        return (gf2.f3_ETT(routes,
+                           frequencies, 
+                           UTRFSP_problem_input.problem_data.mx_dist, 
+                           UTRFSP_problem_input.problem_data.mx_demand, 
+                           UTRFSP_problem_input.problem_inputs.__dict__,
+                           UTRFSP_problem_input.problem_data.mx_walk), #f3_ETT
+                gf2.f4_TBR(routes, 
+                           frequencies, 
+                               UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+    
+def fn_obj_f3_f4_real(routes, frequencies, UTRFSP_problem_input):
     return (gf2.f3_ETT(routes,
                        frequencies, 
                        UTRFSP_problem_input.problem_data.mx_dist, 
@@ -947,6 +1020,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                                                     ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                     round(HV, 4)))
         
+        
     #%% Stats updates
     stats['end_time'] = datetime.datetime.now() # save the end time of the run
     stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
@@ -975,22 +1049,38 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         
         # Create and save the dataframe 
         
-        df_non_dominated_set = pd.DataFrame(data=np.hstack([pop_1.objectives, pop_1.variables_freq]),
-                                            columns=generate_data_analysis_labels(UTRFSP_problem_1.problem_GA_parameters.number_of_objectives,
-                                                                                  UTRFSP_problem_1.problem_constraints.con_r))
-        df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set.values, True)]
-        df_non_dominated_set = df_non_dominated_set.sort_values(by='f_1', ascending=True) # sort
+        
+        
+        df_non_dominated_set = df_data_for_analysis.iloc[-pop_size:,] # create df for non-dominated set
+        df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set[["F_3","F_4"]].values, True)]
+        df_non_dominated_set = df_non_dominated_set.sort_values(by='F_3', ascending=True) # sort
         
         if Decisions["Choice_print_full_data_for_analysis"]:
             df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
         
         df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
-        df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
         
+        if Decisions['Choice_use_NN_to_predict']:
+            real_objectives = np.zeros((len(df_non_dominated_set), 2))
+        
+            for x in range(len(df_non_dominated_set)):
+                R_x = gf.convert_routes_str2list(df_non_dominated_set["R_x"].iloc[x])
+                freq_var_names = ["f_"+str(i) for i in range(UTRFSP_problem_1.problem_constraints.con_r)]
+                F_x = df_non_dominated_set[freq_var_names].iloc[0].values
+                real_objectives[x,:] = fn_obj_f3_f4_real(R_x, F_x, UTRFSP_problem_1)
+                
+            df_non_dominated_set = df_non_dominated_set.assign(F_3_real = real_objectives[:,0],
+                                        F_4_real = real_objectives[:,1])
+        
+        df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
         
         df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['F_3'].mean().iloc[:,1],
                                mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['F_4'].mean().iloc[:,1])
         df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+        
+        #%% Post analysis
+        
+
         
         json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
         json.dump(parameters_constraints, open(path_results_per_run / "parameters_constraints.json", "w"))
@@ -1092,7 +1182,7 @@ if Decisions["Choice_print_results"]:
     stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
     stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
     #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-    stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     #stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     
     df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]

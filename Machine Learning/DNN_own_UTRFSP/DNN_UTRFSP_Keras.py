@@ -92,3 +92,5 @@ hf.print_evaluation(y_test, y_pred)
 results_stacked = np.hstack([y_val, y_pred])
 np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", results_stacked, delimiter=",")
 
+#%% Save the model
+model.save("Saved_models/Model_2")

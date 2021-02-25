@@ -125,8 +125,8 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 10, #should be an even number, John: 200
-    "generations" : 5, # John: 200
+    "population_size" : 6, #should be an even number, John: 200
+    "generations" : 2, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -186,7 +186,7 @@ UTRFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA)
 UTRFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTRFSP_problem_1.R_routes = R_routes
 UTRFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
-UTRFSP_problem_1.add_text = "" # define the additional text for the file name
+UTRFSP_problem_1.add_text = "Data_Gen_Trials_3CMs_Pop_Gen_Upgrade" # define the additional text for the file name
 
 #%% Define the Transit network
 TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) # for debugging
@@ -511,7 +511,7 @@ def crossover_uniform_as_is(parent_A, parent_B, parent_length):
     return child_A, child_B
     
     
-def crossover_pop_uniform_as_is(pop, main_problem):
+def crossover_pop_uniform_as_is_UTRFSP(pop, main_problem):
     selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size/2))
     
     offspring_variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
@@ -523,6 +523,29 @@ def crossover_pop_uniform_as_is(pop, main_problem):
     
         offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
             crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+            
+    return offspring_variable_args
+
+def crossover_pop_uniform_with_prob_UTRFSP(pop, main_problem):
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size/2))
+    
+    offspring_variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
+                                   main_problem.R_routes.number_of_routes]).astype(int)
+    
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size/2)):
+        
+        parent_A = pop.variable_freq_args[selection[i,0]]
+        parent_B = pop.variable_freq_args[selection[i,1]]
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability_freq:
+            # Perform crossover according to probability
+            offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
+                crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+        
+        else:
+            # Just reassign the parents if false
+            offspring_variable_args[int(2*i),] = parent_A
+            offspring_variable_args[int(2*i+1),] = parent_B
             
     return offspring_variable_args
 
@@ -570,6 +593,7 @@ def keep_individuals(pop, survivor_indices):
 
 #%% Funtion: Visualisation of generations
 def plot_generations_objectives(pop_generations):
+    # should be a np.array with entries being: [f_1, f_2, generation]
     # function to visualise the different populations
     
     df_to_plot = pd.DataFrame()
@@ -849,7 +873,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
     pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
     pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj) 
-    pop_generations = np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),0)])
+    df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
     
     if Decisions["Choice_print_full_data_for_analysis"]:
         df_data_for_analysis = ga.add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1)
@@ -863,31 +887,46 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
                                                     ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                     round(HV, 4)))
-#TODO: Checkpoint    
+
     """Run each generation"""
-    for i_generation in range(UTRFSP_problem_1.problem_GA_parameters.generations):    
+    for i_generation in range(1, UTRFSP_problem_1.problem_GA_parameters.generations+1):    
         # Some stats
         stats['begin_time_run'] = datetime.datetime.now() # enter the begin time
-        stats['generation'] = i_generation + 1
-        print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+        stats['generation'] = i_generation
+        print("Generation " + str(int(i_generation)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+        
+        # Create a copy of pop_1 to use in both the routes and frequencies
+        pop_copy = copy.deepcopy(pop_1)
         
         # Crossover amd Mutation for Routes
-        offspring_variables_routes, offspring_variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
-
-        mutated_variables_route = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
-        combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_route, offspring_variables_freq_args, UTRFSP_problem_1)
-                
-        # Crossover amd Mutation for Frequencies
-        #TODO: Sort out the frequency aspects of cross and mut
-        if False:
-            offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTRFSP_problem_1)
+        # Crossover and Mutation is performed on routes, each frequency associated with its original route
+        offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
+        mutated_variables_routes = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
+        
+        combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes, variables_freq_args, UTRFSP_problem_1)
+        
+        if True:        
+        # Crossover and Mutation for Frequencies
+        # Crossover and Mutation is performed on frequencies, keeping the routes constant
+            offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
+            mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
+                           UTRFSP_problem_1.R_routes.number_of_routes,
+                           UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
             
-            mutated_variable_args = mutate_pop_args(offspring_variable_args, 
+            combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, mutated_variables_freq_args, UTRFSP_problem_1)
+
+
+        if True: #TODO: I think this one may be omitted --- it will happen naturally with the other two        
+        # Crossover and Mutation for Frequencies after Route Crossover and Mutation
+        # After the routes are Crossed over and Mutated, a Crossover and Mutation is also performed on the frequencies 
+            pop_copy.variable_freq_args = copy.deepcopy(variables_freq_args)
+            offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
+            mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
                        UTRFSP_problem_1.R_routes.number_of_routes,
                        UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
             
-            # Combine offspring with population
-            combine_offspring_with_pop(pop_1, mutated_variable_args)
+            combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes, mutated_variables_freq_args, UTRFSP_problem_1)
+
         
         if Decisions["Choice_print_full_data_for_analysis"]:
             df_data_for_analysis = ga.add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1, df_data_for_analysis)
@@ -899,12 +938,12 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
 
         # Calculate the HV Quality Measure
         HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-        df_data_generations.loc[i_generation+1] = [i_generation+1, HV]
-    
-        pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),i_generation+1)])]) # add the population to the generations
+        df_data_generations.loc[i_generation] = [i_generation, HV]
+            
+        df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, i_generation, df_pop_generations)
         
         stats['end_time_run'] = datetime.datetime.now() # save the end time of the run
-        print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation+1)),
+        print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
                                                     ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                     round(HV, 4)))
         
@@ -935,7 +974,6 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
             os.makedirs(path_results_per_run)
         
         # Create and save the dataframe 
-        df_pop_generations = create_df_from_pop(pop_generations)
         
         df_non_dominated_set = pd.DataFrame(data=np.hstack([pop_1.objectives, pop_1.variables_freq]),
                                             columns=generate_data_analysis_labels(UTRFSP_problem_1.problem_GA_parameters.number_of_objectives,
@@ -950,8 +988,8 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
         
         
-        df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('generation', as_index=False)['f_1'].mean().iloc[:,1],
-                               mean_f_2=df_pop_generations.groupby('generation', as_index=False)['f_2'].mean().iloc[:,1])
+        df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['F_3'].mean().iloc[:,1],
+                               mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['F_4'].mean().iloc[:,1])
         df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
         
         json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
@@ -969,7 +1007,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         
         # Visualise the generations
         if False: # becomes useless when more than 10 generations
-            plot_generations_objectives(pop_generations)
+            plot_generations_objectives(df_pop_generations.loc["F_3", "F_4"])
             
             manager = plt.get_current_fig_manager()
             manager.window.showMaximized()
@@ -1095,7 +1133,7 @@ if Decisions["Choice_print_results"]:
         plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
         manager.window.close()
         del fig, manager
-    del archive_file, df_non_dominated_set, path_parent_folder, path_results, path_results_per_run, pop_generations, w
+    del archive_file, df_non_dominated_set, path_parent_folder, path_results, path_results_per_run, w
     
 del run_nr
 
@@ -1184,10 +1222,6 @@ if False: #__name__ == "__main__":
         print(f'Finished in {round(finish-start, 6)} second(s)')
      
     else:
-        print(f'Normal run initiated')
+        print('Normal run initiated')
         main(UTRFSP_problem_1)
 
-#TODO: TESTS TO DELETE
-all_nodes = [y for x in pop_1.variables_routes for y in x]
-
-(len(set(all_nodes)) == 15)

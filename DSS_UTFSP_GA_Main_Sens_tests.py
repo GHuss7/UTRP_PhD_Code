@@ -499,6 +499,29 @@ def crossover_pop_uniform_as_is(pop, main_problem):
             
     return offspring_variable_args
 
+def crossover_pop_uniform_with_prob(pop, main_problem):
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size/2))
+    
+    offspring_variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
+                                   main_problem.R_routes.number_of_routes]).astype(int)
+    
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size/2)):
+        
+        parent_A = pop.variable_args[selection[i,0]]
+        parent_B = pop.variable_args[selection[i,1]]
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability:
+            # Perform crossover according to probability
+            offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
+                crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+        
+        else:
+            # Just reassign the parents if false
+            offspring_variable_args[int(2*i),] = parent_A
+            offspring_variable_args[int(2*i+1),] = parent_B
+            
+    return offspring_variable_args
+
 
 #%% Functions: Mutation
 def mutate_pop_args(offspring_variable_args, variable_len, mutation_probability):
@@ -743,7 +766,7 @@ def main(UTFSP_problem_1):
             print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
             
             # Crossover amd Mutation
-            offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTFSP_problem_1)
+            offspring_variable_args = crossover_pop_uniform_with_prob(pop_1, UTFSP_problem_1)
             
             mutated_variable_args = mutate_pop_args(offspring_variable_args, 
                        UTFSP_problem_1.R_routes.number_of_routes,

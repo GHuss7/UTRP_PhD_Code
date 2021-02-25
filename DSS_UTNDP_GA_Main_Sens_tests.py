@@ -532,8 +532,8 @@ if __name__ == "__main__":
                             #[parameters_GA_route_design, "mutation_probability", 0.9],
                             #[parameters_GA_route_design, "mutation_probability", 1],  
                             
-                            [parameters_GA_route_design, "mutation_ratio", 0.01],
-                            [parameters_GA_route_design, "mutation_ratio", 0.05],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.01],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.05],
                             #[parameters_GA_route_design, "mutation_ratio", 0.1],
                             #[parameters_GA_route_design, "mutation_ratio", 0.2],
                             #[parameters_GA_route_design, "mutation_ratio", 0.3],
@@ -542,8 +542,8 @@ if __name__ == "__main__":
                             #[parameters_GA_route_design, "mutation_ratio", 0.6],
                             #[parameters_GA_route_design, "mutation_ratio", 0.7],
                             #[parameters_GA_route_design, "mutation_ratio", 0.8],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.9],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.95],
+                            [parameters_GA_route_design, "mutation_ratio", 0.9],
+                            [parameters_GA_route_design, "mutation_ratio", 0.95],
                             ]
         
         for sensitivity_test in sensitivity_list:

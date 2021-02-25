@@ -125,8 +125,8 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 6, #should be an even number, John: 200
-    "generations" : 2, # John: 200
+    "population_size" : 100, #should be an even number, John: 200
+    "generations" : 20, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,

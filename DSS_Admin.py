@@ -406,14 +406,14 @@ def add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, generation_num, dat
         The appended DataFrame.
 
     """
-    len_pop = len(pop_1.objectives)
     pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
     
     if isinstance(data_for_analysis, pd.DataFrame):
-        for index_i in range(pop_size, len_pop - pop_size):
+        for index_i in range(pop_size):
             data_row = [pop_1.variables_routes_str[index_i]]
             data_row.extend(list(pop_1.variables_freq[index_i,:]))
             data_row.extend(list(pop_1.objectives[index_i,:]))
+            data_row.extend([generation_num])
             data_for_analysis.loc[len(data_for_analysis)] = data_row
             
     else:

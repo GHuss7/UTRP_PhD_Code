@@ -28,7 +28,8 @@ from sklearn.model_selection import StratifiedKFold
 
 
 #%% Load data
-X, Y = hf.load_data_UTRFSP_data("Data_UTRFSP.csv", "Mandl_Data") # nb the number of routes are still hardcoded
+
+X, Y = hf.load_data_UTRFSP_data("Training_data/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
 
 #%% Split data
 

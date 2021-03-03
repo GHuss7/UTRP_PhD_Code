@@ -11,6 +11,7 @@ from keras.models import Sequential
 
 # Import `Dense` from `keras.layers`
 from keras.layers import Dense
+import keras.backend as K
 
 import tensorflow as tf
 #import os
@@ -23,20 +24,58 @@ import numpy as np
 import pandas as pd
 import time
 import datetime
+from matplotlib import pyplot
 
 from sklearn.model_selection import StratifiedKFold
+
+def custom_distance_loss_function(y_real, y_pred):
+    """
+    
+
+    Parameters
+    ----------
+    y_real : tf.Tensor
+        Real values of target variables y, where the rows are the entries and
+        the columns are the different target variables, with shape 
+        (batch_size, N_y).
+    y_pred : tf.Tensor
+        Predicted values of target variables y, where the rows are the entries 
+        and the columns are the different target variables, with shape 
+        (batch_size, N_y).
+
+    Returns
+    -------
+    float64
+        The sum of the euclidian distance between the points. Needs to be in 
+        the form (batch_size,)
+
+    """ 
+    #N_y = y_pred.get_shape()[1] # number of predictions
+    N_y = 2
+    eval = K.square(y_pred - y_real)                           # (batch_size, 2)
+    eval = K.sum(eval, axis=-1)
+    eval = K.pow(eval,1/N_y)     # (batch_size,)
+    #custom_loss_value = kb.mean(custom_loss_value)
+    return eval
+
+def mae_custom(y_true, y_pred):
+            
+    eval = K.square(y_pred - y_true)
+    eval = K.mean(eval, axis=-1)
+        
+    return eval
 
 
 #%% Load data
 
-X, Y = hf.load_data_UTRFSP_data("Training_data/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
+X, Y = hf.load_data_UTRFSP_data("../../../Data/Training_data_UTRFSP_Mandl/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
 
 #%% Split data
 
 param_ML = {
-'train_ratio' : 0.80, # training ratio for data
-'val_ratio' : 0.10, # validation ratio for data
-'test_ratio' : 0.10} # testing ratio for data
+'train_ratio' : 0.90, # training ratio for data
+'val_ratio' : 0.05, # validation ratio for data
+'test_ratio' : 0.05} # testing ratio for data
 
 x_train, x_val, x_test, y_train, y_val, y_test = hf.split_data(X,Y,param_ML)
 
@@ -56,13 +95,12 @@ if False:
 
 #%% Model construction
 model = Sequential()
-model.add(Dense(21, input_dim=x_train.shape[1], activation='relu'))
-model.add(Dense(30, activation='relu'))
-model.add(Dense(15, activation='relu'))
+model.add(Dense(126, input_dim=x_train.shape[1], activation='relu'))
+model.add(Dense(90, activation='relu'))
+model.add(Dense(21, activation='relu'))
 model.add(Dense(2)) # default activation function is linear
-model.compile(optimizer='adam', loss='mse',
-              metrics=['mae',
-                       tf.keras.metrics.MeanAbsolutePercentageError()])
+model.compile(optimizer='adam', loss=custom_distance_loss_function, #loss used to be mse
+              metrics=['mae', 'mape'])
 
 #%% Model training
 t1 = time.time()
@@ -76,8 +114,15 @@ tb_callback = tf.keras.callbacks.TensorBoard(
     embeddings_freq=0,
     embeddings_metadata=None)
 
-model.fit(x_train, y_train, epochs=50, verbose=1, batch_size=10, callbacks=[tb_callback])
+history = model.fit(x_train, y_train, epochs=35, verbose=1, batch_size=4)#, callbacks=[tb_callback])
 t2 = time.time()
+
+# plot metrics
+pyplot.plot(history.history['loss'])
+pyplot.plot(history.history['mae'])
+pyplot.plot(history.history['mape'])
+pyplot.show()
+
 print (f"Training time: {t2-t1:.2f}s")
 
 #%% Model evaluation
@@ -89,8 +134,9 @@ y_pred = model.predict(x_test)
 hf.print_evaluation(y_test, y_pred)
 
 #%% Results saving
-results_stacked = np.hstack([y_val, y_pred])
+results_stacked = np.hstack([y_test, y_pred])
 np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", results_stacked, delimiter=",")
 
 #%% Save the model
-model.save("Saved_models/Model_2")
+model.save("Saved_models/Model_Good_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+#model.save(f"Saved_models/Model_2_35_epochs_L126_90_21_2_MSE_{loss_mse*100:.0f}")

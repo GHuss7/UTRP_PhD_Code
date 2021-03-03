@@ -30,8 +30,6 @@ import concurrent.futures
 
 from tensorflow import keras
 
-model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/Saved_models/Model_1') # load the ML prediction model
-
 # %% Import personal functions
 import DSS_Admin as ga
 import DSS_UTNDP_Functions as gf
@@ -80,12 +78,17 @@ Decisions = {
 #"Choice_generate_initial_set" : True, 
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
-"Choice_consider_walk_links" : False,
+"Choice_consider_walk_links" : True,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Choice_use_NN_to_predict" : False,
-"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
+"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
+"Additional_text" : "Data_Gen_GA_search"
 }
+
+if Decisions["Choice_use_NN_to_predict"]:
+    model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/Saved_models/Model_Good') # load the ML prediction model
+
 
 # Disables walk links
 if not(Decisions["Choice_consider_walk_links"]):
@@ -130,12 +133,12 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 100, #should be an even number, John: 200
+    "population_size" : 200, #should be an even number, John: 200
     "generations" : 20, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
-    "mutation_probability_routes" : 1,
+    "mutation_probability_routes" : 0.9,
     "mutation_ratio" : 0.4, # Ratio used for the probabilites of mutations applied
     "mutation_probability_freq" : 1/parameters_constraints["con_r"], # John: 1/|Route set| -> set later BEST: 0.1 
     "tournament_size" : 2,
@@ -191,7 +194,7 @@ UTRFSP_problem_1.problem_GA_parameters = gf2.Problem_GA_inputs(parameters_GA)
 UTRFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTRFSP_problem_1.R_routes = R_routes
 UTRFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
-UTRFSP_problem_1.add_text = "NN_Trials" # define the additional text for the file name
+UTRFSP_problem_1.add_text = Decisions["Additional_text"] # define the additional text for the file name
 
 #%% Define the Transit network
 TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) # for debugging
@@ -722,13 +725,13 @@ if Decisions['Choice_use_NN_to_predict']:
 
 else:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
-        return (gf2.f3_ETT(routes,
+        return (-gf2.f3_ETT(routes,
                            frequencies, 
                            UTRFSP_problem_input.problem_data.mx_dist, 
                            UTRFSP_problem_input.problem_data.mx_demand, 
                            UTRFSP_problem_input.problem_inputs.__dict__,
                            UTRFSP_problem_input.problem_data.mx_walk), #f3_ETT
-                gf2.f4_TBR(routes, 
+                -gf2.f4_TBR(routes, 
                            frequencies, 
                                UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
     
@@ -1223,7 +1226,7 @@ if Decisions["Choice_print_results"]:
         plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
         manager.window.close()
         del fig, manager
-    del archive_file, df_non_dominated_set, path_parent_folder, path_results, path_results_per_run, w
+    del archive_file, path_parent_folder, path_results, path_results_per_run, w
     
 del run_nr
 
@@ -1315,3 +1318,6 @@ if False: #__name__ == "__main__":
         print('Normal run initiated')
         main(UTRFSP_problem_1)
 
+        R_x = gf.convert_routes_str2list("5-14*4-1-0*10-9-7-5-3-4*13-12-10-11*6-14-8*6-14-5-2*")	
+        F_x = np.array([0.033333333, 0.033333333,	0.033333333,	0.2,	0.033333333,	0.033333333])
+        fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1)

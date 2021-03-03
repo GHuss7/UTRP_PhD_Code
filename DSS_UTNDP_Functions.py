@@ -1157,11 +1157,12 @@ def norm_and_calc_2d_hv(df_norm, max_objs, min_objs):
 def norm_and_calc_2d_hv_np(numpy_objs, max_objs, min_objs):
     """Use this when input values are numpy arrays"""
     numpy_objs_copy = (numpy_objs - min_objs)/(max_objs - min_objs) # normalise the data
+
     # take note, the df has now changed to a numpy array
     numpy_objs_copy[numpy_objs_copy < 0] = 0 # to avoid errors in HV computation
     numpy_objs_copy[numpy_objs_copy > 1] = 1 # to avoid errors in HV computation
       
-    hv = get_performance_indicator("hv", ref_point=np.array([1, 1]))    
+    hv = get_performance_indicator("hv", ref_point=np.array([1, 1]))        
     return hv.calc(numpy_objs_copy) # assume minimisation and compute
     
 ''' Calculate Hypervolume using Pygmo ''' 

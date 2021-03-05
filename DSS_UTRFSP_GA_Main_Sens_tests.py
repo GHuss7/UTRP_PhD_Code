@@ -81,14 +81,15 @@ Decisions = {
 "Choice_consider_walk_links" : True,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
-"Choice_use_NN_to_predict" : False,
+"Choice_use_NN_to_predict" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
 "Additional_text" : "Data_Gen_GA_search"
 }
 
 if Decisions["Choice_use_NN_to_predict"]:
-    model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/Saved_models/Model_Good') # load the ML prediction model
-
+    model_name = "Tuned_models/BO_Test_20210305_141431"
+    model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name) # load the ML prediction model
+    Decisions["Additional_text"] = "NN_Trial"
 
 # Disables walk links
 if not(Decisions["Choice_consider_walk_links"]):
@@ -725,13 +726,13 @@ if Decisions['Choice_use_NN_to_predict']:
 
 else:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
-        return (-gf2.f3_ETT(routes,
+        return (gf2.f3_ETT(routes,
                            frequencies, 
                            UTRFSP_problem_input.problem_data.mx_dist, 
                            UTRFSP_problem_input.problem_data.mx_demand, 
                            UTRFSP_problem_input.problem_inputs.__dict__,
                            UTRFSP_problem_input.problem_data.mx_walk), #f3_ETT
-                -gf2.f4_TBR(routes, 
+                gf2.f4_TBR(routes, 
                            frequencies, 
                                UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
     

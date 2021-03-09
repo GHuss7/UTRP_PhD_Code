@@ -27,8 +27,12 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
 import concurrent.futures
-
 from tensorflow import keras
+
+os.chdir("Machine Learning/DNN_own_UTRFSP")
+import dnn_helper_functions as hf
+from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
+os.chdir(os.path.dirname(__file__))
 
 # %% Import personal functions
 import DSS_Admin as ga
@@ -86,9 +90,11 @@ Decisions = {
 "Additional_text" : "Data_Gen_GA_search"
 }
 
+
 if Decisions["Choice_use_NN_to_predict"]:
-    model_name = "Tuned_models/BO_Test_20210305_141431"
-    model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name) # load the ML prediction model
+    model_name = "Tuned_models/BO_Test_20210308_171216"
+    model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name,
+                                       custom_objects={'custom_distance_loss_function': custom_distance_loss_function}) # load the ML prediction model
     Decisions["Additional_text"] = "NN_Trial"
 
 # Disables walk links
@@ -100,6 +106,7 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
     parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
+    parameters_ML = json.load(open("./Input_Data/"+name_input_data+"/parameters_ML.json"))
 
 else:
     '''State the various parameter constraints''' 
@@ -150,6 +157,16 @@ else:
     "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
     }
 
+    parameters_ML = {
+    'train_ratio' : 0.90, # training ratio for data
+    'val_ratio' : 0.05, # validation ratio for data
+    'test_ratio' : 0.05, # testing ratio for data
+    'min_f_1' : 13,
+    'max_f_1' : 70,
+    'min_f_2' : 4,
+    'max_f_2' :82,
+    'hp_tuning' : True
+    }
 
 #%% Input parameter tests
 
@@ -722,7 +739,9 @@ def recast_decision_variable(routes, frequencies, UTRFSP_problem_1):
 if Decisions['Choice_use_NN_to_predict']:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
         """Objective function using the NN model to predict F_3 and F_4 values"""
-        return model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_1))
+        y_pred = model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_1))
+        _, y_pred_rec = recast_data_UTRFSP(False, y_pred, parameters_ML)
+        return y_pred_rec
 
 else:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
@@ -1116,7 +1135,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                 '''Print Archive'''   
                 fig = plt.figure()
                 ax1 = fig.add_subplot(111)
-                ax1.scatter( df_non_dominated_set["f_1"], df_non_dominated_set["f_2"], s=1, c='b', marker="o", label='Non-dominated set')
+                ax1.scatter( df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=1, c='b', marker="o", label='Non-dominated set')
                 #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
                 #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
                 plt.legend(loc='upper left');
@@ -1149,11 +1168,11 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                 axs[0, 1].legend(loc="upper right")
                 
                 #axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
-                axs[1, 1].scatter(df_non_dominated_set["f_2"], df_non_dominated_set["f_1"], s=10, c='r', marker="o", label='Non-dom set obtained')
+                axs[1, 1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
                 #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
                 #axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
                 axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
-                axs[1, 1].set(xlabel='f2_TBR', ylabel='f1_AETT')
+                axs[1, 1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
                 axs[1, 1].legend(loc="upper right")
                 
                 manager = plt.get_current_fig_manager()
@@ -1170,7 +1189,7 @@ if Decisions["Choice_print_results"]:
     '''Save the summarised results'''
     df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
     df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
-    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
+    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='F_3', ascending=True) # sort
     df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
     
     
@@ -1213,11 +1232,11 @@ if Decisions["Choice_print_results"]:
         fig.set_figwidth(20)
         
         # axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='b', marker="o", label='Initial route sets')
-        axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+        axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
         #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
         #axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
         axs.set_title('Pareto front obtained vs Mumford Results')
-        axs.set(xlabel='f2_TBR', ylabel='f1_AETT')
+        axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')
         axs.legend(loc="upper right")
         del axs
         
@@ -1227,7 +1246,7 @@ if Decisions["Choice_print_results"]:
         plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
         manager.window.close()
         del fig, manager
-    del archive_file, path_parent_folder, path_results, path_results_per_run, w
+    del archive_file, path_results_per_run, w
     
 del run_nr
 

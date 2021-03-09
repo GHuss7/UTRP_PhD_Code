@@ -12,6 +12,7 @@ from keras.models import Sequential
 # Import `Dense` from `keras.layers`
 from keras.layers import Dense, Dropout
 import keras.backend as K
+import keras.optimizers as Optimizers
 import kerastuner as kt
 from kerastuner import HyperModel, RandomSearch, Hyperband, BayesianOptimization
 import tensorflow as tf
@@ -40,7 +41,8 @@ param_ML = {
 'max_f_1' : 70,
 'min_f_2' : 4,
 'max_f_2' :82,
-'hp_tuning' : True
+'hp_tuning' : True,
+'train_f_1_only' : True
 }
 
 def custom_distance_loss_function(y_real, y_pred):
@@ -75,16 +77,23 @@ def custom_distance_loss_function(y_real, y_pred):
 
 def normalise_data_UTRFSP(X,Y,param_ML):
     """A function to normalise data"""
-    Y_norm = np.zeros(Y.shape)
-    Y_norm[:,0] = (Y[:,0] - param_ML['min_f_1'])/(param_ML['max_f_1'] - param_ML['min_f_1'])
-    Y_norm[:,1] = (Y[:,1] - param_ML['min_f_2'])/(param_ML['max_f_2'] - param_ML['min_f_2'])
+    if param_ML['train_f_1_only']:
+        Y_norm = (Y[:,0] - param_ML['min_f_1'])/(param_ML['max_f_1'] - param_ML['min_f_1'])
+    else:
+        Y_norm = np.zeros(Y.shape)
+        Y_norm[:,0] = (Y[:,0] - param_ML['min_f_1'])/(param_ML['max_f_1'] - param_ML['min_f_1'])
+        Y_norm[:,1] = (Y[:,1] - param_ML['min_f_2'])/(param_ML['max_f_2'] - param_ML['min_f_2'])
     return X, Y_norm
 
 def recast_data_UTRFSP(X_norm,Y_norm,param_ML):
     """A function to recast normalised data"""
-    Y_rec = np.zeros(Y_norm.shape)
-    Y_rec[:,0] = Y_norm[:,0] * (param_ML['max_f_1'] - param_ML['min_f_1']) + param_ML['min_f_1']
-    Y_rec[:,1] = Y_norm[:,1] * (param_ML['max_f_2'] - param_ML['min_f_2']) + param_ML['min_f_2']
+    if param_ML['train_f_1_only']:
+        Y_rec = np.zeros(Y_norm.shape)
+        Y_rec[:,0] = Y_norm[:,0] * (param_ML['max_f_1'] - param_ML['min_f_1']) + param_ML['min_f_1']
+    else:
+        Y_rec = np.zeros(Y_norm.shape)
+        Y_rec[:,0] = Y_norm[:,0] * (param_ML['max_f_1'] - param_ML['min_f_1']) + param_ML['min_f_1']
+        Y_rec[:,1] = Y_norm[:,1] * (param_ML['max_f_2'] - param_ML['min_f_2']) + param_ML['min_f_2']
     return X_norm, Y_rec
 
 class RegressionHyperModel(HyperModel):
@@ -94,7 +103,7 @@ class RegressionHyperModel(HyperModel):
         model = Sequential()
         model.add(
             Dense(
-                units=hp.Int('units', 30, 150, 15, default=90),
+                units=hp.Int('units', 30, 200, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
                     values=['relu'],
@@ -105,198 +114,242 @@ class RegressionHyperModel(HyperModel):
         
         model.add(
             Dense(
-                units=hp.Int('units', 30, 150, 15, default=60),
+                units=hp.Int('units', 30, 200, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['relu', 'tanh'],
+                    values=['relu'],
                     default='relu')
             )
         )
         
         model.add(
             Dense(
-                units=hp.Int('units', 30, 150, 15, default=20),
+                units=hp.Int('units', 10, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['relu', 'tanh', 'sigmoid'],
+                    values=['relu'],
                     default='relu')
             )
         )
         
-        model.add(Dense(2))
+        model.add(
+            Dense(
+                units=hp.Int('units', 10, 150, 10, default=140),
+                activation=hp.Choice(
+                    'dense_activation',
+                    values=['relu'],
+                    default='relu')
+            )
+        )
         
-        hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+        if param_ML['train_f_1_only']:
+            model.add(Dense(1))
+            loss_function = 'mae'
+        else:
+            model.add(Dense(2))
+            loss_function = custom_distance_loss_function
+        
+        hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 2*1e-2, 1e-3, 2*1e-3, 4*1e-3, 1e-4])
 
-        
         model.compile(
-            optimizer=K.optimizers.Adam(learning_rate=hp_learning_rate),
-            loss=custom_distance_loss_function,
-            metrics=['mse']
+            optimizer=Optimizers.Adam(learning_rate=hp_learning_rate),
+            loss=loss_function,
+            metrics=['mae']
         )
         
         return model
 
-#%% Load data
+if __name__ == "__main__":
 
-X, Y = hf.load_data_UTRFSP_data("../../../Data/Training_data_UTRFSP_Mandl/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
-
-# Data pre-processing: Normalisation
-X_norm, Y_norm = normalise_data_UTRFSP(X,Y,param_ML)
-
-
-# Split data 
-x_train, x_val, x_test, y_train, y_val, y_test = hf.split_data(X_norm,Y_norm,param_ML)
+    #%% Load data
     
-seed = 7
-np.random.seed(seed)
-
-#%% Model construction
-if not param_ML['hp_tuning']:
-    model = Sequential()
-    model.add(Dense(126, input_dim=x_train.shape[1], activation='relu'))
-    model.add(Dense(90, activation='relu'))
-    model.add(Dense(21, activation='relu'))
-    model.add(Dense(2)) # default activation function is linear
-    model.compile(optimizer='adam', loss=custom_distance_loss_function, #loss used to be mse
-                  metrics=['mae', 'mape'])
+    X, Y = hf.load_data_UTRFSP_data("../../../Data/Training_data_UTRFSP_Mandl/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
     
-    hp = kt.HyperParameters()
+    # Data pre-processing: Normalisation
+    X_norm, Y_norm = normalise_data_UTRFSP(X,Y,param_ML)
     
-    Dense(
-        units=hp.Int(
-            'units',
-            min_value=32,
-            max_value=512,
-            step=32,
-            default=128
-        ),
-        activation=hp.Choice(
-            'dense_activation',
-            values=['relu', 'tanh', 'sigmoid'],
-            default='relu'
-        )
-    )
-
-    #%% Model training
-    t1 = time.time()
-    tb_callback = tf.keras.callbacks.TensorBoard(
-        log_dir="logs",
-        histogram_freq=0,
-        write_graph=True,
-        write_images=False,
-        update_freq="epoch",
-        profile_batch=2,
-        embeddings_freq=0,
-        embeddings_metadata=None)
-    
-    history = model.fit(x_train, y_train, epochs=35, verbose=1, batch_size=4)#, callbacks=[tb_callback])
-    t2 = time.time()
-    
-    # plot metrics
-    pyplot.plot(history.history['loss'])
-    pyplot.plot(history.history['mae'])
-    pyplot.plot(history.history['mape'])
-    pyplot.show()
-    
-    print (f"Training time: {t2-t1:.2f}s")
-    
-    #%% Model evaluation
-    loss_mse, mae, mape = model.evaluate(x_val, y_val)
-    print(f'Performance metrics (AVG): \tMSE: {loss_mse:.2f} \tMAE: {mae:.2f} \tMAPE: {mape:.2f}')
-    
-    #%% Model predictions and evaluations
-    y_pred = model.predict(x_test)
-    
-    _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
-    _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
-    
-    
-    hf.print_evaluation(y_test, y_pred)
-    
-    #%% Results saving
-    prediction_results_stacked = np.hstack([y_test_rec, y_pred_rec])
-    np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", prediction_results_stacked, delimiter=",")
-    
-    #%% Save the model
-    model.save("Saved_models/Model_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-    #model.save(f"Saved_models/Model_2_35_epochs_L126_90_21_2_MSE_{loss_mse*100:.0f}")
-
-
-#%% Other Tests
-# https://towardsdatascience.com/hyperparameter-tuning-with-keras-tuner-283474fbfbe
-else:
-    input_shape = (x_train.shape[1],)
-    hypermodel = RegressionHyperModel(input_shape)
-    
-    #%% RandomSearch
-    tuner_rs = RandomSearch(
-            hypermodel,
-            objective='mse',
-            seed=42,
-            max_trials=10,
-            executions_per_trial=2,
-            directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_RandomSearch'),
-            project_name='Test_2'
-            )
-    
-    print("RS Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-    tuner_rs.search(x_train, y_train, epochs=10, validation_split=0.2, verbose=0)
+    # Split data 
+    x_train, x_val, x_test, y_train, y_val, y_test = hf.split_data(X_norm,Y_norm,param_ML)
         
-    best_hps = tuner_rs.get_best_hyperparameters(num_trials=1)[0]
-    best_model = tuner_rs.get_best_models(num_models=1)[0]
-    loss, mse = best_model.evaluate(x_test, y_test)
-    print(f'RS Performance metrics: \tLoss: {loss:.4f} \tMSE: {mse:.4f}')
-    best_model.save("Tuned_models/RS_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-
+    seed = 7
+    np.random.seed(seed)
     
-    #%% Hyperband
-    tuner_hb = Hyperband(
-            hypermodel,
-            max_epochs=5,
-            objective='mse',
-            seed=42,
-            executions_per_trial=2,
-            directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_HyperBand'),
-            project_name='Test_2'
+    #%% Model construction
+    if not param_ML['hp_tuning']:
+        model = Sequential()
+        model.add(Dense(126, input_dim=x_train.shape[1], activation='relu'))
+        model.add(Dense(90, activation='relu'))
+        model.add(Dense(21, activation='relu'))
+        model.add(Dense(2)) # default activation function is linear
+        model.compile(optimizer='adam', loss=custom_distance_loss_function, #loss used to be mse
+                      metrics=['mae', 'mape'])
+        
+        hp = kt.HyperParameters()
+        
+        Dense(
+            units=hp.Int(
+                'units',
+                min_value=32,
+                max_value=512,
+                step=32,
+                default=128
+            ),
+            activation=hp.Choice(
+                'dense_activation',
+                values=['relu', 'tanh', 'sigmoid'],
+                default='relu'
+            )
         )
     
-    print("HB Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-    tuner_hb.search(x_train, y_train, epochs=10, validation_split=0.2, verbose=0)
+        #%% Model training
+        t1 = time.time()
+        tb_callback = tf.keras.callbacks.TensorBoard(
+            log_dir="logs",
+            histogram_freq=0,
+            write_graph=True,
+            write_images=False,
+            update_freq="epoch",
+            profile_batch=2,
+            embeddings_freq=0,
+            embeddings_metadata=None)
+        
+        history = model.fit(x_train, y_train, epochs=35, verbose=1, batch_size=4)#, callbacks=[tb_callback])
+        t2 = time.time()
+        
+        # plot metrics
+        pyplot.plot(history.history['loss'])
+        pyplot.plot(history.history['mae'])
+        pyplot.plot(history.history['mape'])
+        pyplot.show()
+        
+        print (f"Training time: {t2-t1:.2f}s")
+        
+        #%% Model evaluation
+        loss_mae, mae, mape = model.evaluate(x_val, y_val)
+        print(f'Performance metrics (AVG): \tMAE: {loss_mae:.2f} \tMAE: {mae:.2f} \tMAPE: {mape:.2f}')
+        
+        #%% Model predictions and evaluations
+        y_pred = model.predict(x_test)
+        
+        _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
+        _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
+        
+        
+        hf.print_evaluation(y_test, y_pred)
+        
+        #%% Results saving
+        prediction_results_stacked = np.hstack([y_test_rec, y_pred_rec])
+        np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", prediction_results_stacked, delimiter=",")
+        
+        #%% Save the model
+        model.save("Saved_models/Model_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+        #model.save(f"Saved_models/Model_2_35_epochs_L126_90_21_2_MSE_{loss_mse*100:.0f}")
     
-    best_hps = tuner_hb.get_best_hyperparameters(num_trials=1)[0]
-    best_model = tuner_hb.get_best_models(num_models=1)[0]
-    loss, mse = best_model.evaluate(x_test, y_test)
-    print(f'HB Performance metrics: \tLoss: {loss:.4f} \tMSE: {mse:.4f}')
-    best_model.save("Tuned_models/HB_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
     
-    #%% BayesianOptimization
-    tuner_bo = BayesianOptimization(
-            hypermodel,
-            objective='mse',
-            max_trials=10,
-            seed=42,
-            executions_per_trial=2,
-            directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_BayesianOptimization'),
-            project_name='Test_2'
-        )
+    #%% Other Tests
+    # https://towardsdatascience.com/hyperparameter-tuning-with-keras-tuner-283474fbfbe
+    else:
+        input_shape = (x_train.shape[1],)
+        hypermodel = RegressionHyperModel(input_shape)
+        
+        if False:
+            #%% RandomSearch
+            tuner_rs = RandomSearch(
+                    hypermodel,
+                    objective='mae',
+                    seed=42,
+                    max_epochs=50,
+                    max_trials=30,
+                    executions_per_trial=2,
+                    directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_RandomSearch'),
+                    project_name='Test_4'
+                    )
+            
+            print("\nRS Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+            tuner_rs.search(x_train, y_train, epochs=100, validation_split=0.2, verbose=1)
+                
+            best_hps = tuner_rs.get_best_hyperparameters(num_trials=1)[0]
+            best_model = tuner_rs.get_best_models(num_models=1)[0]
+            loss, mae = best_model.evaluate(x_test, y_test)
+            print(f'RS Performance metrics: \tLoss: {loss:.4f} \tMSE: {mae:.4f}')
+            best_model.get_config()
+            best_model.save("Tuned_models/RS_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+            
+            y_pred = best_model.predict(x_test)
+            
+            _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
+            _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
+            
+            hf.print_evaluation(y_test, y_pred)
+        
+            
+            #%% Hyperband
+            tuner_hb = Hyperband(
+                    hypermodel,
+                    objective='mae',
+                    seed=42,
+                    max_epochs=50,
+                    max_trials=30,
+                    executions_per_trial=2,
+                    directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_HyperBand'),
+                    project_name='Test_4'
+                )
+            
+            print("\nHB Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+            tuner_hb.search(x_train, y_train, epochs=100, validation_split=0.2, verbose=1)
+            
+            best_hps = tuner_hb.get_best_hyperparameters(num_trials=1)[0]
+            best_model = tuner_hb.get_best_models(num_models=1)[0]
+            loss, mae = best_model.evaluate(x_test, y_test)
+            print(f'HB Performance metrics: \tLoss: {loss:.4f} \tMSE: {mae:.4f}')
+            best_model.get_config()
+            best_model.save("Tuned_models/HB_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+            
+            y_pred = best_model.predict(x_test)
+            
+            _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
+            _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
+            
+            hf.print_evaluation(y_test, y_pred)
+        
+        #%% BayesianOptimization
+        tuner_bo = BayesianOptimization(
+                hypermodel,
+                objective='mae',
+                seed=42,
+                max_trials=30,
+                executions_per_trial=2,
+                directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_BayesianOptimization'),
+                project_name='Test_7'
+            )
+        
+        print("\nBO Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+        callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss', 
+                                                    patience=3)
+        tuner_bo.search(x_train, y_train, epochs=100, validation_split=0.2, verbose=1,
+                        callbacks=[callback])
+        
+        best_hps = tuner_bo.get_best_hyperparameters(num_trials=1)[0]
+        tuner_bo.results_summary()
+        best_model = tuner_bo.get_best_models(num_models=1)[0]
+        loss, mae = best_model.evaluate(x_test, y_test)
+        print(f'BO Performance metrics: \tLoss: {loss:.4f} \tMSE: {mae:.4f}')
+        best_model.get_config()
+        best_model.save("Tuned_models/BO_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
     
-    print("RS Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-    tuner_bo.search(x_train, y_train, epochs=10, validation_split=0.2, verbose=0)
-    
-    best_hps = tuner_bo.get_best_hyperparameters(num_trials=1)[0]
-    best_model = tuner_bo.get_best_models(num_models=1)[0]
-    loss, mse = best_model.evaluate(x_test, y_test)
-    print(f'BO Performance metrics: \tLoss: {loss:.4f} \tMSE: {mse:.4f}')
-    best_model.save("Tuned_models/BO_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+        y_pred = best_model.predict(x_test)
+        
+        _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
+        _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
+        
+        hf.print_evaluation(y_test, y_pred)
+        
+        #%% Results saving
+        prediction_results_stacked = np.hstack([y_test_rec, y_pred_rec])
+        np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", prediction_results_stacked, delimiter=",")
+        
+        tuner_bo.search_space_summary()
 
-    y_pred = best_model.predict(x_test)
-    
-    _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
-    _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
-    
-    hf.print_evaluation(y_test, y_pred)
-    
-    #%% Results saving
-    prediction_results_stacked = np.hstack([y_test_rec, y_pred_rec])
-    np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", prediction_results_stacked, delimiter=",")
-    
+
+        
+        

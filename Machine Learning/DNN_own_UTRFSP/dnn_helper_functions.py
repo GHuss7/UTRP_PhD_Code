@@ -324,6 +324,8 @@ def print_evaluation(y_val, y_pred):
     mse = round(mean_squared_error(y_val, y_pred),4)
     accuracy = round(1 - mae/np.average(y_val),4)       
     print (f"Test AVG:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
+    
+
 
 # %% Coursera course helper functions
 def initialize_parameters(n_x, n_h, n_y):

@@ -1904,12 +1904,12 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
             offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
                 # crossover_uniform_as_is(parent_A_route, parent_B_route, main_problem.R_routes.number_of_routes)
             
-            while not test_all_four_constraints_debug(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+            while not test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
                 offspring_variables_routes[i] = repair_add_missing_from_terminal(offspring_variables_routes[i], 
                                                                              main_problem.problem_inputs.n, 
                                                                              main_problem.mapping_adjacent)
                 
-                if test_all_four_constraints_debug(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
                     continue
                 else:
                     offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)

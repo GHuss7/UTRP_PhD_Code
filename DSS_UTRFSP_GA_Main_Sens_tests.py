@@ -68,7 +68,7 @@ from pymoo.util.misc import random_permuations
 from pymoo.factory import get_performance_indicator
     
 # %% Load the respective files
-name_input_data = ["Mandl_UTRFSP"][0]  # set the name of the input data
+name_input_data = ["Mandl_UTRFSP_no_walk"][0]  # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
@@ -82,7 +82,7 @@ Decisions = {
 #"Choice_generate_initial_set" : True, 
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
-"Choice_consider_walk_links" : True,
+"Choice_consider_walk_links" : False,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Choice_use_NN_to_predict" : True,
@@ -92,7 +92,7 @@ Decisions = {
 
 
 if Decisions["Choice_use_NN_to_predict"]:
-    model_name = "Tuned_models/BO_Test_20210308_171216"
+    model_name = "Saved_models/BO_Test_20210315_154011"
     model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name,
                                        custom_objects={'custom_distance_loss_function': custom_distance_loss_function}) # load the ML prediction model
     Decisions["Additional_text"] = "NN_Trial"
@@ -165,7 +165,8 @@ else:
     'max_f_1' : 70,
     'min_f_2' : 4,
     'max_f_2' :82,
-    'hp_tuning' : True
+    'hp_tuning' : True,
+    'train_f_1_only' : True,
     }
 
 #%% Input parameter tests
@@ -239,13 +240,13 @@ class PopulationRouteFreq(gf2.Frequencies):
                                    1])
         
     
-    def generate_initial_population(self, main_problem, fn_obj):
+    def generate_initial_population(self, main_problem, fn_objectives):
         for i in range(self.population_size):
             self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
             self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
             self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
             self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
-            self.objectives[i,] = fn_obj_f3_f4(self.variables_routes[i], self.variables_freq[i], main_problem)
+            self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
             
         # get the objective space values and objects
         # F = pop.get("F").astype(np.float, copy=False)
@@ -739,9 +740,11 @@ def recast_decision_variable(routes, frequencies, UTRFSP_problem_1):
 if Decisions['Choice_use_NN_to_predict']:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
         """Objective function using the NN model to predict F_3 and F_4 values"""
-        y_pred = model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_1))
-        _, y_pred_rec = recast_data_UTRFSP(False, y_pred, parameters_ML)
-        return y_pred_rec
+        F_3_pred = model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_input))
+        _, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
+        F_4 = gf2.f4_TBR(routes, frequencies, 
+                         UTRFSP_problem_input.problem_data.mx_dist) #f4_TBR
+        return (F_3_pred_rec[0][0], F_4)
 
 else:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
@@ -766,6 +769,8 @@ def fn_obj_f3_f4_real(routes, frequencies, UTRFSP_problem_input):
                        frequencies, 
                            UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
 
+'''Set the objective function'''
+UTRFSP_problem_1.fn_obj = fn_obj_f3_f4
 '''Set the reference point for the Hypervolume calculations'''
 # parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTRFSP_problem_1.problem_constraints.con_r), 1/5)[0],UTRFSP_problem_1)
 # parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = fn_obj(np.full((1,UTRFSP_problem_1.problem_constraints.con_r), 1/30)[0],UTRFSP_problem_1)
@@ -821,7 +826,7 @@ def combine_offspring_with_pop_routes(pop, offspring_variables_routes):
             pop.rank[i] = k
             pop.crowding_dist[i] = crowding_of_front[j]
             
-def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, offspring_variables_freq_args, main_problem):
+def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, offspring_variables_freq_args, main_problem, rank_and_sort=True):
     """Function to combine the offspring with the population for the UTNDP routes
     NB: avoid casting lists to numpy arrays, keep it lists"""
     
@@ -832,7 +837,7 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
     pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables_freq])
             
     # Only evaluate the offspring
-    offspring_variables_routes = pop.variables_routes[len_pop:] # this is done so that if duplicates are removed, no redundant calculations are done
+    #offspring_variables_routes = pop.variables_routes[len_pop:] # this is done so that if duplicates are removed, no redundant calculations are done
     
     len_offspring = len(offspring_variables_routes)
     offspring_variables_routes_str = [None] * len_offspring
@@ -843,31 +848,32 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
         # Adds the string representations
         offspring_variables_routes_str[index_i] = gf.convert_routes_list2str(offspring_variables_routes[index_i])
         # Calculates the objectives
-        offspring_objectives[index_i,] = fn_obj_f3_f4(offspring_variables_routes[index_i], offspring_variables_freq[index_i], main_problem) 
+        offspring_objectives[index_i,] = main_problem.fn_obj(offspring_variables_routes[index_i], offspring_variables_freq[index_i], main_problem) 
 
     # Add evaluated offspring to population
     pop.variables_routes_str = pop.variables_routes_str + offspring_variables_routes_str # adds two lists to each other
     pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
     
-    # This continues as normal
-    pop.rank = np.empty([len(pop.objectives), 1])
-    pop.crowding_dist = np.empty([len(pop.objectives), 1])
+    if rank_and_sort:
+        # This continues as normal
+        pop.rank = np.empty([len(pop.objectives), 1])
+        pop.crowding_dist = np.empty([len(pop.objectives), 1])
+        
+        # get the objective space values and objects
+        F = pop.objectives
     
-    # get the objective space values and objects
-    F = pop.objectives
-
-    # do the non-dominated sorting until splitting front
-    fronts = gc.NonDominated_Sorting().do(F)
-
-    for k, front in enumerate(fronts):
-
-        # calculate the crowding distance of the front
-        crowding_of_front = gf.calc_crowding_distance(F[front, :])
-
-        # save rank and crowding in the individual class
-        for j, i in enumerate(front):
-            pop.rank[i] = k
-            pop.crowding_dist[i] = crowding_of_front[j]
+        # do the non-dominated sorting until splitting front
+        fronts = gc.NonDominated_Sorting().do(F)
+    
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = gf.calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                pop.rank[i] = k
+                pop.crowding_dist[i] = crowding_of_front[j]
 
 def combine_offspring_with_pop(pop, offspring_variable_args):
     # Function to combine the offspring with the population
@@ -968,7 +974,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     print("######################### RUN {0} #########################".format(run_nr+1))
     print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
     pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
-    pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj) 
+    pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj_f3_f4) 
     df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
     
     if Decisions["Choice_print_full_data_for_analysis"]:
@@ -996,10 +1002,12 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         
         # Crossover amd Mutation for Routes
         # Crossover and Mutation is performed on routes, each frequency associated with its original route
-        offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_1, UTRFSP_problem_1)
+        offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_copy, UTRFSP_problem_1)
         mutated_variables_routes = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
         
-        combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes, variables_freq_args, UTRFSP_problem_1)
+        combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
+                                                 variables_freq_args, 
+                                                 UTRFSP_problem_1, rank_and_sort=False)
         
         if True:        
         # Crossover and Mutation for Frequencies
@@ -1009,7 +1017,9 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                            UTRFSP_problem_1.R_routes.number_of_routes,
                            UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
             
-            combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, mutated_variables_freq_args, UTRFSP_problem_1)
+            combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, 
+                                                     mutated_variables_freq_args, 
+                                                     UTRFSP_problem_1, rank_and_sort=False)
 
 
         if True: #TODO: I think this one may be omitted --- it will happen naturally with the other two        
@@ -1021,7 +1031,9 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                        UTRFSP_problem_1.R_routes.number_of_routes,
                        UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
             
-            combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes, mutated_variables_freq_args, UTRFSP_problem_1)
+            combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
+                                                     mutated_variables_freq_args, 
+                                                     UTRFSP_problem_1, rank_and_sort=True)
 
         
         if Decisions["Choice_print_full_data_for_analysis"]:
@@ -1074,7 +1086,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         
         
         
-        df_non_dominated_set = df_data_for_analysis.iloc[-pop_size:,] # create df for non-dominated set
+        df_non_dominated_set = copy.deepcopy(df_pop_generations) # create df for non-dominated set
         df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set[["F_3","F_4"]].values, True)]
         df_non_dominated_set = df_non_dominated_set.sort_values(by='F_3', ascending=True) # sort
         
@@ -1089,7 +1101,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
             for x in range(len(df_non_dominated_set)):
                 R_x = gf.convert_routes_str2list(df_non_dominated_set["R_x"].iloc[x])
                 freq_var_names = ["f_"+str(i) for i in range(UTRFSP_problem_1.problem_constraints.con_r)]
-                F_x = df_non_dominated_set[freq_var_names].iloc[0].values
+                F_x = df_non_dominated_set[freq_var_names].iloc[x].values
                 real_objectives[x,:] = fn_obj_f3_f4_real(R_x, F_x, UTRFSP_problem_1)
                 
             df_non_dominated_set = df_non_dominated_set.assign(F_3_real = real_objectives[:,0],
@@ -1341,3 +1353,11 @@ if False: #__name__ == "__main__":
         R_x = gf.convert_routes_str2list("5-14*4-1-0*10-9-7-5-3-4*13-12-10-11*6-14-8*6-14-5-2*")	
         F_x = np.array([0.033333333, 0.033333333,	0.033333333,	0.2,	0.033333333,	0.033333333])
         fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1)
+        
+    def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+        """Objective function using the NN model to predict F_3 and F_4 values"""
+        F_3_pred = model_NN.predict(recast_decision_variable(R_x, F_x, UTRFSP_problem_1))
+        _, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
+        F_4 = gf2.f4_TBR(R_x, F_x, 
+                         UTRFSP_problem_1.problem_data.mx_dist) #f4_TBR
+        return (F_3_pred_rec[0][0], F_4)

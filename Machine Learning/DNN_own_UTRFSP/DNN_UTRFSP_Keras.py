@@ -79,6 +79,7 @@ def normalise_data_UTRFSP(X,Y,param_ML):
     """A function to normalise data"""
     if param_ML['train_f_1_only']:
         Y_norm = (Y[:,0] - param_ML['min_f_1'])/(param_ML['max_f_1'] - param_ML['min_f_1'])
+        Y_norm = Y_norm.reshape(-1,1)
     else:
         Y_norm = np.zeros(Y.shape)
         Y_norm[:,0] = (Y[:,0] - param_ML['min_f_1'])/(param_ML['max_f_1'] - param_ML['min_f_1'])
@@ -106,8 +107,8 @@ class RegressionHyperModel(HyperModel):
                 units=hp.Int('units', 30, 200, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['relu'],
-                    default='relu'),
+                    values=['prelu'],
+                    default='prelu'),
                 input_shape=input_shape
             )
         )
@@ -117,8 +118,8 @@ class RegressionHyperModel(HyperModel):
                 units=hp.Int('units', 30, 200, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['relu'],
-                    default='relu')
+                    values=['prelu'],
+                    default='prelu')
             )
         )
         
@@ -127,8 +128,8 @@ class RegressionHyperModel(HyperModel):
                 units=hp.Int('units', 10, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['relu'],
-                    default='relu')
+                    values=['prelu'],
+                    default='prelu')
             )
         )
         
@@ -137,10 +138,12 @@ class RegressionHyperModel(HyperModel):
                 units=hp.Int('units', 10, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['relu'],
-                    default='relu')
+                    values=['prelu'],
+                    default='prelu')
             )
         )
+        
+        #model.add(layers.LeakyReLU())
         
         if param_ML['train_f_1_only']:
             model.add(Dense(1))
@@ -292,7 +295,7 @@ if __name__ == "__main__":
                     max_trials=30,
                     executions_per_trial=2,
                     directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_HyperBand'),
-                    project_name='Test_4'
+                    project_name='Test_6'
                 )
             
             print("\nHB Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
@@ -320,7 +323,7 @@ if __name__ == "__main__":
                 max_trials=30,
                 executions_per_trial=2,
                 directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_BayesianOptimization'),
-                project_name='Test_7'
+                project_name='Test_9'
             )
         
         print("\nBO Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))

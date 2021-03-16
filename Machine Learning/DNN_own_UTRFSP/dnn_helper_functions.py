@@ -313,17 +313,18 @@ def print_evaluation(y_val, y_pred):
     accuracy = round(1 - mae/np.average(y_val[:,0]),4)
     print (f"Test F_3:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
     
-    r2 = round(r2_score(y_val[:,1], y_pred[:,1]),4)
-    mae = round(mean_absolute_error(y_val[:,1], y_pred[:,1]),4)
-    mse = round(mean_squared_error(y_val[:,1], y_pred[:,1]),4)
-    accuracy = round(1 - mae/np.average(y_val[:,1]),4)
-    print (f"Test F_4:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
+    if y_val.shape[1] == 2:
+        r2 = round(r2_score(y_val[:,1], y_pred[:,1]),4)
+        mae = round(mean_absolute_error(y_val[:,1], y_pred[:,1]),4)
+        mse = round(mean_squared_error(y_val[:,1], y_pred[:,1]),4)
+        accuracy = round(1 - mae/np.average(y_val[:,1]),4)
+        print (f"Test F_4:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
     
-    r2 = round(r2_score(y_val, y_pred),4)
-    mae = round(mean_absolute_error(y_val, y_pred),4)
-    mse = round(mean_squared_error(y_val, y_pred),4)
-    accuracy = round(1 - mae/np.average(y_val),4)       
-    print (f"Test AVG:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
+        r2 = round(r2_score(y_val, y_pred),4)
+        mae = round(mean_absolute_error(y_val, y_pred),4)
+        mse = round(mean_squared_error(y_val, y_pred),4)
+        accuracy = round(1 - mae/np.average(y_val),4)       
+        print (f"Test AVG:\tA: {accuracy} \t R2: {r2} \t MAE: {mae} \t MSE: {mse}")
     
 
 

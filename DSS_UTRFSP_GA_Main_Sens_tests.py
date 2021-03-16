@@ -141,8 +141,8 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 200, #should be an even number, John: 200
-    "generations" : 20, # John: 200
+    "population_size" : 6, #should be an even number, John: 200
+    "generations" : 2, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -831,14 +831,12 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
     NB: avoid casting lists to numpy arrays, keep it lists"""
     
     len_pop = len(pop.objectives)
-    pop.variables_routes = pop.variables_routes + offspring_variables_routes # adds two lists to each other
-    pop.variable_freq_args = np.vstack([pop.variable_freq_args, np.asarray(offspring_variables_freq_args)])
-    offspring_variables_freq = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]]
-    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables_freq])
+    pop.variables_routes = pop.variables_routes + offspring_variables_routes # adds two routes lists to each other
+    pop.variable_freq_args = np.vstack([pop.variable_freq_args, np.asarray(offspring_variables_freq_args)]) # adds the frequencies together
+    offspring_variables_freq = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]] # determines the actual frequencies
+    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables_freq]) # adds the actual frequencies together
             
-    # Only evaluate the offspring
-    #offspring_variables_routes = pop.variables_routes[len_pop:] # this is done so that if duplicates are removed, no redundant calculations are done
-    
+    # Only evaluate the offspring's objective function values    
     len_offspring = len(offspring_variables_routes)
     offspring_variables_routes_str = [None] * len_offspring
     offspring_objectives = np.empty([len_offspring,
@@ -851,7 +849,7 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
         offspring_objectives[index_i,] = main_problem.fn_obj(offspring_variables_routes[index_i], offspring_variables_freq[index_i], main_problem) 
 
     # Add evaluated offspring to population
-    pop.variables_routes_str = pop.variables_routes_str + offspring_variables_routes_str # adds two lists to each other
+    pop.variables_routes_str = pop.variables_routes_str + offspring_variables_routes_str # adds two routes str lists to each other
     pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
     
     if rank_and_sort:
@@ -1147,15 +1145,15 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                 '''Print Archive'''   
                 fig = plt.figure()
                 ax1 = fig.add_subplot(111)
-                ax1.scatter( df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=1, c='b', marker="o", label='Non-dominated set')
+                ax1.scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=1, c='b', marker="o", label='Non-dominated set')
                 #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
                 #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
                 plt.legend(loc='upper left');
                 plt.show()
                 
             '''Load validation data'''
-            #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-            #John_validation_data = pd.read_csv("./Validation_Data/John_results_on_Mandl_2016/Results_data_headers.csv")
+            validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
+            initial_set = df_pop_generations.iloc[0:UTRFSP_problem_1.problem_GA_parameters.population_size,:]
         
             if True:
                 '''Print Objective functions over time, all solutions and pareto set obtained'''
@@ -1179,10 +1177,9 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                 axs[0, 1].set(xlabel='Generations', ylabel='%')
                 axs[0, 1].legend(loc="upper right")
                 
-                #axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='b', marker="o", label='Initial route sets')
+                axs[1, 1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
                 axs[1, 1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
-                #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
-                #axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+                axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
                 axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
                 axs[1, 1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
                 axs[1, 1].legend(loc="upper right")
@@ -1200,7 +1197,7 @@ del i_generation, pop_size, survivor_indices
 if Decisions["Choice_print_results"]:
     '''Save the summarised results'''
     df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
-    df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
+    df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["F_3","F_4"]].values, True)] # reduce the pareto front from the total archive
     df_overall_pareto_set = df_overall_pareto_set.sort_values(by='F_3', ascending=True) # sort
     df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
     
@@ -1216,9 +1213,9 @@ if Decisions["Choice_print_results"]:
     stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
     stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
     stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-    #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(initial_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-    #stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     
     df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
     df_durations.to_csv(path_results / "Run_durations.csv")
@@ -1236,18 +1233,19 @@ if Decisions["Choice_print_results"]:
     ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
     # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
     
-    # %% Plot analysis graph
+    # %% Plot analysis graph after all runs
     '''Plot the analysis graph'''
     if True:
         fig, axs = plt.subplots(1,1)
         fig.set_figheight(15)
         fig.set_figwidth(20)
         
-        # axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='b', marker="o", label='Initial route sets')
+        axs.scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
         axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-        #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
-        #axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
-        axs.set_title('Pareto front obtained vs Mumford Results')
+        if Decisions['Choice_use_NN_to_predict']:
+            axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='o', marker="o", label='Pareto front obtained from all runs')
+        axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
+        axs.set_title('Pareto front obtained from all runs')
         axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')
         axs.legend(loc="upper right")
         del axs

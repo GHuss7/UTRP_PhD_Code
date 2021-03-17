@@ -135,12 +135,12 @@ class Routes():
             
             initial_route_set = gf.routes_generation_unseen_prob(paths_shortest_all, paths_shortest_all, UTNDP_problem_input.problem_constraints.con_r)
             
-            if gf.test_all_four_constraints_debug(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
+            if gf.test_all_four_constraints(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
                 return initial_route_set
                 
             else:
                 routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)
-                if gf.test_all_four_constraints_debug(routes_R, UTNDP_problem_input.problem_constraints.__dict__):
+                if gf.test_all_four_constraints(routes_R, UTNDP_problem_input.problem_constraints.__dict__):
                     return routes_R
          
     

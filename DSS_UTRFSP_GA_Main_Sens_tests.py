@@ -141,8 +141,8 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 6, #should be an even number, John: 200
-    "generations" : 2, # John: 200
+    "population_size" : 20, #should be an even number, John: 200
+    "generations" : 1, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -1243,7 +1243,7 @@ if Decisions["Choice_print_results"]:
         axs.scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
         axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
         if Decisions['Choice_use_NN_to_predict']:
-            axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='o', marker="o", label='Pareto front obtained from all runs')
+            axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='orange', marker="o", label='Pareto front obtained from all runs')
         axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
         axs.set_title('Pareto front obtained from all runs')
         axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')

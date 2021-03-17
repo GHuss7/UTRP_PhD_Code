@@ -1923,7 +1923,7 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
                 offspring_variables_routes[i] = pop.variables_routes[selection[i,1]]
                 offspring_variables_freq_args[i] = pop.variable_freq_args[selection[i,1]]
                 
-    return offspring_variables_routes, offspring_variables_freq_args
+    return offspring_variables_routes, np.array(offspring_variables_freq_args)
 
 
 #%% Mutation functions   

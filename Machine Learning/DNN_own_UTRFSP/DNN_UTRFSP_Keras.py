@@ -34,9 +34,9 @@ from sklearn.model_selection import StratifiedKFold
 #%% Load dictionaries and required settings
 
 param_ML = {
-'train_ratio' : 0.90, # training ratio for data
-'val_ratio' : 0.05, # validation ratio for data
-'test_ratio' : 0.05, # testing ratio for data
+'train_ratio' : 0.799999, # training ratio for data
+'val_ratio'   : 0.000001, # validation ratio for data
+'test_ratio' : 0.20, # testing ratio for data
 'min_f_1' : 13,
 'max_f_1' : 70,
 'min_f_2' : 4,
@@ -102,60 +102,82 @@ class RegressionHyperModel(HyperModel):
         self.input_shape = input_shape
     def build(self, hp):
         model = Sequential()
+        
         model.add(
             Dense(
-                units=hp.Int('units', 30, 200, 10, default=140),
+                units=hp.Int('units', 80, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['prelu'],
-                    default='prelu'),
+                    values=['relu'],
+                    default='relu'),
                 input_shape=input_shape
             )
         )
         
+        #model.add(Dropout(0.2))
+        
         model.add(
             Dense(
-                units=hp.Int('units', 30, 200, 10, default=140),
+                units=hp.Int('units', 50, 160, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['prelu'],
-                    default='prelu')
+                    values=['relu'],
+                    default='relu')
             )
         )
         
         model.add(
             Dense(
-                units=hp.Int('units', 10, 150, 10, default=140),
+                units=hp.Int('units', 50, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['prelu'],
-                    default='prelu')
+                    values=['relu'],
+                    default='relu')
+            )
+        )
+        
+        #model.add(Dropout(0.2))
+        
+        model.add(
+            Dense(
+                units=hp.Int('units', 50, 150, 10, default=140),
+                activation=hp.Choice(
+                    'dense_activation',
+                    values=['relu'],
+                    default='relu')
             )
         )
         
         model.add(
             Dense(
-                units=hp.Int('units', 10, 150, 10, default=140),
+                units=hp.Int('units', 50, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
-                    values=['prelu'],
-                    default='prelu')
+                    values=['relu'],
+                    default='relu')
             )
         )
         
         #model.add(layers.LeakyReLU())
         
         if param_ML['train_f_1_only']:
-            model.add(Dense(1))
+            model.add(Dense(1, activation=hp.Choice(
+                    'dense_activation',
+                    values=['relu','linear'],
+                    default='relu')))
             loss_function = 'mae'
         else:
-            model.add(Dense(2))
+            model.add(Dense(2, activation=hp.Choice(
+                    'dense_activation',
+                    values=['relu','linear'],
+                    default='relu')))
             loss_function = custom_distance_loss_function
         
-        hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 2*1e-2, 1e-3, 2*1e-3, 4*1e-3, 1e-4])
+        hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 2*1e-3, 1e-4])
 
         model.compile(
             optimizer=Optimizers.Adam(learning_rate=hp_learning_rate),
+            #optimizer=Optimizers.SGD(learning_rate=hp_learning_rate, momentum=0.9),
             loss=loss_function,
             metrics=['mae']
         )
@@ -254,67 +276,7 @@ if __name__ == "__main__":
     else:
         input_shape = (x_train.shape[1],)
         hypermodel = RegressionHyperModel(input_shape)
-        
-        if False:
-            #%% RandomSearch
-            tuner_rs = RandomSearch(
-                    hypermodel,
-                    objective='mae',
-                    seed=42,
-                    max_epochs=50,
-                    max_trials=30,
-                    executions_per_trial=2,
-                    directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_RandomSearch'),
-                    project_name='Test_4'
-                    )
-            
-            print("\nRS Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-            tuner_rs.search(x_train, y_train, epochs=100, validation_split=0.2, verbose=1)
-                
-            best_hps = tuner_rs.get_best_hyperparameters(num_trials=1)[0]
-            best_model = tuner_rs.get_best_models(num_models=1)[0]
-            loss, mae = best_model.evaluate(x_test, y_test)
-            print(f'RS Performance metrics: \tLoss: {loss:.4f} \tMSE: {mae:.4f}')
-            best_model.get_config()
-            best_model.save("Tuned_models/RS_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-            
-            y_pred = best_model.predict(x_test)
-            
-            _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
-            _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
-            
-            hf.print_evaluation(y_test, y_pred)
-        
-            
-            #%% Hyperband
-            tuner_hb = Hyperband(
-                    hypermodel,
-                    objective='mae',
-                    seed=42,
-                    max_epochs=50,
-                    max_trials=30,
-                    executions_per_trial=2,
-                    directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_HyperBand'),
-                    project_name='Test_6'
-                )
-            
-            print("\nHB Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-            tuner_hb.search(x_train, y_train, epochs=100, validation_split=0.2, verbose=1)
-            
-            best_hps = tuner_hb.get_best_hyperparameters(num_trials=1)[0]
-            best_model = tuner_hb.get_best_models(num_models=1)[0]
-            loss, mae = best_model.evaluate(x_test, y_test)
-            print(f'HB Performance metrics: \tLoss: {loss:.4f} \tMSE: {mae:.4f}')
-            best_model.get_config()
-            best_model.save("Tuned_models/HB_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
-            
-            y_pred = best_model.predict(x_test)
-            
-            _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
-            _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
-            
-            hf.print_evaluation(y_test, y_pred)
-        
+             
         #%% BayesianOptimization
         tuner_bo = BayesianOptimization(
                 hypermodel,
@@ -323,7 +285,7 @@ if __name__ == "__main__":
                 max_trials=30,
                 executions_per_trial=2,
                 directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_BayesianOptimization'),
-                project_name='Test_9'
+                project_name='Test_'+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             )
         
         print("\nBO Started:"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))

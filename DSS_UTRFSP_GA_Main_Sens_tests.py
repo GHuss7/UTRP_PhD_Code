@@ -85,7 +85,7 @@ Decisions = {
 "Choice_consider_walk_links" : False,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
-"Choice_use_NN_to_predict" : True,
+"Choice_use_NN_to_predict" : False,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
 "Additional_text" : "Data_Gen_GA_search"
 }
@@ -96,6 +96,8 @@ if Decisions["Choice_use_NN_to_predict"]:
     model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name,
                                        custom_objects={'custom_distance_loss_function': custom_distance_loss_function}) # load the ML prediction model
     Decisions["Additional_text"] = "NN_Trial"
+    
+    model_NN.get_config()
 
 # Disables walk links
 if not(Decisions["Choice_consider_walk_links"]):
@@ -141,7 +143,7 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 20, #should be an even number, John: 200
+    "population_size" : 10, #should be an even number, John: 200
     "generations" : 1, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
@@ -1351,6 +1353,28 @@ if False: #__name__ == "__main__":
         R_x = gf.convert_routes_str2list("5-14*4-1-0*10-9-7-5-3-4*13-12-10-11*6-14-8*6-14-5-2*")	
         F_x = np.array([0.033333333, 0.033333333,	0.033333333,	0.2,	0.033333333,	0.033333333])
         fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1)
+        
+        """Unexpectedly good generated solution""" # due to including walk links...
+        R_x = gf.convert_routes_str2list("12-13*12-10-9-7-5-2-1-0*4-3-5-14-8*11-10*9-6*0-1-2-5-7-9-10-12*")	
+        F_x = np.array([0.033333333,	0.04,	0.033333333,	0.033333333,	0.071428571,	0.04])
+        fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1)
+        
+        """John Best Operator"""
+        R_x = gf.convert_routes_str2list("4-3-1*13-12*8-14*9-10-12*9-6-14-7-5-2-1-0*10-11*") # ans: 31.81374438,	4.2
+
+        F_x = np.array([0.033333333, 0.033333333,	0.033333333,	0.033333333,	0.033333333,	0.033333333])
+        fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1) # 0 boarding and alighting: (22.443584833983234, 8.34666664) 
+        
+        """John Best Passenger"""
+        R_x = gf.convert_routes_str2list("10-9-7-5-3-4-1-0*9-13-12-10-11-3-1-0*5-3-11-10-9-6-14-8*6-14-7-5-3-4-1-2*12-10-9-7-5-2-1-0*0-1-2-5-14-6-9-7*") 
+        F_x = np.array([0.2, 0.2, 0.2, 0.2, 0.2, 0.2])
+        fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1) # 0 boarding and alighting: (11.495547973828113, 86.80000000000001)
+        
+        """Test"""
+        R_x = gf.convert_routes_str2list("5-7-9*0-1-2-5-14-6*9-10-11*4-3-11*9-13-12*14-8*") 
+        F_x = np.array([0.05,	0.05,	0.2,	0.0625,	0.142857143,	0.071428571])
+        fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1) # real ans: 19.32168948	13.68888889 no_walk
+
         
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
         """Objective function using the NN model to predict F_3 and F_4 values"""

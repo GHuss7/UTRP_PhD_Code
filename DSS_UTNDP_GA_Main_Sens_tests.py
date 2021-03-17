@@ -17,7 +17,7 @@ import pandas as pd
 import numpy as np
 import math
 from math import inf
-import pygmo as pg
+#import pygmo as pg
 import random
 import copy
 import datetime
@@ -56,7 +56,7 @@ from pymoo.util.misc import find_duplicates, has_feasible
 #from pymoo.util.nds.non_dominated_sorting import NonDominatedSorting
 from pymoo.util.randomized_argsort import randomized_argsort
 
-
+np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning) # find VisibleDeprecationWarning
     
 # %% Load the respective files
 name_input_data = ["Mandl_Data","Mumford0"][0]   # set the name of the input data
@@ -80,9 +80,9 @@ if Decisions["Choice_import_dictionaries"]:
 else:    
     '''State the various parameter constraints''' 
     parameters_constraints = {
-    'con_r' : 12,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
+    'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
-    'con_maxNodes' : 15,                       # maximum nodes in a route
+    'con_maxNodes' : 10,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist),              # number of nodes in the network
     'con_fleet_size' : 40,                     # number of vehicles that are allowed
     'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
@@ -112,13 +112,13 @@ else:
     'Problem_name' : f"{name_input_data}_UTRP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
     "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 2, # STANDARD: 200 (John 2016)
+    "generations" : 10, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
-    "mutation_ratio" : 0.9, # Ratio used for the probabilites of mutations applied
+    "mutation_ratio" : 0.4, # Ratio used for the probabilites of mutations applied
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
@@ -200,14 +200,17 @@ def main(UTNDP_problem_1):
         #pop.variables = pop.variables[is_unique]
         
         # Only evaluate the offspring
-        offspring_variables = pop.variables[len_pop:]
+        offspring_variables = pop.variables[len_pop:] # this is done so that if duplicates are removed, no redundant calculations are done
         # offspring_variables_str = list(np.apply_along_axis(gf.convert_routes_list2str, 1, offspring_variables)) # potentially gave errors
         
         offspring_variables_str = [None] * len(offspring_variables)
+        offspring_objectives = np.empty([len_pop, pop.objectives.shape[1]])
+        
         for index_i in range(len(offspring_variables)):
             offspring_variables_str[index_i] = gf.convert_routes_list2str(offspring_variables[index_i])
-        
-        offspring_objectives = np.apply_along_axis(fn_obj_2_row, 1, offspring_variables)   
+            
+            offspring_objectives[index_i,] = fn_obj_2_row(offspring_variables[index_i])
+        # offspring_objectives = np.apply_along_axis(fn_obj_2_row, 1, offspring_variables)   #gave VisibleDeprecationWarning error, rather loop
     
         # Add evaluated offspring to population
         # pop.variables = np.vstack([pop.variables, offspring_variables])
@@ -268,7 +271,7 @@ def main(UTNDP_problem_1):
             print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
             
             # Crossover amd Mutation
-            offspring_variables = gf.crossover_pop_routes(pop_1, UTNDP_problem_1)
+            offspring_variables = gf.crossover_pop_routes_individuals(pop_1, UTNDP_problem_1)
             
             mutated_variables = gf.mutate_route_population(offspring_variables, UTNDP_problem_1)
             
@@ -529,8 +532,8 @@ if __name__ == "__main__":
                             #[parameters_GA_route_design, "mutation_probability", 0.9],
                             #[parameters_GA_route_design, "mutation_probability", 1],  
                             
-                            [parameters_GA_route_design, "mutation_ratio", 0.01],
-                            [parameters_GA_route_design, "mutation_ratio", 0.05],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.01],
+                            #[parameters_GA_route_design, "mutation_ratio", 0.05],
                             #[parameters_GA_route_design, "mutation_ratio", 0.1],
                             #[parameters_GA_route_design, "mutation_ratio", 0.2],
                             #[parameters_GA_route_design, "mutation_ratio", 0.3],
@@ -539,8 +542,8 @@ if __name__ == "__main__":
                             #[parameters_GA_route_design, "mutation_ratio", 0.6],
                             #[parameters_GA_route_design, "mutation_ratio", 0.7],
                             #[parameters_GA_route_design, "mutation_ratio", 0.8],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.9],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.95],
+                            [parameters_GA_route_design, "mutation_ratio", 0.9],
+                            [parameters_GA_route_design, "mutation_ratio", 0.95],
                             ]
         
         for sensitivity_test in sensitivity_list:

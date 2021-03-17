@@ -17,7 +17,7 @@ import pandas as pd
 import numpy as np
 import math
 from math import inf
-import pygmo as pg
+#import pygmo as pg
 import random
 import copy
 import datetime
@@ -63,7 +63,7 @@ from pymoo.util.misc import random_permuations
     
 # %% Load the respective files
 #name_input_data = "SSML_STB_1700_UTFSP"      # set the name of the input data
-name_input_data = "SSML_STB_1200_UTFSP"      # set the name of the input data
+name_input_data = ["Mandl_Data_John_UTFSP_Best_operator", "SSML_STB_1700_UTFSP"][0]      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
@@ -77,8 +77,8 @@ Decisions = {
 #"Choice_generate_initial_set" : True, 
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
-"Choice_consider_walk_links" : True,
-"Choice_import_dictionaries" : True,
+"Choice_consider_walk_links" : False,
+"Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
@@ -96,7 +96,7 @@ if Decisions["Choice_import_dictionaries"]:
 else:
     '''State the various parameter constraints''' 
     parameters_constraints = {
-    'con_r' : 8,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
+    'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
     'con_maxNodes' : 6,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist),              # number of nodes in the network
@@ -121,8 +121,8 @@ else:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA_frequencies={
     "method" : "GA",
-    "population_size" : 200, #should be an even number, John: 200
-    "generations" : 40, # John: 200
+    "population_size" : 4, #should be an even number, John: 200
+    "generations" : 2, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability" : 0.7,  # John: 0.9 BEST: 0.8
     "crossover_distribution_index" : 5,
@@ -208,22 +208,22 @@ class PopulationFreq(gf2.Frequencies):
             self.variables[i,] = 1/gf2.Frequencies.theta_set[self.variable_args[i,]]
             self.objectives[i,] = fn_obj(self.variables[i,], main_problem)
             
-            # get the objective space values and objects
-            # F = pop.get("F").astype(np.float, copy=False)
-            F = self.objectives
-        
-            # do the non-dominated sorting until splitting front
-            fronts = NonDominated_Sorting().do(F)
+        # get the objective space values and objects
+        # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+    
+        # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
 
-            for k, front in enumerate(fronts):
-        
-                # calculate the crowding distance of the front
-                crowding_of_front = calc_crowding_distance(F[front, :])
-        
-                # save rank and crowding in the individual class
-                for j, i in enumerate(front):
-                    self.rank[i] = k
-                    self.crowding_dist[i] = crowding_of_front[j]
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
                     
             
     def get_summary(self):
@@ -499,6 +499,29 @@ def crossover_pop_uniform_as_is(pop, main_problem):
             
     return offspring_variable_args
 
+def crossover_pop_uniform_with_prob(pop, main_problem):
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size/2))
+    
+    offspring_variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
+                                   main_problem.R_routes.number_of_routes]).astype(int)
+    
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size/2)):
+        
+        parent_A = pop.variable_args[selection[i,0]]
+        parent_B = pop.variable_args[selection[i,1]]
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability:
+            # Perform crossover according to probability
+            offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
+                crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+        
+        else:
+            # Just reassign the parents if false
+            offspring_variable_args[int(2*i),] = parent_A
+            offspring_variable_args[int(2*i+1),] = parent_B
+            
+    return offspring_variable_args
+
 
 #%% Functions: Mutation
 def mutate_pop_args(offspring_variable_args, variable_len, mutation_probability):
@@ -730,8 +753,10 @@ def main(UTFSP_problem_1):
             
         
         stats['end_time'] = datetime.datetime.now() # enter the begin time
-        print("Generation 0 duration: "+ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']))
-        
+        HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
+        print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
+                                                        ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
+                                                        round(HV, 4)))
         
         """Run each generation"""
         for i_generation in range(UTFSP_problem_1.problem_GA_parameters.generations):    
@@ -741,7 +766,7 @@ def main(UTFSP_problem_1):
             print("Generation " + str(int(i_generation+1)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
             
             # Crossover amd Mutation
-            offspring_variable_args = crossover_pop_uniform_as_is(pop_1, UTFSP_problem_1)
+            offspring_variable_args = crossover_pop_uniform_with_prob(pop_1, UTFSP_problem_1)
             
             mutated_variable_args = mutate_pop_args(offspring_variable_args, 
                        UTFSP_problem_1.R_routes.number_of_routes,
@@ -1446,155 +1471,156 @@ if False:
                            UTFSP_problem_1.problem_data.mx_walk)
 
 # %% Post optimisation analysis:
-def objective_function_analysis(UTFSP_problem_1, F_x):
-    return(
-    f"{round(gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,F_x, UTFSP_problem_1.problem_data.mx_dist, UTFSP_problem_1.problem_data.mx_demand, UTFSP_problem_1.problem_inputs.__dict__),3)}"\
-    f" min & "\
-    f"{round(gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,F_x, UTFSP_problem_1.problem_data.mx_dist, UTFSP_problem_1.problem_data.mx_demand, UTFSP_problem_1.problem_inputs.__dict__, UTFSP_problem_1.problem_data.mx_walk),3)}"\
-    f" min & "\
-    f"{gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, F_x, UTFSP_problem_1.problem_data.mx_dist)}"
-    f" buses"
-    )
-
-F_x = np.array([1/5, 1/5, 1/7, 1/5, 1/5, 1/5, 1/5, 1/5])
-F_x = np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0]
-F_x = np.array([0.2,	0.2,	0.2,	0.2,	0.0333333333333333,	0.0333333333333333,	0.2,	0.2]) # case study
-
-1/F_x
-
-Route_lengths = gf.calc_seperate_route_length(R_x, mx_dist)  
+if False:
+    def objective_function_analysis(UTFSP_problem_1, F_x):
+        return(
+        f"{round(gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,F_x, UTFSP_problem_1.problem_data.mx_dist, UTFSP_problem_1.problem_data.mx_demand, UTFSP_problem_1.problem_inputs.__dict__),3)}"\
+        f" min & "\
+        f"{round(gf2.f3_ETT(UTFSP_problem_1.R_routes.routes,F_x, UTFSP_problem_1.problem_data.mx_dist, UTFSP_problem_1.problem_data.mx_demand, UTFSP_problem_1.problem_inputs.__dict__, UTFSP_problem_1.problem_data.mx_walk),3)}"\
+        f" min & "\
+        f"{gf2.f4_TBR(UTFSP_problem_1.R_routes.routes, F_x, UTFSP_problem_1.problem_data.mx_dist)}"
+        f" buses"
+        )
     
-buses_required = gf2.f4_TBR(R_x, F_x, mx_dist, False)
-
-for i in range(len(buses_required)):  
-    buses_required[i] = math.ceil(buses_required[i])
-
-""" Print the routes with buses required and the frequencies """
-print_str = ""
-comma = ","
-rowcol_boolean = True
-for i in range(len(buses_required)): 
-    freq_temp = round(buses_required[i]/(Route_lengths[i]*2),3)
-    headway_temp = round(1/(buses_required[i]/(Route_lengths[i]*2)),3) 
+    F_x = np.array([1/5, 1/5, 1/7, 1/5, 1/5, 1/5, 1/5, 1/5])
+    F_x = np.full((1,UTFSP_problem_1.problem_constraints.con_r), 1/30)[0]
+    F_x = np.array([0.2,	0.2,	0.2,	0.2,	0.0333333333333333,	0.0333333333333333,	0.2,	0.2]) # case study
     
-    temp_str = f"{string.ascii_uppercase[i]} & $\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {Route_lengths[i]} & {math.ceil(buses_required[i])} & {freq_temp} & {headway_temp}\\\\"
-    if rowcol_boolean:
-        temp_str = "".join([temp_str, "\\rowcol"])
-    rowcol_boolean = not rowcol_boolean
-    print_str = "\n".join([print_str, temp_str])
-
-print(print_str)
-
-# Initial performance
-objective_function_analysis(UTFSP_problem_1, F_x)
-
-# Actual performance 
-F_x_achieved = buses_required/Route_lengths
-objective_function_analysis(UTFSP_problem_1, F_x_achieved)
-
-
-
-TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) 
-
-mx_volumes_links = TN.mx_volumes_links
-b = TN.mx_volumes_nodes
-
-c = TN.volumes_links_per_destination
-
-TN.volumes_nodes_per_destination_i[0]
-
-d = TN.df_opt_strat_alg_named[1]
-
-
-
-# %% Links Analysis for UTFSP
-TN = gf2.Transit_network(R_x, F_x_achieved, mx_dist, mx_demand, parameters_input, mx_walk) 
-
-links_analysis_df = pd.DataFrame(columns = ["v_i", "v_j", "c_a","f_a","v_a"])
-
-for v_i in range(len(mx_volumes_links)):
-    for v_j in range(len(mx_volumes_links)):
-        if mx_volumes_links[v_i,v_j] != 0:
-            links_analysis_df.loc[len(links_analysis_df)] = [v_i, v_j, TN.mx_C_a[v_i,v_j], TN.mx_f_a[v_i,v_j], mx_volumes_links[v_i,v_j]]
-            
-links_analysis_df_named = copy.deepcopy(links_analysis_df)
-
-for i in range(len(links_analysis_df)):
-    links_analysis_df_named.iloc[i,0] = TN.names_all_transit_nodes[int(links_analysis_df.iloc[i,0])]
-    links_analysis_df_named.iloc[i,1] = TN.names_all_transit_nodes[int(links_analysis_df.iloc[i,1])] 
-
-
-""" Max usage per link """     
-links_analysis_max_df = pd.DataFrame(columns = ["Route", "Max"])
-
-for index_i in range(len(TN.R_routes_named)):
-    temp_storage = 0 
+    1/F_x
+    
+    Route_lengths = gf.calc_seperate_route_length(R_x, mx_dist)  
+        
+    buses_required = gf2.f4_TBR(R_x, F_x, mx_dist, False)
+    
+    for i in range(len(buses_required)):  
+        buses_required[i] = math.ceil(buses_required[i])
+    
+    """ Print the routes with buses required and the frequencies """
+    print_str = ""
+    comma = ","
+    rowcol_boolean = True
+    for i in range(len(buses_required)): 
+        freq_temp = round(buses_required[i]/(Route_lengths[i]*2),3)
+        headway_temp = round(1/(buses_required[i]/(Route_lengths[i]*2)),3) 
+        
+        temp_str = f"{string.ascii_uppercase[i]} & $\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {Route_lengths[i]} & {math.ceil(buses_required[i])} & {freq_temp} & {headway_temp}\\\\"
+        if rowcol_boolean:
+            temp_str = "".join([temp_str, "\\rowcol"])
+        rowcol_boolean = not rowcol_boolean
+        print_str = "\n".join([print_str, temp_str])
+    
+    print(print_str)
+    
+    # Initial performance
+    objective_function_analysis(UTFSP_problem_1, F_x)
+    
+    # Actual performance 
+    F_x_achieved = buses_required/Route_lengths
+    objective_function_analysis(UTFSP_problem_1, F_x_achieved)
+    
+    
+    
+    TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) 
+    
+    mx_volumes_links = TN.mx_volumes_links
+    b = TN.mx_volumes_nodes
+    
+    c = TN.volumes_links_per_destination
+    
+    TN.volumes_nodes_per_destination_i[0]
+    
+    d = TN.df_opt_strat_alg_named[1]
+    
+    
+    
+    # %% Links Analysis for UTFSP
+    TN = gf2.Transit_network(R_x, F_x_achieved, mx_dist, mx_demand, parameters_input, mx_walk) 
+    
+    links_analysis_df = pd.DataFrame(columns = ["v_i", "v_j", "c_a","f_a","v_a"])
+    
+    for v_i in range(len(mx_volumes_links)):
+        for v_j in range(len(mx_volumes_links)):
+            if mx_volumes_links[v_i,v_j] != 0:
+                links_analysis_df.loc[len(links_analysis_df)] = [v_i, v_j, TN.mx_C_a[v_i,v_j], TN.mx_f_a[v_i,v_j], mx_volumes_links[v_i,v_j]]
+                
+    links_analysis_df_named = copy.deepcopy(links_analysis_df)
+    
+    for i in range(len(links_analysis_df)):
+        links_analysis_df_named.iloc[i,0] = TN.names_all_transit_nodes[int(links_analysis_df.iloc[i,0])]
+        links_analysis_df_named.iloc[i,1] = TN.names_all_transit_nodes[int(links_analysis_df.iloc[i,1])] 
+    
+    
+    """ Max usage per link """     
+    links_analysis_max_df = pd.DataFrame(columns = ["Route", "Max"])
+    
+    for index_i in range(len(TN.R_routes_named)):
+        temp_storage = 0 
+        for link_nr in range(len(links_analysis_df_named)):
+            if links_analysis_df_named.iloc[link_nr,0] in TN.R_routes_named[index_i] or links_analysis_df_named.iloc[link_nr,1] in TN.R_routes_named[index_i]:
+                if links_analysis_df_named.iloc[link_nr,4] > temp_storage:
+                    temp_storage = links_analysis_df_named.iloc[link_nr,4]
+        
+        links_analysis_max_df.loc[len(links_analysis_max_df)] = [string.ascii_uppercase[index_i], temp_storage]
+    
+    """ Walk usage for links """     
+    walk_analysis_max_df = pd.DataFrame(columns = ["v_i", "v_i", "Usage"])
+    
     for link_nr in range(len(links_analysis_df_named)):
-        if links_analysis_df_named.iloc[link_nr,0] in TN.R_routes_named[index_i] or links_analysis_df_named.iloc[link_nr,1] in TN.R_routes_named[index_i]:
-            if links_analysis_df_named.iloc[link_nr,4] > temp_storage:
-                temp_storage = links_analysis_df_named.iloc[link_nr,4]
+        if links_analysis_df_named.iloc[link_nr,0] in TN.names_all_transit_nodes[0:len(TN.mapping_adjacent)] and links_analysis_df_named.iloc[link_nr,1] in TN.names_all_transit_nodes[0:len(TN.mapping_adjacent)]:
+            walk_analysis_max_df.loc[len(walk_analysis_max_df)] = [links_analysis_df_named.iloc[link_nr,0], links_analysis_df_named.iloc[link_nr,1], links_analysis_df_named.iloc[link_nr,4]]
     
-    links_analysis_max_df.loc[len(links_analysis_max_df)] = [string.ascii_uppercase[index_i], temp_storage]
-
-""" Walk usage for links """     
-walk_analysis_max_df = pd.DataFrame(columns = ["v_i", "v_i", "Usage"])
-
-for link_nr in range(len(links_analysis_df_named)):
-    if links_analysis_df_named.iloc[link_nr,0] in TN.names_all_transit_nodes[0:len(TN.mapping_adjacent)] and links_analysis_df_named.iloc[link_nr,1] in TN.names_all_transit_nodes[0:len(TN.mapping_adjacent)]:
-        walk_analysis_max_df.loc[len(walk_analysis_max_df)] = [links_analysis_df_named.iloc[link_nr,0], links_analysis_df_named.iloc[link_nr,1], links_analysis_df_named.iloc[link_nr,4]]
-
-def inf_conversion(number_to_test): 
-    if number_to_test == inf:
-        return "\infty"
-    else:   
-        return round(number_to_test,3)
-
-"""  Print links analysis for latex """
-print_str = ""
-rowcol_boolean = True
-for i in range(len(links_analysis_df_named)):   
-    temp_str = f"{links_analysis_df_named.iloc[i,0]} & {links_analysis_df_named.iloc[i,1]} & {links_analysis_df_named.iloc[i,2]} & ${inf_conversion(links_analysis_df_named.iloc[i,3])}$ & {round(links_analysis_df_named.iloc[i,4],3)}\\\\"
-    if rowcol_boolean:
-        temp_str = "".join([temp_str, "\\rowcol"])
-    rowcol_boolean = not rowcol_boolean
+    def inf_conversion(number_to_test): 
+        if number_to_test == inf:
+            return "\infty"
+        else:   
+            return round(number_to_test,3)
     
-    print_str = "\n".join([print_str, temp_str])
+    """  Print links analysis for latex """
+    print_str = ""
+    rowcol_boolean = True
+    for i in range(len(links_analysis_df_named)):   
+        temp_str = f"{links_analysis_df_named.iloc[i,0]} & {links_analysis_df_named.iloc[i,1]} & {links_analysis_df_named.iloc[i,2]} & ${inf_conversion(links_analysis_df_named.iloc[i,3])}$ & {round(links_analysis_df_named.iloc[i,4],3)}\\\\"
+        if rowcol_boolean:
+            temp_str = "".join([temp_str, "\\rowcol"])
+        rowcol_boolean = not rowcol_boolean
+        
+        print_str = "\n".join([print_str, temp_str])
+        
+    print(print_str)
     
-print(print_str)
-
-
-"""  Print max route usage for latex """
-print_str = ""
-rowcol_boolean = True
-for i in range(len(links_analysis_max_df)):   
-    temp_str = f"{links_analysis_max_df.iloc[i,0]} & $\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {round(links_analysis_max_df.iloc[i,1],3)}\\\\"
-    if rowcol_boolean:
-        temp_str = "".join([temp_str, "\\rowcol"])
-    rowcol_boolean = not rowcol_boolean
     
-    print_str = "\n".join([print_str, temp_str])
+    """  Print max route usage for latex """
+    print_str = ""
+    rowcol_boolean = True
+    for i in range(len(links_analysis_max_df)):   
+        temp_str = f"{links_analysis_max_df.iloc[i,0]} & $\\left\\langle {comma.join([str(x) for x in R_x[i]])}\\right\\rangle$ & {round(links_analysis_max_df.iloc[i,1],3)}\\\\"
+        if rowcol_boolean:
+            temp_str = "".join([temp_str, "\\rowcol"])
+        rowcol_boolean = not rowcol_boolean
+        
+        print_str = "\n".join([print_str, temp_str])
+        
+    print(print_str)
     
-print(print_str)
-
-"""  Print walk links usage for latex """
-print_str = ""
-rowcol_boolean = True
-for i in range(len(walk_analysis_max_df)):   
-    temp_str = f"{walk_analysis_max_df.iloc[i,0]} & {walk_analysis_max_df.iloc[i,1]} & {round(walk_analysis_max_df.iloc[i,2],3)}\\\\"
-    if rowcol_boolean:
-        temp_str = "".join([temp_str, "\\rowcol"])
-    rowcol_boolean = not rowcol_boolean
+    """  Print walk links usage for latex """
+    print_str = ""
+    rowcol_boolean = True
+    for i in range(len(walk_analysis_max_df)):   
+        temp_str = f"{walk_analysis_max_df.iloc[i,0]} & {walk_analysis_max_df.iloc[i,1]} & {round(walk_analysis_max_df.iloc[i,2],3)}\\\\"
+        if rowcol_boolean:
+            temp_str = "".join([temp_str, "\\rowcol"])
+        rowcol_boolean = not rowcol_boolean
+        
+        print_str = "\n".join([print_str, temp_str])
+        
+    print(print_str)
     
-    print_str = "\n".join([print_str, temp_str])
+    # %% Final performance
+    buses_required_final = copy.deepcopy(buses_required)
+    F_x_achieved = buses_required_final/Route_lengths
+    F_x_achieved[4] = 1/100000
+    F_x_achieved[5] = 1/100000
+    objective_function_analysis(UTFSP_problem_1, F_x_achieved)
     
-print(print_str)
-
-# %% Final performance
-buses_required_final = copy.deepcopy(buses_required)
-F_x_achieved = buses_required_final/Route_lengths
-F_x_achieved[4] = 1/100000
-F_x_achieved[5] = 1/100000
-objective_function_analysis(UTFSP_problem_1, F_x_achieved)
-
-# Matie Bus Evaluations
-UTFSP_problem_matie_bus_routes = copy.deepcopy(UTFSP_problem_1)
+    # Matie Bus Evaluations
+    UTFSP_problem_matie_bus_routes = copy.deepcopy(UTFSP_problem_1)

@@ -16,13 +16,15 @@ from itertools import compress
 import networkx as nx
 import copy
 import datetime
-import pygmo as pg
+# import pygmo as pg
 
 from pymoo.util.misc import find_duplicates, has_feasible
 from pymoo.util.dominator import Dominator
 from pymoo.operators.selection.tournament_selection import compare, TournamentSelection
 from pymoo.util.randomized_argsort import randomized_argsort
 from pymoo.util.misc import random_permuations
+from pymoo.factory import get_performance_indicator
+
 
 import DSS_UTNDP_Classes as gc
 import EvaluateRouteSet as ev
@@ -295,6 +297,14 @@ def routes_generation_unseen_prob(parent_i, parent_j, solution_len):
         parent_index = looped_incrementor(parent_index, 1)
     
     return child_i
+
+def normalise_route_set(R_x):
+    all_nodes = [y for x in R_x for y in x]
+    if 0 not in all_nodes:
+        for i in range(len(R_x)): # get routes in the correct format
+            R_x[i] = [x - 1 for x in R_x[i]] # subtract 1 from each element in the list
+        del i
+    return R_x
 
 # %% Try to generate a feasible solution 
 def generate_solution(paths_shortest_all, con_r, N , iterations):
@@ -1141,18 +1151,19 @@ def norm_and_calc_2d_hv(df_norm, max_objs, min_objs):
     df_norm_copy[df_norm_copy < 0] = 0 # to avoid errors in HV computation
     df_norm_copy[df_norm_copy > 1] = 1 # to avoid errors in HV computation
         
-    hv = pg.hypervolume(points = df_norm_copy.tolist()) # create the HV object
-    return hv.compute((1,1)) # assume minimisation and compute
+    hv = get_performance_indicator("hv", ref_point=np.array([1, 1])) # create the HV object
+    return hv.calc(df_norm_copy) # assume minimisation and compute
     
 def norm_and_calc_2d_hv_np(numpy_objs, max_objs, min_objs):
     """Use this when input values are numpy arrays"""
     numpy_objs_copy = (numpy_objs - min_objs)/(max_objs - min_objs) # normalise the data
+
     # take note, the df has now changed to a numpy array
     numpy_objs_copy[numpy_objs_copy < 0] = 0 # to avoid errors in HV computation
     numpy_objs_copy[numpy_objs_copy > 1] = 1 # to avoid errors in HV computation
-        
-    hv = pg.hypervolume(points = numpy_objs_copy) # create the HV object
-    return hv.compute((1,1)) # assume minimisation and compute
+      
+    hv = get_performance_indicator("hv", ref_point=np.array([1, 1]))        
+    return hv.calc(numpy_objs_copy) # assume minimisation and compute
     
 ''' Calculate Hypervolume using Pygmo ''' 
 def calc_hv_from_df(df_archive):
@@ -1700,6 +1711,65 @@ def crossover_routes_unseen_prob(parent_i, parent_j):
     
     return child_i
 
+def crossover_routes_unseen_prob_UTRFSP(parent_i_route, parent_j_route, parent_i_freq_args, parent_j_freq_args):
+    """Crossover function for routes based on Mumford 2013's Crossover function
+    for routes based on alternating between parents and including a route from
+    each parent that maximises the unseen vertices added to the child route
+    Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
+    parents_route = []  
+    parents_route.append(copy.deepcopy(parent_i_route))
+    parents_route.append(copy.deepcopy(parent_j_route))
+    parents_freq_args = []
+    parents_freq_args.append(copy.deepcopy(list(parent_i_freq_args)))
+    parents_freq_args.append(copy.deepcopy(list(parent_j_freq_args)))
+    parent_index = random.randint(0,1) # counter to help alternate between parents  
+    
+    child_i_route = [] # define child route
+    child_i_freq_args = [] # define child frequency
+    parent_len = len(parent_i_route)
+    
+    # Randomly select the first seed solution for the child
+    random_index = random.randint(0,parent_len-1)
+    child_i_route.append(parents_route[parent_index][random_index]) # adds seed solution to parent route
+    child_i_freq_args.append(parents_freq_args[parent_index][random_index]) # adds seed solution to parent frequency
+    del(parents_route[parent_index][random_index]) # removes the route from parent so that it is not evaluated again
+    del(parents_freq_args[parent_index][random_index]) # removes the frequnecy from parent
+    
+    # Alternates parent solutions
+    parent_index = looped_incrementor(parent_index, 1)
+    
+    
+    # Calculate the unseen proportions to select next route for inclusion into child
+    while len(child_i_route) < parent_len:
+        # Determines all nodes present in the child
+        all_nodes_present = set([y for x in child_i_route for y in x]) # flatten all the elements in child
+    
+        parent_curr = parents_route[parent_index] # sets the current parent
+        
+        proportions = []
+        for i_candidate in range(len(parent_curr)):
+            R_i = set(parent_curr[i_candidate])
+            if bool(R_i.intersection(all_nodes_present)): # test whether there is a common transfer point
+                proportions.append(len(R_i - all_nodes_present) / len(R_i)) # calculate the proportion of unseen vertices
+            else:
+                proportions.append(0) # set proportion to zero so that it won't be chosen
+        
+        # Get route that maximises the proportion of unseen nodes included
+        max_indices = set([i for i, j in enumerate(proportions) if j == max(proportions)]) # position of max proportion/s
+        max_index = random.sample(max_indices, 1)[0] # selects only one index randomly between a possible tie, else the only one
+        
+        # Add the route to the child
+        child_i_route.append(parent_curr[max_index]) # add max proportion unseen nodes route to the child
+        child_i_freq_args.append(parents_freq_args[parent_index][max_index]) # adds the frequency that corresponds to the route
+        del(parents_route[parent_index][max_index]) # removes the route from parent so that it is not evaluated again
+        del(parents_freq_args[parent_index][max_index]) # removes the frequnecy from parent
+
+        
+        # Alternates parent solutions
+        parent_index = looped_incrementor(parent_index, 1)
+    
+    return child_i_route, child_i_freq_args
+
 
 def crossover_uniform_as_is(parent_A, parent_B, parent_length):
     x_index = random.randint(1,parent_length-1)
@@ -1752,7 +1822,7 @@ def crossover_pop_routes_cxp_1(pop, main_problem):
     return offspring_variables
 
 def crossover_pop_routes(pop, main_problem):
-    """Crossover function for entire route population"""
+    """Crossover function for entire route population (all or nothing)"""
     selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
     
     if random.random() < main_problem.problem_GA_parameters.crossover_probability:
@@ -1780,8 +1850,80 @@ def crossover_pop_routes(pop, main_problem):
     
     else:
         return pop.variables
-        
     
+def crossover_pop_routes_individuals(pop, main_problem):
+    """Crossover function applied to each route in population"""
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
+    
+    offspring_variables = [None] * main_problem.problem_GA_parameters.population_size
+     
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability:
+            parent_A = pop.variables[selection[i,0]]
+            parent_B = pop.variables[selection[i,1]]
+        
+            offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+                # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+            
+            while not test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], 
+                                                                             main_problem.problem_inputs.n, 
+                                                                             main_problem.mapping_adjacent)
+                
+                if test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                    continue
+                else:
+                    offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+    
+        else:
+            if random.random() < 0.5:
+                offspring_variables[i] = pop.variables[selection[i,0]]
+            else:
+                offspring_variables[i] = pop.variables[selection[i,1]]
+    
+    return offspring_variables
+    
+    
+def crossover_pop_routes_UTRFSP(pop, main_problem):
+    """Crossover function for entire route population"""
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
+    
+    offspring_variables_routes = [None] * main_problem.problem_GA_parameters.population_size
+    offspring_variables_freq_args = [None] * main_problem.problem_GA_parameters.population_size
+    
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability_routes:
+            
+            parent_A_route = pop.variables_routes[selection[i,0]]
+            parent_B_route = pop.variables_routes[selection[i,1]]
+            parent_A_freq_args = pop.variable_freq_args[selection[i,0]]
+            parent_B_freq_args = pop.variable_freq_args[selection[i,1]]
+        
+            offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
+                # crossover_uniform_as_is(parent_A_route, parent_B_route, main_problem.R_routes.number_of_routes)
+            
+            while not test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+                offspring_variables_routes[i] = repair_add_missing_from_terminal(offspring_variables_routes[i], 
+                                                                             main_problem.problem_inputs.n, 
+                                                                             main_problem.mapping_adjacent)
+                
+                if test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+                    continue
+                else:
+                    offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
+        
+        else:
+            # Randomly choose one of the parents as the offspring
+            if random.random() < 0.5:
+                offspring_variables_routes[i] = pop.variables_routes[selection[i,0]]
+                offspring_variables_freq_args[i] = pop.variable_freq_args[selection[i,0]]
+            else:
+                offspring_variables_routes[i] = pop.variables_routes[selection[i,1]]
+                offspring_variables_freq_args[i] = pop.variable_freq_args[selection[i,1]]
+                
+    return offspring_variables_routes, np.array(offspring_variables_freq_args)
 
 
 #%% Mutation functions   
@@ -1893,6 +2035,14 @@ def mutate_route_population(pop_variables_routes, main_problem):
     for i in range(len(pop_mutated_variables)):
          pop_mutated_variables[i] = mutate_overall_routes(pop_mutated_variables[i], main_problem, 
                           main_problem.problem_GA_parameters.mutation_probability)
+    return pop_mutated_variables
+
+def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
+    """A function to mutate over the entire population"""
+    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    for i in range(len(pop_mutated_variables)):
+         pop_mutated_variables[i] = mutate_overall_routes(pop_mutated_variables[i], main_problem, 
+                          main_problem.problem_GA_parameters.mutation_probability_routes)
     return pop_mutated_variables
 
 # %% Objective Functions

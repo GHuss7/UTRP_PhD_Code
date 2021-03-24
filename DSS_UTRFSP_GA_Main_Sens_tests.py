@@ -85,20 +85,42 @@ Decisions = {
 "Choice_consider_walk_links" : False,
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
-"Choice_use_NN_to_predict" : False,
+"Choice_use_NN_to_predict" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
-"Additional_text" : "Data_Gen_GA_search"
+"Additional_text" : "Tests"
 }
-
+Decisions["Additional_text"]
 
 if Decisions["Choice_use_NN_to_predict"]:
-    model_name = "Saved_models/BO_Test_20210315_154011"
+    model_name = "Tuned_models/BO_Test_20210323_180505" #very good BO_Test_20210323_180505
     model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name,
                                        custom_objects={'custom_distance_loss_function': custom_distance_loss_function}) # load the ML prediction model
     Decisions["Additional_text"] = "NN_Trial"
     
     model_NN.get_config()
+    
+#%% Seperate testing configurations
+config_nr = 4
 
+boolean_config = [[True, True, False, False, False, False], #1
+                  [False, False, True, True, False, False], #2
+                  [False, False, False, False, True, True], #3
+                  [True, False, True, True, False, False], #1&2
+                  [True, False, False, False, True, True], #1&3
+                  [False, False, True, False, True, True], #2&3
+                  [True, False, True, False, True, True]] #1&2&3
+
+names_config = [["r"],
+        ["f"],
+        ["r_and_f"],
+        ["r_plus_f"],
+        ["r_plus_r_and_f"],
+        ["f_plus_r_and_f"],
+        ["all"]]
+
+Decisions["Additional_text"] = names_config[config_nr][0]
+
+#%% Load and set other parameters
 # Disables walk links
 if not(Decisions["Choice_consider_walk_links"]):
     mx_walk = False
@@ -143,8 +165,8 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 10, #should be an even number, John: 200
-    "generations" : 1, # John: 200
+    "population_size" : 200, #should be an even number, John: 200
+    "generations" : 20, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -743,10 +765,11 @@ if Decisions['Choice_use_NN_to_predict']:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
         """Objective function using the NN model to predict F_3 and F_4 values"""
         F_3_pred = model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_input))
-        _, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
+        #_, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
         F_4 = gf2.f4_TBR(routes, frequencies, 
                          UTRFSP_problem_input.problem_data.mx_dist) #f4_TBR
-        return (F_3_pred_rec[0][0], F_4)
+        return (F_3_pred, F_4)
+        #return (F_3_pred_rec[0][0], F_4)
 
 else:
     def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
@@ -1000,16 +1023,18 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         # Create a copy of pop_1 to use in both the routes and frequencies
         pop_copy = copy.deepcopy(pop_1)
         
+        if boolean_config[config_nr][0] or boolean_config[config_nr][4]:
         # Crossover amd Mutation for Routes
         # Crossover and Mutation is performed on routes, each frequency associated with its original route
-        offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_copy, UTRFSP_problem_1)
-        mutated_variables_routes = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
+            offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_copy, UTRFSP_problem_1)
+            mutated_variables_routes = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
+            
+            if boolean_config[config_nr][0]:
+                combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
+                                                         variables_freq_args, 
+                                                         UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][1])
         
-        combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
-                                                 variables_freq_args, 
-                                                 UTRFSP_problem_1, rank_and_sort=False)
-        
-        if True:        
+        if boolean_config[config_nr][2]:        
         # Crossover and Mutation for Frequencies
         # Crossover and Mutation is performed on frequencies, keeping the routes constant
             offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
@@ -1019,10 +1044,10 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
             
             combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, 
                                                      mutated_variables_freq_args, 
-                                                     UTRFSP_problem_1, rank_and_sort=False)
+                                                     UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][3])
 
 
-        if True: #TODO: I think this one may be omitted --- it will happen naturally with the other two        
+        if boolean_config[config_nr][4]: #TODO: I think this one may be omitted --- it will happen naturally with the other two        
         # Crossover and Mutation for Frequencies after Route Crossover and Mutation
         # After the routes are Crossed over and Mutated, a Crossover and Mutation is also performed on the frequencies 
             pop_copy.variable_freq_args = copy.deepcopy(variables_freq_args)
@@ -1033,7 +1058,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
             
             combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
                                                      mutated_variables_freq_args, 
-                                                     UTRFSP_problem_1, rank_and_sort=True)
+                                                     UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][5])
 
         
         if Decisions["Choice_print_full_data_for_analysis"]:
@@ -1371,8 +1396,8 @@ if False: #__name__ == "__main__":
         fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1) # 0 boarding and alighting: (11.495547973828113, 86.80000000000001)
         
         """Test"""
-        R_x = gf.convert_routes_str2list("5-7-9*0-1-2-5-14-6*9-10-11*4-3-11*9-13-12*14-8*") 
-        F_x = np.array([0.05,	0.05,	0.2,	0.0625,	0.142857143,	0.071428571])
+        R_x = gf.convert_routes_str2list("4-1-0*10-9-7-5-3-4*12-13-9-6-14-8*1-2*11-10*13-9-6-14-8*") 
+        F_x = np.array([0.055555556,	0.111111111,	0.2,	0.04,	0.125,	0.125])
         fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1) # real ans: 19.32168948	13.68888889 no_walk
 
         

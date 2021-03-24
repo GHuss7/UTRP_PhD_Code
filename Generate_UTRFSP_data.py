@@ -24,7 +24,7 @@ import pandas as pd
 import numpy as np
 import math
 from math import inf
-import pygmo as pg
+#import pygmo as pg
 import random
 import copy
 import datetime
@@ -69,7 +69,7 @@ from pymoo.model.selection import Selection
 from pymoo.util.misc import random_permuations
     
 # %% Load the respective files
-name_input_data = ["Mandl_UTRFSP"][0]  # set the name of the input data
+name_input_data = ["Mandl_UTRFSP_no_walk"][0]  # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
@@ -84,7 +84,7 @@ Decisions = {
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
 "Choice_consider_walk_links" : False,
-"Choice_import_dictionaries" : True,
+"Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
@@ -121,7 +121,9 @@ else:
     'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
     'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
     'large_dist' : int(mx_dist.max()), # the large number from the distance matrix
-    'alpha_const_inter' : 0.5 # constant for interarrival times relationship 0.5 (Spiess 1989)
+    'alpha_const_inter' : 0.5, # constant for interarrival times relationship 0.5 (Spiess 1989)
+    'wt' : 0,
+    'tp' : 5
     }
     
     '''State the various GA input parameters for frequency setting''' 
@@ -237,7 +239,7 @@ data_UTRFSP = pd.DataFrame(columns=columns_list)
 
 t1 = time.time()
 time_start = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-iterations = 5000
+iterations = 15000
 
 for counter in range(iterations):
     R_x = gc.Routes.return_feasible_route_robust(UTRFSP_problem_1)

@@ -41,6 +41,7 @@ param_ML = {
 'max_f_1' : 70,
 'min_f_2' : 4,
 'max_f_2' :82,
+'normalise' : False,
 'hp_tuning' : True,
 'train_f_1_only' : True
 }
@@ -105,7 +106,7 @@ class RegressionHyperModel(HyperModel):
         
         model.add(
             Dense(
-                units=hp.Int('units', 80, 150, 10, default=140),
+                units=hp.Int('units', 90, 150, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
                     values=['relu'],
@@ -118,54 +119,46 @@ class RegressionHyperModel(HyperModel):
         
         model.add(
             Dense(
-                units=hp.Int('units', 50, 160, 10, default=140),
+                units=hp.Int('units', 90, 160, 10, default=140),
                 activation=hp.Choice(
                     'dense_activation',
                     values=['relu'],
                     default='relu')
             )
         )
-        
-        model.add(
-            Dense(
-                units=hp.Int('units', 50, 150, 10, default=140),
-                activation=hp.Choice(
-                    'dense_activation',
-                    values=['relu'],
-                    default='relu')
+    
+        if True:
+            model.add(
+                Dense(
+                    units=hp.Int('units', 90, 150, 10, default=140),
+                    activation=hp.Choice(
+                        'dense_activation',
+                        values=['relu'],
+                        default='relu')
+                )
             )
-        )
+            
+            #model.add(Dropout(0.2))
         
-        #model.add(Dropout(0.2))
-        
-        model.add(
-            Dense(
-                units=hp.Int('units', 50, 150, 10, default=140),
-                activation=hp.Choice(
-                    'dense_activation',
-                    values=['relu'],
-                    default='relu')
+        if True:    
+            model.add(
+                Dense(
+                    units=hp.Int('units', 90, 150, 10, default=140),
+                    activation=hp.Choice(
+                        'dense_activation',
+                        values=['relu'],
+                        default='relu')
+                )
             )
-        )
-        
-        model.add(
-            Dense(
-                units=hp.Int('units', 50, 150, 10, default=140),
-                activation=hp.Choice(
-                    'dense_activation',
-                    values=['relu'],
-                    default='relu')
-            )
-        )
         
         #model.add(layers.LeakyReLU())
         
         if param_ML['train_f_1_only']:
             model.add(Dense(1, activation=hp.Choice(
                     'dense_activation',
-                    values=['relu','linear'],
+                    values=['relu'],
                     default='relu')))
-            loss_function = 'mae'
+            loss_function = 'mse'
         else:
             model.add(Dense(2, activation=hp.Choice(
                     'dense_activation',
@@ -179,7 +172,7 @@ class RegressionHyperModel(HyperModel):
             optimizer=Optimizers.Adam(learning_rate=hp_learning_rate),
             #optimizer=Optimizers.SGD(learning_rate=hp_learning_rate, momentum=0.9),
             loss=loss_function,
-            metrics=['mae']
+            metrics=['mse', 'mae']
         )
         
         return model
@@ -190,11 +183,19 @@ if __name__ == "__main__":
     
     X, Y = hf.load_data_UTRFSP_data("../../../Data/Training_data_UTRFSP_Mandl/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
     
-    # Data pre-processing: Normalisation
-    X_norm, Y_norm = normalise_data_UTRFSP(X,Y,param_ML)
+    if param_ML['train_f_1_only']:
+        Y = Y[:,0].reshape(-1,1)
+        
+    if param_ML['normalise']:
+        # Data pre-processing: Normalisation
+        X_norm, Y_norm = normalise_data_UTRFSP(X,Y,param_ML)
+        
+        # Split data 
+        x_train, x_val, x_test, y_train, y_val, y_test = hf.split_data(X_norm,Y_norm,param_ML)
     
-    # Split data 
-    x_train, x_val, x_test, y_train, y_val, y_test = hf.split_data(X_norm,Y_norm,param_ML)
+    else:
+        # Split data
+        x_train, x_val, x_test, y_train, y_val, y_test = hf.split_data(X,Y,param_ML)
         
     seed = 7
     np.random.seed(seed)
@@ -202,30 +203,14 @@ if __name__ == "__main__":
     #%% Model construction
     if not param_ML['hp_tuning']:
         model = Sequential()
-        model.add(Dense(126, input_dim=x_train.shape[1], activation='relu'))
+        model.add(Dense(132, input_dim=x_train.shape[1], activation='relu'))
         model.add(Dense(90, activation='relu'))
         model.add(Dense(21, activation='relu'))
-        model.add(Dense(2)) # default activation function is linear
-        model.compile(optimizer='adam', loss=custom_distance_loss_function, #loss used to be mse
+        model.add(Dense(1)) # default activation function is linear
+        model.compile(optimizer='adam', loss='mse', #loss used to be mse
                       metrics=['mae', 'mape'])
         
-        hp = kt.HyperParameters()
         
-        Dense(
-            units=hp.Int(
-                'units',
-                min_value=32,
-                max_value=512,
-                step=32,
-                default=128
-            ),
-            activation=hp.Choice(
-                'dense_activation',
-                values=['relu', 'tanh', 'sigmoid'],
-                default='relu'
-            )
-        )
-    
         #%% Model training
         t1 = time.time()
         tb_callback = tf.keras.callbacks.TensorBoard(
@@ -280,10 +265,10 @@ if __name__ == "__main__":
         #%% BayesianOptimization
         tuner_bo = BayesianOptimization(
                 hypermodel,
-                objective='mae',
+                objective='mse',
                 seed=42,
                 max_trials=30,
-                executions_per_trial=2,
+                executions_per_trial=1,
                 directory=os.path.normpath('D:/ML_Keras_Tuner/UTRFSP/Tests_BayesianOptimization'),
                 project_name='Test_'+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             )
@@ -297,24 +282,32 @@ if __name__ == "__main__":
         best_hps = tuner_bo.get_best_hyperparameters(num_trials=1)[0]
         tuner_bo.results_summary()
         best_model = tuner_bo.get_best_models(num_models=1)[0]
-        loss, mae = best_model.evaluate(x_test, y_test)
+        loss, mse, mae = best_model.evaluate(x_test, y_test)
         print(f'BO Performance metrics: \tLoss: {loss:.4f} \tMSE: {mae:.4f}')
         best_model.get_config()
         best_model.save("Tuned_models/BO_Test_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
     
         y_pred = best_model.predict(x_test)
         
-        _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
-        _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
-        
         hf.print_evaluation(y_test, y_pred)
+
+        if param_ML['normalise']:
+            _, y_test_rec = recast_data_UTRFSP(False, y_test, param_ML)
+            _, y_pred_rec = recast_data_UTRFSP(False, y_pred, param_ML)
         
-        #%% Results saving
-        prediction_results_stacked = np.hstack([y_test_rec, y_pred_rec])
+            #%% Results saving
+            prediction_results_stacked = np.hstack([y_test_rec, y_pred_rec])
+        
+        else:
+            #%% Results saving
+            prediction_results_stacked = np.hstack([y_test, y_pred])
+        
         np.savetxt("Predictions/NN_predictions_"+datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+".csv", prediction_results_stacked, delimiter=",")
         
         tuner_bo.search_space_summary()
 
+if False:
+    hf.print_evaluation(y_test, y_pred)
 
         
         

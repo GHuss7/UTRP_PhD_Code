@@ -366,7 +366,7 @@ def add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1, data_for_analysis=False):
     pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
     
     if isinstance(data_for_analysis, pd.DataFrame):
-        for index_i in range(pop_size, len_pop - pop_size):
+        for index_i in range(pop_size, len_pop):
             data_row = [pop_1.variables_routes_str[index_i]]
             data_row.extend(list(pop_1.variables_freq[index_i,:]))
             data_row.extend(list(pop_1.objectives[index_i,:]))

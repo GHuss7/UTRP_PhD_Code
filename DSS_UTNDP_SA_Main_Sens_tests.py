@@ -15,7 +15,7 @@ import pickle
 import pandas as pd 
 import numpy as np
 from math import inf
-import pygmo as pg
+#import pygmo as pg
 import random
 import copy
 import datetime
@@ -35,7 +35,7 @@ import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
 # %% Load the respective files
-name_input_data = ["Mandl_Data","Mumford0"][0]      # set the name of the input data
+name_input_data = ["Mandl_Data","Mumford0"][1]      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set variables
@@ -145,7 +145,8 @@ def main(UTNDP_problem_1):
                 UTNDP_problem_1.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
     # %% Generate an initial feasible solution
-    routes_R = gf.generate_initial_feasible_route_set(mx_dist, UTNDP_problem_1.problem_constraints.__dict__)
+    #routes_R = gf.generate_initial_feasible_route_set(mx_dist, UTNDP_problem_1.problem_constraints.__dict__)
+    routes_R = gc.Routes.return_feasible_route_robust(UTNDP_problem_1)
     
     if UTNDP_problem_1.problem_constraints.con_r != len(routes_R): # if the constraint was leveraged, update constraints
         UTNDP_problem_1.problem_constraints.con_r = len(routes_R)

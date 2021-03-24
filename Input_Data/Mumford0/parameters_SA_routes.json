@@ -7,10 +7,10 @@
 "max_attempts": 50, 
 "max_reheating_times": 5, 
 "max_poor_epochs": 400, 
-"Temp": 10, 
+"Temp": 5, 
 "M_iterations_for_temp": 1000, 
 "Cooling_rate": 0.97, 
 "Reheating_rate": 1.05, 
-"number_of_initial_solutions": 2, 
+"number_of_initial_solutions": 1, 
 "Feasibility_repair_attempts": 3, 
 "number_of_runs": 20}

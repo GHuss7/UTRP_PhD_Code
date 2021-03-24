@@ -59,7 +59,7 @@ from pymoo.util.randomized_argsort import randomized_argsort
 np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning) # find VisibleDeprecationWarning
     
 # %% Load the respective files
-name_input_data = ["Mandl_Data","Mumford0"][0]   # set the name of the input data
+name_input_data = ["Mandl_Data","Mumford0"][1]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set input parameters
@@ -118,7 +118,7 @@ else:
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
-    "mutation_ratio" : 0.4, # Ratio used for the probabilites of mutations applied
+    "mutation_ratio" : 0.1, # Ratio used for the probabilites of mutations applied
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
@@ -506,8 +506,8 @@ if __name__ == "__main__":
         # Set up the list of parameters to test
         sensitivity_list = [#[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
                             #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
-                            [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300],
-                            [parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300],
+                            [parameters_GA_route_design, "population_size", 10, 20, 50, 100, 150, 200, 300, 400],
+                            [parameters_GA_route_design, "generations", 10, 20, 50, 100, 150, 200, 300, 400],
                             [parameters_GA_route_design, "crossover_probability", 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1],
                             [parameters_GA_route_design, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5, 0.7, 0.9, 1],
                             [parameters_GA_route_design, "mutation_ratio", 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -523,7 +523,7 @@ if __name__ == "__main__":
                             #[parameters_GA_route_design, "mutation_ratio", 0.1, 0.2]
                             #]
         
-        sensitivity_list = [
+        #sensitivity_list = [
                             #[parameters_GA_route_design, "population_size", 20, 400], 
                             #[parameters_GA_route_design, "generations", 20, 400],
                             #[parameters_GA_route_design, "crossover_probability", 0.1],
@@ -532,19 +532,24 @@ if __name__ == "__main__":
                             #[parameters_GA_route_design, "mutation_probability", 0.9],
                             #[parameters_GA_route_design, "mutation_probability", 1],  
                             
-                            #[parameters_GA_route_design, "mutation_ratio", 0.01],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.05],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.1],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.2],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.3],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.4],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.5],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.6],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.7],
-                            #[parameters_GA_route_design, "mutation_ratio", 0.8],
-                            [parameters_GA_route_design, "mutation_ratio", 0.9],
-                            [parameters_GA_route_design, "mutation_ratio", 0.95],
-                            ]
+                            # [parameters_GA_route_design, "mutation_ratio", 0.01],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.05],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.1],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.2],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.3],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.4],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.5],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.6],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.7],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.8],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.9],
+                            # [parameters_GA_route_design, "mutation_ratio", 0.95],
+                            # ]
+        
+        sens_from = 4
+        sens_to = sens_from + 1
+        sensitivity_list = sensitivity_list[sens_from:sens_to]
+        
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]

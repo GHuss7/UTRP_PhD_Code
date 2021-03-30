@@ -68,7 +68,9 @@ from pymoo.util.misc import random_permuations
 from pymoo.factory import get_performance_indicator
     
 # %% Load the respective files
-name_input_data = ["Mandl_UTRFSP_no_walk"][0]  # set the name of the input data
+name_input_data = ["Mandl_UTRFSP_no_walk",
+                   "Mandl_UTRFSP_no_walk_prototype",
+                   "Mandl_UTRFSP_no_walk_trial"][1]  # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
@@ -86,10 +88,11 @@ Decisions = {
 "Choice_import_dictionaries" : False,
 "Choice_print_full_data_for_analysis" : True,
 "Choice_use_NN_to_predict" : True,
+"Choice_use_seeding_route_Set" : True,
+"Choice_seeding_route_set_size" : 40,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
 "Additional_text" : "Tests"
 }
-Decisions["Additional_text"]
 
 if Decisions["Choice_use_NN_to_predict"]:
     model_name = "Tuned_models/BO_Test_20210323_180505" #very good BO_Test_20210323_180505
@@ -118,7 +121,8 @@ names_config = [["r"],
         ["f_plus_r_and_f"],
         ["all"]]
 
-Decisions["Additional_text"] = names_config[config_nr][0]
+if not Decisions["Choice_use_NN_to_predict"]:
+    Decisions["Additional_text"] = names_config[config_nr][0]
 
 #%% Load and set other parameters
 # Disables walk links
@@ -137,7 +141,7 @@ else:
     parameters_constraints = {
     'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
-    'con_maxNodes' : 6,                       # maximum nodes in a route
+    'con_maxNodes' : 10,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist),              # number of nodes in the network
     'con_fleet_size' : 40,                     # number of vehicles that are allowed
     'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
@@ -165,8 +169,8 @@ else:
     parameters_GA={
     "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
-    "population_size" : 200, #should be an even number, John: 200
-    "generations" : 20, # John: 200
+    "population_size" : 600, #should be an even number, John: 200
+    "generations" : 200, # John: 200
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -288,7 +292,77 @@ class PopulationRouteFreq(gf2.Frequencies):
             for j, i in enumerate(front):
                 self.rank[i] = k
                 self.crowding_dist[i] = crowding_of_front[j]
-                    
+                
+    def generate_initial_population_from_seed_route_set(self, main_problem, fn_objectives, seed_route_set):
+        """
+        Function that generates an initial population based on a seed route set provided for the population.
+
+        Parameters
+        ----------
+        main_problem : UTRFSP_problem class
+            Contains all the problem details.
+        fn_objectives : function_obj
+            Objective functions to evaluate.
+        seed_route_set : DataFrame
+            Set of route strings to be incorporated with the initial population.
+
+        Returns
+        -------
+        None.
+
+        """        
+        seed_route_set_container = copy.deepcopy(seed_route_set)
+        seed_route_set_container = seed_route_set_container.append(seed_route_set)
+        seed_route_set_container = seed_route_set_container.append(seed_route_set)
+
+        seed_route_set_len = len(seed_route_set)
+        
+        for i in range(self.population_size):
+            
+            if i < seed_route_set_len*1: # sets the max freq for the seed route set
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_max_freq_args()
+                self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
+                self.variables_routes_str[i] = seed_route_set_container["routes"].iloc[i]
+                self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i])
+                self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
+            
+            if i >= seed_route_set_len*1 and i < seed_route_set_len*2: # sets the min freq for the seed route set
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_min_freq_args()
+                self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
+                self.variables_routes_str[i] = seed_route_set_container["routes"].iloc[i]
+                self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i])
+                self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)        
+        
+            if i >= seed_route_set_len*2 and i < seed_route_set_len*3: # sets random freq for the seed route set
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+                self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
+                self.variables_routes_str[i] = seed_route_set_container["routes"].iloc[i]
+                self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i])
+                self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)        
+        
+            if i >= seed_route_set_len*3: # generates random routes and frequencies
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+                self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
+                self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
+                self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
+                self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
+        
+        # get the objective space values and objects
+        # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+    
+        # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
+
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
             
     def get_summary(self):
         df_summary = pd.DataFrame()
@@ -333,6 +407,10 @@ class PopulationRouteFreq(gf2.Frequencies):
               Route str variables:\t {len(self.variables_routes_str)}\n \
               Objectives:\t {len(self.objectives)}\n \
               ")
+              
+    def convert_pop_route_strings_to_lists(self):
+        for i in range(len(self.variables_routes_str)):
+            self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i]) 
     
 
 #%% Class: NonDominated_Sorting
@@ -997,7 +1075,20 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     print("######################### RUN {0} #########################".format(run_nr+1))
     print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
     pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
-    pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj_f3_f4) 
+    
+    if Decisions["Choice_use_seeding_route_Set"]:    # Implement seeding solutions
+        nr_seeding_solutions_to_include = Decisions["Choice_seeding_route_set_size"]
+        seeding_route_set = pd.read_csv("./Input_Data/"+name_input_data+"/Seeding_route_set/Overall_Pareto_set.csv")
+        seeding_route_set = seeding_route_set.sort_values('f_1')
+        seed_indices = np.percentile(range(0,len(seeding_route_set)),np.linspace(0, 100, num=nr_seeding_solutions_to_include))
+        seeding_route_choices = seeding_route_set.iloc[seed_indices,:]
+        assert len(seeding_route_choices)*3 < UTRFSP_problem_1.problem_GA_parameters.population_size
+        
+        pop_1.generate_initial_population_from_seed_route_set(UTRFSP_problem_1, fn_obj_f3_f4, seeding_route_choices) 
+     
+    else:
+        pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj_f3_f4) 
+    
     df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
     
     if Decisions["Choice_print_full_data_for_analysis"]:
@@ -1145,11 +1236,14 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
         json.dump(parameters_constraints, open(path_results_per_run / "parameters_constraints.json", "w"))
         json.dump(parameters_GA, open(path_results_per_run / "parameters_GA.json", "w"))
+        json.dump(Decisions, open(path_results_per_run / "Decisions.json", "w"))
+
+        
         pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
         
         with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
             w = csv.writer(archive_file)
-            for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
+            for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats, **Decisions}.items():
                 w.writerow([key, val])
             del key, val
         
@@ -1270,7 +1364,7 @@ if Decisions["Choice_print_results"]:
         axs.scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
         axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
         if Decisions['Choice_use_NN_to_predict']:
-            axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='orange', marker="o", label='Pareto front obtained from all runs')
+            axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='orange', marker="o", label='Real Pareto front values')
         axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
         axs.set_title('Pareto front obtained from all runs')
         axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')

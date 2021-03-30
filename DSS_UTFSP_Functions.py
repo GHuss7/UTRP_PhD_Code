@@ -1065,6 +1065,14 @@ class Frequencies():
     def return_random_theta_args(self):
         F_x_arg = np.random.randint(0, len(self.theta_set), self.number_of_frequencies)
         return F_x_arg
+    
+    def return_max_freq_args(self):
+        F_x_arg = np.ones((1,self.number_of_frequencies))*0
+        return F_x_arg
+    
+    def return_min_freq_args(self):
+        F_x_arg = np.ones((1,self.number_of_frequencies))*(len(self.theta_set)-1) 
+        return F_x_arg
         
     def set_frequencies_all_equal(self, freq):
         self.frequencies = np.full(self.number_of_frequencies, freq)

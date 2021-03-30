@@ -1908,6 +1908,7 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
                 offspring_variables_routes[i] = repair_add_missing_from_terminal(offspring_variables_routes[i], 
                                                                              main_problem.problem_inputs.n, 
                                                                              main_problem.mapping_adjacent)
+                print(f"Debug: {i}")
                 
                 if test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
                     continue

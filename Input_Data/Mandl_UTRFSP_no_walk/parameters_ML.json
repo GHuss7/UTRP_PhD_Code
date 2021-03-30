@@ -5,6 +5,6 @@
 'max_f_1' : 70,
 'min_f_2' : 4,
 'max_f_2' :82,
-'hp_tuning' : True,
-'train_f_1_only' : True,
+'hp_tuning' : true,
+'train_f_1_only' : true,
 }

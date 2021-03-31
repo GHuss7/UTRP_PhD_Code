@@ -1,0 +1,23 @@
+Multi-computer setup:
+
+1.) Install and setup OneDrive with SUN account
+
+	1.1) Give some time to sync, but not the end of the world
+
+2.) Install and setup GitHub Desktop with ghuss7
+
+	2.1) Clone DSS-Main repository to default documents
+
+3.) Make sure Spyder and Anaconda are installed
+
+4.) Update Anaconda with: conda update --all
+
+5.) Download iGraph wheel for same Python installation (3.7 or 3.8)
+	
+	5.1) Download wheel: https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-igraph
+	
+	5.2) pip install path/to/wheel.whl
+
+6.) Pip installs:
+	
+	6.1) pip install pymoo

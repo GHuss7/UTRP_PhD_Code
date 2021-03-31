@@ -4,5 +4,6 @@
 "Choice_import_dictionaries": true, 
 "Choice_print_full_data_for_analysis": true, 
 "Choice_use_NN_to_predict": false, 
-"Choice_use_seeding_route_Set": false,  
+"Choice_use_seeding_route_Set": false,
+"Choice_relative_results_referencing" : false,
 "Additional_text": "Tests"}

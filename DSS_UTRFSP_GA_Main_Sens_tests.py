@@ -27,11 +27,11 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
 import concurrent.futures
-from tensorflow import keras
+#from tensorflow import keras
 
 os.chdir("Machine Learning/DNN_own_UTRFSP")
 import dnn_helper_functions as hf
-from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
+#from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
 os.chdir(os.path.dirname(__file__))
 
 # %% Import personal functions
@@ -87,6 +87,7 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_use_NN_to_predict" : False,
     "Choice_use_seeding_route_Set" : True,
+    "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests"
     }    
 
@@ -1030,7 +1031,11 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     
         '''Write all results and parameters to files'''
         '''Main folder path'''
-        path_parent_folder = Path(os.path.dirname(os.getcwd()))
+        if Decisions["Choice_relative_results_referencing"]:
+            path_parent_folder = Path(os.path.dirname(os.getcwd()))
+        else:
+            path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+        
         path_results = path_parent_folder / ("Results/Results_"+
                                              name_input_data+
                                              "/"+name_input_data+

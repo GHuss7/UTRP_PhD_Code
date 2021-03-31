@@ -1,0 +1,9 @@
+{"train_ratio" : 0.90,
+"val_ratio" : 0.05,
+"test_ratio" : 0.05,
+"min_f_1" : 13,
+"max_f_1" : 70,
+"min_f_2" : 4,
+"max_f_2" :82,
+"hp_tuning" : true,
+"train_f_1_only" : true}

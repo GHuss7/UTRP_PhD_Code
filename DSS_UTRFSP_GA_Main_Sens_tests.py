@@ -66,11 +66,31 @@ from pymoo.util.randomized_argsort import randomized_argsort
 from pymoo.model.selection import Selection
 from pymoo.util.misc import random_permuations
 from pymoo.factory import get_performance_indicator
-    
-# %% Load the respective files
+
+# %% Set decisions for the algorithm
 name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_prototype",
-                   "Mandl_UTRFSP_no_walk_trial"][1]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_trial",
+                   "Mandl_UTRFSP_no_walk_quick"][-1]  # set the name of the input data
+
+config_nr = 4
+
+if True:
+    Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
+
+else:
+    Decisions = {
+    "Choice_print_results" : True, 
+    "Choice_conduct_sensitivity_analysis" : False,
+    "Choice_consider_walk_links" : False,
+    "Choice_import_dictionaries" : True,
+    "Choice_print_full_data_for_analysis" : True,
+    "Choice_use_NN_to_predict" : False,
+    "Choice_use_seeding_route_Set" : True,
+    "Additional_text" : "Tests"
+    }    
+
+# %% Load the respective files
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
@@ -80,19 +100,6 @@ else:
     mx_walk = False
 
 # %% Set input parameters
-Decisions = {
-#"Choice_generate_initial_set" : True, 
-"Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : False,
-"Choice_consider_walk_links" : False,
-"Choice_import_dictionaries" : False,
-"Choice_print_full_data_for_analysis" : True,
-"Choice_use_NN_to_predict" : True,
-"Choice_use_seeding_route_Set" : True,
-"Choice_seeding_route_set_size" : 40,
-"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
-"Additional_text" : "Tests"
-}
 
 if Decisions["Choice_use_NN_to_predict"]:
     model_name = "Tuned_models/BO_Test_20210323_180505" #very good BO_Test_20210323_180505
@@ -103,8 +110,6 @@ if Decisions["Choice_use_NN_to_predict"]:
     model_NN.get_config()
     
 #%% Seperate testing configurations
-config_nr = 4
-
 boolean_config = [[True, True, False, False, False, False], #1
                   [False, False, True, True, False, False], #2
                   [False, False, False, False, True, True], #3
@@ -124,7 +129,7 @@ names_config = [["r"],
 if not Decisions["Choice_use_NN_to_predict"]:
     Decisions["Additional_text"] = names_config[config_nr][0]
 
-#%% Load and set other parameters
+#%% Load and set problem parameters
 # Disables walk links
 if not(Decisions["Choice_consider_walk_links"]):
     mx_walk = False
@@ -153,7 +158,6 @@ else:
     parameters_input = {
     'total_demand' : sum(sum(mx_demand))/2, # total demand from demand matrix
     'n' : len(mx_dist), # total number of nodes
-    'Problem_name' : name_input_data, # Specify the name of the problem currently being addressed
     'walkFactor' : 100, # factor it takes longer to walk than to drive
     'boardingTime' : 0.1, # assume boarding and alighting time = 6 seconds
     'alightingTime' : 0.1, # problem when alighting time = 0 (good test 0.5)(0.1 also works)
@@ -167,10 +171,10 @@ else:
     
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
-    "Problem_name" : f"{name_input_data}_UTRFSP_NSGAII", # Specify the name of the problem currently being addresses
     "method" : "GA",
     "population_size" : 600, #should be an even number, John: 200
     "generations" : 200, # John: 200
+    "initial_seeding_solutions" : 20, # Number of seeding solutions to incorporate from the non-dominated UTRP solution set, multiplied by 3, therefore should be at least 3 times smaller than population size
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -722,7 +726,7 @@ def keep_individuals(pop, survivor_indices):
 
 #%% Funtion: Visualisation of generations
 def plot_generations_objectives(pop_generations):
-    # should be a np.array with entries being: [f_1, f_2, generation]
+    # should be a np.array or array with column entries being: [f_1, f_2, generation]
     # function to visualise the different populations
     
     df_to_plot = pd.DataFrame()
@@ -765,28 +769,6 @@ stats_overall = {
 stats = {} # define the stats dictionary
 
 #%% Define the Objective functions
-def fn_obj(frequencies, UTFSP_problem_input):
-    return (gf2.f3_ETT(UTFSP_problem_input.R_routes.routes,
-                       frequencies, 
-                       UTFSP_problem_input.problem_data.mx_dist, 
-                       UTFSP_problem_input.problem_data.mx_demand, 
-                       UTFSP_problem_input.problem_inputs.__dict__,
-                       UTFSP_problem_input.problem_data.mx_walk), #f3_ETT
-            gf2.f4_TBR(UTFSP_problem_input.R_routes.routes, 
-                       frequencies, 
-                       UTFSP_problem_input.problem_data.mx_dist)) #f4_TBR
-
-def fn_obj_row(frequencies):
-    
-    return (gf2.f3_ETT(UTRFSP_problem_1.R_routes.routes,
-                       frequencies, 
-                       UTRFSP_problem_1.problem_data.mx_dist, 
-                       UTRFSP_problem_1.problem_data.mx_demand, 
-                       UTRFSP_problem_1.problem_inputs.__dict__,
-                       UTRFSP_problem_1.problem_data.mx_walk), #f3_ETT
-            gf2.f4_TBR(UTRFSP_problem_1.R_routes.routes, 
-                       frequencies, 
-                       UTRFSP_problem_1.problem_data.mx_dist)) #f4_TBR
 
 def get_links_list_and_distances(matrix_dist):
     # Creates a list of all the links in a given adjacency matrix and a 
@@ -875,62 +857,14 @@ def fn_obj_f3_f4_real(routes, frequencies, UTRFSP_problem_input):
 '''Set the objective function'''
 UTRFSP_problem_1.fn_obj = fn_obj_f3_f4
 '''Set the reference point for the Hypervolume calculations'''
-# parameters_input['ref_point_min_f1_AETT'], parameters_input['ref_point_max_f2_TBR'] = fn_obj(np.full((1,UTRFSP_problem_1.problem_constraints.con_r), 1/5)[0],UTRFSP_problem_1)
-# parameters_input['ref_point_max_f1_AETT'], parameters_input['ref_point_min_f2_TBR'] = fn_obj(np.full((1,UTRFSP_problem_1.problem_constraints.con_r), 1/30)[0],UTRFSP_problem_1)
 UTRFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
 UTRFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']]) 
 
 #%% Function: Add/Delete individuals to/from population
 # Add/Delete individuals to/from population
-def combine_offspring_with_pop_routes(pop, offspring_variables_routes):
-    """Function to combine the offspring with the population for the UTNDP routes
-    NB: avoid casting lists to numpy arrays, keep it lists"""
-    
-    len_pop = len(pop.objectives)
-    pop.variables_routes = pop.variables_routes + offspring_variables_routes # adds two lists to each other
-    
-    # TODO: Filter out duplicates
-    #is_unique = np.where(np.logical_not(find_duplicates(pop.variables, epsilon=1e-24)))[0]
-    #pop.variables = pop.variables[is_unique]
-    
-    # Only evaluate the offspring
-    offspring_variables_routes = pop.variables_routes[len_pop:]
-    # offspring_variables_routes_str = list(np.apply_along_axis(gf.convert_routes_list2str, 1, offspring_variables_routes)) # potentially gave errors
-    
-    offspring_variables_routes_str = [None] * len(offspring_variables_routes)
-    for index_i in range(len(offspring_variables_routes)):
-        offspring_variables_routes_str[index_i] = gf.convert_routes_list2str(offspring_variables_routes[index_i])
-    
-    offspring_objectives = np.apply_along_axis(fn_obj_2_row, 1, offspring_variables_routes)   
-
-    # Add evaluated offspring to population
-    # pop.variables = np.vstack([pop.variables, offspring_variables_routes])
-    pop.variables_str = pop.variables_str + offspring_variables_routes_str # adds two lists to each other
-    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
-    
-    #pop_1.variables_str = np.vstack([pop_1.variables_str, offspring_variables_routes_str])
-    # This continues as normal
-    pop.rank = np.empty([len(pop.variables), 1])
-    pop.crowding_dist = np.empty([len(pop.variables), 1])
-    
-    # get the objective space values and objects
-    F = pop.objectives
-
-    # do the non-dominated sorting until splitting front
-    fronts = gc.NonDominated_Sorting().do(F)
-
-    for k, front in enumerate(fronts):
-
-        # calculate the crowding distance of the front
-        crowding_of_front = gf.calc_crowding_distance(F[front, :])
-
-        # save rank and crowding in the individual class
-        for j, i in enumerate(front):
-            pop.rank[i] = k
-            pop.crowding_dist[i] = crowding_of_front[j]
             
 def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, offspring_variables_freq_args, main_problem, rank_and_sort=True):
-    """Function to combine the offspring with the population for the UTNDP routes
+    """Function to combine the offspring with the population for the UTRFSP routes
     NB: avoid casting lists to numpy arrays, keep it lists"""
     
     len_pop = len(pop.objectives)
@@ -976,95 +910,6 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
                 pop.rank[i] = k
                 pop.crowding_dist[i] = crowding_of_front[j]
 
-def combine_offspring_with_pop(pop, offspring_variable_args):
-    # Function to combine the offspring with the population
-    len_pop = len(pop.objectives)
-    pop.variable_freq_args = np.vstack([pop.variable_freq_args, offspring_variable_args])
-    
-    # Filter out duplicates
-    is_unique = np.where(np.logical_not(find_duplicates(pop.variable_freq_args, epsilon=1e-24)))[0]
-    pop.variable_freq_args = pop.variable_freq_args[is_unique]
-    
-    # Only evaluate the offspring
-    offspring_variables = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]]
-    offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables)
-
-    # Add evaluated offspring to population
-    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables])
-    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
-    
-    # This continues as normal
-    pop.rank = np.empty([pop.variable_freq_args.shape[0], 1])
-    pop.crowding_dist = np.empty([pop.variable_freq_args.shape[0], 1])
-    
-    # get the objective space values and objects
-    F = pop.objectives
-
-    # do the non-dominated sorting until splitting front
-    fronts = NonDominated_Sorting().do(F)
-
-    for k, front in enumerate(fronts):
-
-        # calculate the crowding distance of the front
-        crowding_of_front = calc_crowding_distance(F[front, :])
-
-        # save rank and crowding in the individual class
-        for j, i in enumerate(front):
-            pop.rank[i] = k
-            pop.crowding_dist[i] = crowding_of_front[j]
-
-def combine_offspring_with_pop_multi(pop, offspring_variable_args):
-    # Function to combine the offspring with the population
-    len_pop = len(pop.objectives)
-    pop.variable_freq_args = np.vstack([pop.variable_freq_args, offspring_variable_args])
-    
-    # Filter out duplicates
-    is_unique = np.where(np.logical_not(find_duplicates(pop.variable_freq_args, epsilon=1e-24)))[0]
-    pop.variable_freq_args = pop.variable_freq_args[is_unique]
-    
-    # Only evaluate the offspring
-    offspring_variables = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]]
-    # offspring_objectives = gf2.calc_fn_obj_for_np_array(fn_obj_row, offspring_variables)  
-
-    # could put offspring variables in a list:
-    #     multi_list = []
-    # for offspring_variable in offspring_variables:
-    #     multi_list.append(offspring_variable)
-
-    # with concurrent.futures.ProcessPoolExecutor() as executor:
-    #     offspring_objectives = executor.map(fn_obj_row, multi_list) # map returns processes in order they were started
-            
-
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-            offspring_objectives = executor.map(fn_obj_row, offspring_variables) # map returns processes in order they were started
-        
-            for result in offspring_objectives:
-                print(result)
-
-
-    # Add evaluated offspring to population
-    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables])
-    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
-    
-    # This continues as normal
-    pop.rank = np.empty([pop.variable_freq_args.shape[0], 1])
-    pop.crowding_dist = np.empty([pop.variable_freq_args.shape[0], 1])
-    
-    # get the objective space values and objects
-    F = pop.objectives
-
-    # do the non-dominated sorting until splitting front
-    fronts = NonDominated_Sorting().do(F)
-
-    for k, front in enumerate(fronts):
-
-        # calculate the crowding distance of the front
-        crowding_of_front = calc_crowding_distance(F[front, :])
-
-        # save rank and crowding in the individual class
-        for j, i in enumerate(front):
-            pop.rank[i] = k
-            pop.crowding_dist[i] = crowding_of_front[j]
     
 #%% GA Implementation UTRFSP
 
@@ -1077,7 +922,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
     
     if Decisions["Choice_use_seeding_route_Set"]:    # Implement seeding solutions
-        nr_seeding_solutions_to_include = Decisions["Choice_seeding_route_set_size"]
+        nr_seeding_solutions_to_include = parameters_GA["initial_seeding_solutions"]
         seeding_route_set = pd.read_csv("./Input_Data/"+name_input_data+"/Seeding_route_set/Overall_Pareto_set.csv")
         seeding_route_set = seeding_route_set.sort_values('f_1')
         seed_indices = np.percentile(range(0,len(seeding_route_set)),np.linspace(0, 100, num=nr_seeding_solutions_to_include))
@@ -1187,8 +1032,8 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         '''Main folder path'''
         path_parent_folder = Path(os.path.dirname(os.getcwd()))
         path_results = path_parent_folder / ("Results/Results_"+
-                                             parameters_input['Problem_name']+
-                                             "/"+parameters_input['Problem_name']+
+                                             name_input_data+
+                                             "/"+name_input_data+
                                              "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                              " "+parameters_GA['method']+
                                              f"_{UTRFSP_problem_1.add_text}")
@@ -1250,13 +1095,13 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
         
         # Visualise the generations
-        if False: # becomes useless when more than 10 generations
-            plot_generations_objectives(df_pop_generations.loc["F_3", "F_4"])
+        if True: # becomes useless when more than 10 generations
+            plot_generations_objectives(df_pop_generations[["F_3", "F_4","Generation"]].values)
             
             manager = plt.get_current_fig_manager()
             manager.window.showMaximized()
             plt.show()
-            plt.savefig(path_results_per_run / "Results_combined.pdf", bbox_inches='tight')
+            plt.savefig(path_results_per_run / "Results_generations_combined.pdf", bbox_inches='tight')
             manager.window.close()
         
         #%% Print and save result summary figures:

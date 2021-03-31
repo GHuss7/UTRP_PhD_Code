@@ -27,11 +27,11 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
 import concurrent.futures
-#from tensorflow import keras
+from tensorflow import keras
 
 os.chdir("Machine Learning/DNN_own_UTRFSP")
 import dnn_helper_functions as hf
-#from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
+from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
 os.chdir(os.path.dirname(__file__))
 
 # %% Import personal functions
@@ -71,6 +71,7 @@ from pymoo.factory import get_performance_indicator
 name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_prototype",
                    "Mandl_UTRFSP_no_walk_trial",
+                   "Mandl_UTRFSP_no_walk_trial_50",
                    "Mandl_UTRFSP_no_walk_quick"][-2]  # set the name of the input data
 
 config_nr = 6

@@ -1,5 +1,5 @@
 {"method": "GA", 
-"population_size": 100, 
+"population_size": 300, 
 "generations": 20, 
 "initial_seeding_solutions" : 20,
 "number_of_runs": 1, 

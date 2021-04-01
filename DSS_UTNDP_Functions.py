@@ -2053,3 +2053,9 @@ def fn_obj_2(routes, UTNDP_problem_input):
             UTNDP_problem_input.problem_data.mx_demand, 
             UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
 
+# %% Non-dominated set creation functions
+def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', obj_2_name='F_4'):
+    df_non_dominated_set = copy.deepcopy(df_data_for_analysis.loc[df_data_for_analysis['Rank'] == 0]) # create df for non-dominated set
+    df_non_dominated_set = df_non_dominated_set[is_pareto_efficient(df_non_dominated_set[[obj_1_name,obj_2_name]].values, True)]
+    df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
+    return df_non_dominated_set

@@ -27,11 +27,11 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
 import concurrent.futures
-from tensorflow import keras
+#from tensorflow import keras
 
 os.chdir("Machine Learning/DNN_own_UTRFSP")
 import dnn_helper_functions as hf
-from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
+#from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
 os.chdir(os.path.dirname(__file__))
 
 # %% Import personal functions
@@ -77,7 +77,7 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
 
 config_nr = 4
 
-if False:
+if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
@@ -918,7 +918,7 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
 
 for run_nr in range(0, parameters_GA["number_of_runs"]):
 
-    # Create the initial populations   
+    # Create the initial population   
     stats['begin_time'] = datetime.datetime.now() # enter the begin time
     print("######################### RUN {0} #########################".format(run_nr+1))
     print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
@@ -940,19 +940,23 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
     
     if Decisions["Choice_print_full_data_for_analysis"]:
-        df_data_for_analysis = ga.add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1)
+        df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, 0)
               
-    df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
-    df_data_generations.loc[0] = [0, gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)]
-        
     
+    df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
+    HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs) # Calculate HV
+
+    df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
+    df_data_generations.loc[0] = [0, HV]
+        
     stats['end_time'] = datetime.datetime.now() # enter the begin time
-    HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    
     print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
                                                     ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                     round(HV, 4)))
 
-    """Run each generation"""
+    """ ######## Run each generation ################################################################ """
+    
     for i_generation in range(1, UTRFSP_problem_1.problem_GA_parameters.generations+1):    
         # Some stats
         stats['begin_time_run'] = datetime.datetime.now() # enter the begin time
@@ -1001,17 +1005,20 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
 
         
         if Decisions["Choice_print_full_data_for_analysis"]:
-            df_data_for_analysis = ga.add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1, df_data_for_analysis)
+            df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, i_generation, df_data_for_analysis)
           
+        df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
+
+        # Calculate the HV Quality Measure
+        HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+        df_data_generations.loc[i_generation] = [i_generation, HV]
+           
         # Get new generation
         pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
         survivor_indices = get_survivors(pop_1, pop_size)
         keep_individuals(pop_1, survivor_indices)
-
-        # Calculate the HV Quality Measure
-        HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-        df_data_generations.loc[i_generation] = [i_generation, HV]
-            
+        
+        # Adds the population to the dataframe
         df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, i_generation, df_pop_generations)
         
         stats['end_time_run'] = datetime.datetime.now() # save the end time of the run
@@ -1051,12 +1058,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
             os.makedirs(path_results_per_run)
         
         # Create and save the dataframe 
-        
-        
-        
-        df_non_dominated_set = copy.deepcopy(df_data_for_analysis.loc[df_data_for_analysis['Rank'] == 0]) # create df for non-dominated set
-        df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set[["F_3","F_4"]].values, True)]
-        df_non_dominated_set = df_non_dominated_set.sort_values(by='F_3', ascending=True) # sort
+        df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
         
         if Decisions["Choice_print_full_data_for_analysis"]:
             df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")

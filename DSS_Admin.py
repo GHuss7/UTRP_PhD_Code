@@ -386,6 +386,54 @@ def add_UTRFSP_analysis_data(pop_1, UTRFSP_problem_1, data_for_analysis=False):
             data_for_analysis.loc[len(data_for_analysis)] = data_row
                     
     return data_for_analysis
+
+def add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, generation_num=0, data_for_analysis=False):
+    """
+    
+
+    Parameters
+    ----------
+    pop_1 : PopulationRoutesFreq object
+        Contains all the variables and objective function values.
+    UTRFSP_problem_1 : UTRFSP_problem object
+        Object containing the main UTRFSP details.
+    data_for_analysis : False or pandas.DataFrame, optional
+        The dataframe to contain the data analysis. If False, this is the fist 
+        time the Dataframe is created and then only add the first pop_size 
+        population of solutions. The default is False.
+
+    Returns
+    -------
+    data_for_analysis : pandas.DataFrame
+        The appended DataFrame.
+
+    """
+    len_pop = len(pop_1.objectives)
+    pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
+    
+    if isinstance(data_for_analysis, pd.DataFrame):
+        for index_i in range(pop_size, len_pop):
+            data_row = [pop_1.variables_routes_str[index_i]]
+            data_row.extend(list(pop_1.variables_freq[index_i,:]))
+            data_row.extend(list(pop_1.objectives[index_i,:]))
+            data_row.extend([generation_num])
+            data_row.extend(list(pop_1.rank[index_i]))
+            data_for_analysis.loc[len(data_for_analysis)] = data_row
+                 
+    else:
+        columns_list = ["R_x", "F_3", "F_4", "Generation", "Rank"]
+        columns_list[1:1] = ["f_"+str(x) for x in range(UTRFSP_problem_1.problem_constraints.con_r)]
+        data_for_analysis = pd.DataFrame(columns=columns_list)
+        
+        for index_i in range(pop_size):
+            data_row = [pop_1.variables_routes_str[index_i]]
+            data_row.extend(list(pop_1.variables_freq[index_i,:]))
+            data_row.extend(list(pop_1.objectives[index_i,:]))
+            data_row.extend([generation_num])
+            data_row.extend(list(pop_1.rank[index_i]))
+            data_for_analysis.loc[len(data_for_analysis)] = data_row
+                    
+    return data_for_analysis
     
 def add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, generation_num, data_for_analysis=False):
     """
@@ -477,3 +525,4 @@ def progress(percent=0, width=30):
 # for i in range(101):
 #     progress(i)
 #     sleep(0.1)
+

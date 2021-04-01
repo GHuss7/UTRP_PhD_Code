@@ -73,7 +73,7 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_trial",
                    "Mandl_UTRFSP_no_walk_trial_0",
                    "Mandl_UTRFSP_no_walk_trial_50",
-                   "Mandl_UTRFSP_no_walk_quick"][-3]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_quick"][-1]  # set the name of the input data
 
 config_nr = 0
 
@@ -277,7 +277,7 @@ class PopulationRouteFreq(gf2.Frequencies):
     
     def generate_initial_population(self, main_problem, fn_objectives):
         for i in range(self.population_size):
-            self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+            self.variable_freq_args[i,] = gf2.Frequencies(main_problem.problem_constraints.con_r).return_random_theta_args()
             self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
             self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
             self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
@@ -327,28 +327,28 @@ class PopulationRouteFreq(gf2.Frequencies):
         for i in range(self.population_size):
             
             if i < seed_route_set_len*1: # sets the max freq for the seed route set
-                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_max_freq_args()
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.problem_constraints.con_r).return_max_freq_args()
                 self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
                 self.variables_routes_str[i] = seed_route_set_container["routes"].iloc[i]
                 self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i])
                 self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
             
             if i >= seed_route_set_len*1 and i < seed_route_set_len*2: # sets the min freq for the seed route set
-                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_min_freq_args()
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.problem_constraints.con_r).return_min_freq_args()
                 self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
                 self.variables_routes_str[i] = seed_route_set_container["routes"].iloc[i]
                 self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i])
                 self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)        
         
             if i >= seed_route_set_len*2 and i < seed_route_set_len*3: # sets random freq for the seed route set
-                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.problem_constraints.con_r).return_random_theta_args()
                 self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
                 self.variables_routes_str[i] = seed_route_set_container["routes"].iloc[i]
                 self.variables_routes[i] = gf.convert_routes_str2list(self.variables_routes_str[i])
                 self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)        
         
             if i >= seed_route_set_len*3: # generates random routes and frequencies
-                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+                self.variable_freq_args[i,] = gf2.Frequencies(main_problem.problem_constraints.con_r).return_random_theta_args()
                 self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
                 self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
                 self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
@@ -651,14 +651,14 @@ def crossover_pop_uniform_as_is_UTRFSP(pop, main_problem):
     selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size/2))
     
     offspring_variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
-                                   main_problem.R_routes.number_of_routes]).astype(int)
+                                   main_problem.problem_constraints.con_r]).astype(int)
     
     for i in range(0,int(main_problem.problem_GA_parameters.population_size/2)):
         parent_A = pop.variable_freq_args[selection[i,0]]
         parent_B = pop.variable_freq_args[selection[i,1]]
     
         offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
-            crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+            crossover_uniform_as_is(parent_A, parent_B, main_problem.problem_constraints.con_r)
             
     return offspring_variable_args
 
@@ -666,7 +666,7 @@ def crossover_pop_uniform_with_prob_UTRFSP(pop, main_problem):
     selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size/2))
     
     offspring_variable_args = np.empty([main_problem.problem_GA_parameters.population_size,
-                                   main_problem.R_routes.number_of_routes]).astype(int)
+                                   main_problem.problem_constraints.con_r]).astype(int)
     
     for i in range(0,int(main_problem.problem_GA_parameters.population_size/2)):
         
@@ -676,7 +676,7 @@ def crossover_pop_uniform_with_prob_UTRFSP(pop, main_problem):
         if random.random() < main_problem.problem_GA_parameters.crossover_probability_freq:
             # Perform crossover according to probability
             offspring_variable_args[int(2*i),], offspring_variable_args[int(2*i+1),] =\
-                crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+                crossover_uniform_as_is(parent_A, parent_B, main_problem.problem_constraints.con_r)
         
         else:
             # Just reassign the parents if false
@@ -978,7 +978,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         # Crossover and Mutation is performed on frequencies, keeping the routes constant
             offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
             mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
-                           UTRFSP_problem_1.R_routes.number_of_routes,
+                           UTRFSP_problem_1.problem_constraints.con_r,
                            UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
             
             combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, 
@@ -992,7 +992,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
             pop_copy.variable_freq_args = copy.deepcopy(variables_freq_args)
             offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
             mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
-                       UTRFSP_problem_1.R_routes.number_of_routes,
+                       UTRFSP_problem_1.problem_constraints.con_r,
                        UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
             
             combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
@@ -1054,7 +1054,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         
         
         
-        df_non_dominated_set = copy.deepcopy(df_pop_generations) # create df for non-dominated set
+        df_non_dominated_set = copy.deepcopy(df_data_for_analysis) # create df for non-dominated set
         df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set[["F_3","F_4"]].values, True)]
         df_non_dominated_set = df_non_dominated_set.sort_values(by='F_3', ascending=True) # sort
         

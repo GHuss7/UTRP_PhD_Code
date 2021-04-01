@@ -4,11 +4,21 @@ Multi-computer setup:
 
 	1.1) Give some time to sync, but not the end of the world
 
+	1.2) Pin OneDrive folder to Quick Access
+	
+	1.3) Pin DSS-Main folder to Quick Access
+
+	1.4) Right click DSS-Main folder to be "Always on this device"
+
 2.) Install and setup GitHub Desktop with ghuss7
 
 	2.1) Clone DSS-Main repository to default documents
 
 3.) Make sure Spyder and Anaconda are installed
+
+	3.1) Spyder: Tools -> Preferences -> General -> Show CPU Usage: ON
+	
+	3.2) Spyder: Tools -> Preferences -> IPython Console -> Graphics -> Backend -> Qt5
 
 4.) Update Anaconda with: conda update --all
 
@@ -21,3 +31,9 @@ Multi-computer setup:
 6.) Pip installs:
 	
 	6.1) pip install pymoo
+
+BEFORE RUNS:
+
+7.) Pull Request from GitHub to get most current DSS-Main folder
+
+	7.1) Code only to be edited from the main computer and run on others

@@ -71,11 +71,10 @@ from pymoo.factory import get_performance_indicator
 name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_prototype",
                    "Mandl_UTRFSP_no_walk_trial",
-                   "Mandl_UTRFSP_no_walk_trial_0",
                    "Mandl_UTRFSP_no_walk_trial_50",
-                   "Mandl_UTRFSP_no_walk_quick"][-3]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_quick"][-2]  # set the name of the input data
 
-config_nr = 0
+config_nr = 6
 
 if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))

@@ -16,6 +16,7 @@ import pandas as pd
 from collections import deque, namedtuple
 from timeit import default_timer as timer
 import datetime
+from datetime import timedelta
 from pathlib import Path
 import copy
 
@@ -52,6 +53,7 @@ def createDataTableFor_SA_Analysis():
     df_SA_Main_accepted = pd.DataFrame(columns = names_SA_Main)
     return df_SA_Main_accepted
 
+#%% Timing functions
 def print_timedelta_duration(timedelta_obj):
     # prints the hours:minutes:seconds
     totsec = timedelta_obj.total_seconds()
@@ -60,6 +62,45 @@ def print_timedelta_duration(timedelta_obj):
     sec =(totsec%3600)%60 #just for reference
     return "%d:%d:%d" %(h,m,sec)
 
+def time_projection(seconds_per_iteration, total_iterations, t_now=False, return_objs=False, print_iter_info=False):
+    def get_time_objects(totsec):
+        h = totsec//3600
+        m = (totsec%3600) // 60
+        sec =(totsec%3600)%60 #just for reference
+        return h, m , sec
+    
+    total_estimated_seconds = seconds_per_iteration * total_iterations
+    t_additional = timedelta(seconds=total_estimated_seconds)
+    dur_h, dur_m, dur_sec = get_time_objects(t_additional.seconds)
+    
+    # Get time now
+    if not t_now:
+        t_now = datetime.now()
+    date_time_start = t_now.strftime("%a, %d %b, %H:%M:%S")
+    
+    # Determine expected time
+    t_expected = t_now + t_additional
+    date_time_due = t_expected.strftime("%a, %d %b, %H:%M:%S")
+    
+    print(f"Start:    {date_time_start}")
+    print(f"Due date: {date_time_due}")
+    print(f"Duration: {t_additional.days} days, {dur_h} hrs, {dur_m} min, {dur_sec} sec")
+    
+    if print_iter_info:
+        print(f"Total iterations: {total_iterations} at {seconds_per_iteration:.2f} sec/it")
+    
+    if return_objs:
+        return date_time_start, date_time_due
+
+# Deterime total iterations
+def determine_total_iterations(main_problem, multiply_factor=1):
+    len_pop = main_problem.problem_GA_parameters.population_size
+    num_gen = main_problem.problem_GA_parameters.generations
+    num_runs = main_problem.problem_GA_parameters.number_of_runs
+
+    total_iterations = (len_pop + len_pop * num_gen * multiply_factor) * num_runs
+    return total_iterations
+    
 # %% Directory functions
 '''Gets all the pareto fronts and combines them'''
 def group_pareto_fronts_from_model_runs(path_to_main_folder, parameters_input):

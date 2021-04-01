@@ -21,8 +21,10 @@ from math import inf
 import random
 import copy
 import datetime
+from datetime import timedelta, datetime
 import time
 from timeit import default_timer as timer
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
@@ -34,7 +36,7 @@ import dnn_helper_functions as hf
 #from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
 os.chdir(os.path.dirname(__file__))
 
-# %% Import personal functions
+# Import personal functions
 import DSS_Admin as ga
 import DSS_UTNDP_Functions as gf
 import DSS_UTFSP_Functions as gf2
@@ -45,7 +47,7 @@ import DSS_UTNDP_Classes as gc
 # todo def main_dss(): # create a main function to encapsulate the main body
 # def main():
     
-#%% Pymoo functions
+# Pymoo functions
 from pymoo.util.function_loader import load_function
 from pymoo.util.dominator import Dominator
 from pymoo.algorithms.genetic_algorithm import GeneticAlgorithm
@@ -73,9 +75,9 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_trial",
                    "Mandl_UTRFSP_no_walk_trial_0",
                    "Mandl_UTRFSP_no_walk_trial_50",
-                   "Mandl_UTRFSP_no_walk_quick"][-1]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_quick"][-2]  # set the name of the input data
 
-config_nr = 4
+config_nr = 0
 
 if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -113,13 +115,13 @@ if Decisions["Choice_use_NN_to_predict"]:
     model_NN.get_config()
     
 #%% Seperate testing configurations
-boolean_config = [[True, True, False, False, False, False], #1
-                  [False, False, True, True, False, False], #2
-                  [False, False, False, False, True, True], #3
-                  [True, False, True, True, False, False], #1&2
-                  [True, False, False, False, True, True], #1&3
-                  [False, False, True, False, True, True], #2&3
-                  [True, False, True, False, True, True]] #1&2&3
+boolean_config = [[True, True, False, False, False, False, 1], #1
+                  [False, False, True, True, False, False, 1], #2
+                  [False, False, False, False, True, True, 1], #3
+                  [True, False, True, True, False, False, 2], #1&2
+                  [True, False, False, False, True, True, 2], #1&3
+                  [False, False, True, False, True, True, 2], #2&3
+                  [True, False, True, False, True, True, 3]] #1&2&3
 
 names_config = [["r"],
         ["f"],
@@ -132,7 +134,7 @@ names_config = [["r"],
 if not Decisions["Choice_use_NN_to_predict"]:
     Decisions["Additional_text"] = names_config[config_nr][0]
 
-#%% Load and set problem parameters
+#%% Load and set problem parameters #######################################
 # Disables walk links
 if not(Decisions["Choice_consider_walk_links"]):
     mx_walk = False
@@ -239,7 +241,7 @@ F_x = F_frequencies.frequencies
 
 parameters_GA["number_of_variables"] = len(F_x)
 
-#%% Define the UTRFSP Problem      
+#%% Define the UTRFSP Problem ############################################       
 UTRFSP_problem_1 = gf2.UTFSP_problem()
 UTRFSP_problem_1.problem_data = gf2.Problem_data(mx_dist, mx_demand, mx_coords, mx_walk)
 UTRFSP_problem_1.problem_constraints = gf2.Problem_constraints(parameters_constraints)
@@ -249,6 +251,7 @@ UTRFSP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creat
 UTRFSP_problem_1.R_routes = R_routes
 UTRFSP_problem_1.frequency_set = np.array([5,6,7,8,9,10,12,14,16,18,20,25,30])
 UTRFSP_problem_1.add_text = Decisions["Additional_text"] # define the additional text for the file name
+UTRFSP_problem_1.timing_multiplyer = boolean_config[config_nr][6]
 
 #%% Define the Transit network
 TN = gf2.Transit_network(R_x, F_x, mx_dist, mx_demand, parameters_input, mx_walk) # for debugging
@@ -276,13 +279,21 @@ class PopulationRouteFreq(gf2.Frequencies):
         
     
     def generate_initial_population(self, main_problem, fn_objectives):
+        t_now = datetime.now() # TIMING FUNCTION
+        average_at = 5 # TIMING FUNCTION
+        
         for i in range(self.population_size):
             self.variable_freq_args[i,] = gf2.Frequencies(main_problem.problem_constraints.con_r).return_random_theta_args()
             self.variables_freq[i,] = 1/gf2.Frequencies.theta_set[self.variable_freq_args[i,]]            
             self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
             self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
             self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
-            
+        
+            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
+                tot_iter = ga.determine_total_iterations(main_problem, UTRFSP_problem_1.timing_multiplyer)
+                sec_per_iter_time_delta = datetime.now() - t_now
+                ga.time_projection((sec_per_iter_time_delta.seconds)/average_at, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+                
         # get the objective space values and objects
         # F = pop.get("F").astype(np.float, copy=False)
         F = self.objectives
@@ -324,6 +335,9 @@ class PopulationRouteFreq(gf2.Frequencies):
 
         seed_route_set_len = len(seed_route_set)
         
+        t_now = datetime.now() # TIMING FUNCTION
+        average_at = 5 # TIMING FUNCTION
+        
         for i in range(self.population_size):
             
             if i < seed_route_set_len*1: # sets the max freq for the seed route set
@@ -353,6 +367,11 @@ class PopulationRouteFreq(gf2.Frequencies):
                 self.variables_routes[i] = gc.Routes.return_feasible_route_robust(main_problem)
                 self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
                 self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
+               
+            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
+                tot_iter = ga.determine_total_iterations(main_problem, UTRFSP_problem_1.timing_multiplyer)
+                sec_per_iter_time_delta = datetime.now() - t_now
+                ga.time_projection((sec_per_iter_time_delta.seconds)/average_at, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
         
         # get the objective space values and objects
         # F = pop.get("F").astype(np.float, copy=False)
@@ -767,7 +786,7 @@ def generate_data_analysis_labels(num_objectives, num_variables):
 
 """ Keep track of the stats """
 stats_overall = {
-    'execution_start_time' : datetime.datetime.now()} # enter the begin time
+    'execution_start_time' : datetime.now()} # enter the begin time
 
 stats = {} # define the stats dictionary
 
@@ -914,14 +933,14 @@ def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, of
                 pop.crowding_dist[i] = crowding_of_front[j]
 
     
-#%% GA Implementation UTRFSP
+#%% GA Implementation UTRFSP ############################################
 
 for run_nr in range(0, parameters_GA["number_of_runs"]):
 
     # Create the initial population   
-    stats['begin_time'] = datetime.datetime.now() # enter the begin time
+    stats['begin_time'] = datetime.now() # enter the begin time
     print("######################### RUN {0} #########################".format(run_nr+1))
-    print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+    print("Generation 0 initiated" + " ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
     pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
     
     if Decisions["Choice_use_seeding_route_Set"]:    # Implement seeding solutions
@@ -949,7 +968,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
     df_data_generations.loc[0] = [0, HV]
         
-    stats['end_time'] = datetime.datetime.now() # enter the begin time
+    stats['end_time'] = datetime.now() # enter the begin time
     
     print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
                                                     ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
@@ -959,9 +978,9 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
     
     for i_generation in range(1, UTRFSP_problem_1.problem_GA_parameters.generations+1):    
         # Some stats
-        stats['begin_time_run'] = datetime.datetime.now() # enter the begin time
+        stats['begin_time_run'] = datetime.now() # enter the begin time
         stats['generation'] = i_generation
-        print("Generation " + str(int(i_generation)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+        print("Generation " + str(int(i_generation)) + " initiated ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         
         # Create a copy of pop_1 to use in both the routes and frequencies
         pop_copy = copy.deepcopy(pop_1)
@@ -1021,21 +1040,21 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         # Adds the population to the dataframe
         df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, i_generation, df_pop_generations)
         
-        stats['end_time_run'] = datetime.datetime.now() # save the end time of the run
+        stats['end_time_run'] = datetime.now() # save the end time of the run
         print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
                                                     ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                     round(HV, 4)))
         
         
     #%% Stats updates
-    stats['end_time'] = datetime.datetime.now() # save the end time of the run
+    stats['end_time'] = datetime.now() # save the end time of the run
     stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
     stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
     stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
     stats['HV obtained'] = HV
     
     
-    #%% Save the results
+    #%% Save the results #####################################################
     if Decisions["Choice_print_results"]:
     
         '''Write all results and parameters to files'''
@@ -1101,7 +1120,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                 w.writerow([key, val])
             del key, val
         
-        print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+        print("End of generations: " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
         
         # Visualise the generations
         if True: # becomes useless when more than 10 generations
@@ -1181,7 +1200,7 @@ if Decisions["Choice_print_results"]:
     # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
     df_durations = ga.get_stats_from_model_runs(path_results)
     
-    stats_overall['execution_end_time'] =  datetime.datetime.now()
+    stats_overall['execution_end_time'] =  datetime.now()
     
     stats_overall['total_model_runs'] = run_nr + 1
     stats_overall['average_run_time'] = str(df_durations["Duration"].mean())

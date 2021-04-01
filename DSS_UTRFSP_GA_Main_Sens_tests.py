@@ -75,9 +75,9 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_trial_50",
                    "Mandl_UTRFSP_no_walk_quick"][-1]  # set the name of the input data
 
-config_nr = 0
+config_nr = 4
 
-if True:
+if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
@@ -85,7 +85,7 @@ else:
     "Choice_print_results" : True, 
     "Choice_conduct_sensitivity_analysis" : False,
     "Choice_consider_walk_links" : False,
-    "Choice_import_dictionaries" : True,
+    "Choice_import_dictionaries" : False,
     "Choice_print_full_data_for_analysis" : True,
     "Choice_use_NN_to_predict" : False,
     "Choice_use_seeding_route_Set" : True,
@@ -175,9 +175,9 @@ else:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 600, #should be an even number, John: 200
-    "generations" : 200, # John: 200
-    "initial_seeding_solutions" : 20, # Number of seeding solutions to incorporate from the non-dominated UTRP solution set, multiplied by 3, therefore should be at least 3 times smaller than population size
+    "population_size" : 10, #should be an even number, John: 200
+    "generations" : 2, # John: 200
+    "initial_seeding_solutions" : 2, # Number of seeding solutions to incorporate from the non-dominated UTRP solution set, multiplied by 3, therefore should be at least 3 times smaller than population size
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,

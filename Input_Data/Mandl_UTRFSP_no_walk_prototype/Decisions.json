@@ -5,5 +5,5 @@
 "Choice_print_full_data_for_analysis": true, 
 "Choice_use_NN_to_predict": false, 
 "Choice_use_seeding_route_Set": true, 
-"Choice_seeding_route_set_size": 20, 
+"Choice_relative_results_referencing" : false, 
 "Additional_text": "Tests"}

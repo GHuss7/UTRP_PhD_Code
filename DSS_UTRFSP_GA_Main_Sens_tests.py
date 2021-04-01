@@ -1054,7 +1054,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         
         
         
-        df_non_dominated_set = copy.deepcopy(df_data_for_analysis) # create df for non-dominated set
+        df_non_dominated_set = copy.deepcopy(df_data_for_analysis.loc[df_data_for_analysis['Rank'] == 0]) # create df for non-dominated set
         df_non_dominated_set = df_non_dominated_set[gf.is_pareto_efficient(df_non_dominated_set[["F_3","F_4"]].values, True)]
         df_non_dominated_set = df_non_dominated_set.sort_values(by='F_3', ascending=True) # sort
         

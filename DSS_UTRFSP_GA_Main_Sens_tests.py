@@ -74,6 +74,7 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_prototype",
                    "Mandl_UTRFSP_no_walk_trial",
                    "Mandl_UTRFSP_no_walk_trial_0",
+                   "Mandl_UTRFSP_no_walk_trial_20",
                    "Mandl_UTRFSP_no_walk_trial_50",
                    "Mandl_UTRFSP_no_walk_quick"][-2]  # set the name of the input data
 
@@ -289,10 +290,10 @@ class PopulationRouteFreq(gf2.Frequencies):
             self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
             self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
         
-            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
+            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
                 tot_iter = ga.determine_total_iterations(main_problem, UTRFSP_problem_1.timing_multiplyer)
                 sec_per_iter_time_delta = datetime.now() - t_now
-                ga.time_projection((sec_per_iter_time_delta.seconds)/average_at, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+                ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
                 
         # get the objective space values and objects
         # F = pop.get("F").astype(np.float, copy=False)
@@ -368,10 +369,10 @@ class PopulationRouteFreq(gf2.Frequencies):
                 self.variables_routes_str[i] = gf.convert_routes_list2str(self.variables_routes[i])
                 self.objectives[i,] = fn_objectives(self.variables_routes[i], self.variables_freq[i], main_problem)
                
-            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
+            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
                 tot_iter = ga.determine_total_iterations(main_problem, UTRFSP_problem_1.timing_multiplyer)
                 sec_per_iter_time_delta = datetime.now() - t_now
-                ga.time_projection((sec_per_iter_time_delta.seconds)/average_at, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+                ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
         
         # get the objective space values and objects
         # F = pop.get("F").astype(np.float, copy=False)

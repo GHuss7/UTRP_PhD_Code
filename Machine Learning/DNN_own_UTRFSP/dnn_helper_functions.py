@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import h5py
 import pandas as pd
 import datetime
+import json
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
@@ -198,7 +199,8 @@ def load_data_UTRFSP_data(file_location, name_input_data, load_all_y_values=True
     data = data.sample(frac=1)
     
     edge_list, edge_weights = get_links_list_and_distances(mx_dist)
-    con_r = 6 # number of routes constraint
+    parameters_constraints = json.load(open("../../Input_Data/"+name_input_data+"/parameters_constraints.json"))
+    con_r = parameters_constraints["con_r"]
     
     recast_decision_variable = np.zeros((len(edge_list)*con_r + con_r, data.shape[0]))
     
@@ -215,7 +217,8 @@ def load_data_UTRFSP_data(file_location, name_input_data, load_all_y_values=True
                     
                 recast_decision_variable[route_nr*num_edges + edge_list.index(temp_edge),m_example] = 1
         
-        recast_decision_variable[-con_r:,m_example] = data.iloc[m_example, 2:con_r+2] # adds the frequencies
+        loc_f_0 = data.columns.get_loc("f_0")
+        recast_decision_variable[-con_r:,m_example] = data.iloc[m_example, loc_f_0:con_r+loc_f_0] # adds the frequencies
     
     data_x_orig = recast_decision_variable
     if load_all_y_values:

@@ -3,6 +3,13 @@
 Created on Thu Jul 30 11:48:53 2020
 
 @author: 17832020
+
+Script that goes into each folder for the results and then gathers all the 
+hypervolume measurements and puts it into a .csv file within each results 
+folder. 
+
+NOTE: All of this have been incorporated into the NSGA II implementations.
+
 """
 import pandas as pd
 import os

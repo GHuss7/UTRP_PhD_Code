@@ -29,11 +29,11 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
 import concurrent.futures
-#from tensorflow import keras
+from tensorflow import keras
 
 os.chdir("Machine Learning/DNN_own_UTRFSP")
 import dnn_helper_functions as hf
-#from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
+from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
 os.chdir(os.path.dirname(__file__))
 
 # Import personal functions
@@ -76,9 +76,10 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_trial_0",
                    "Mandl_UTRFSP_no_walk_trial_20",
                    "Mandl_UTRFSP_no_walk_trial_50",
-                   "Mandl_UTRFSP_no_walk_quick"][1]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_quick",
+                   "Mandl_UTRFSP_no_walk_NN_trial_50"][-1]  # set the name of the input data
 
-config_nr = 0
+config_nr = 6
 
 if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -108,7 +109,7 @@ else:
 # %% Set input parameters
 
 if Decisions["Choice_use_NN_to_predict"]:
-    model_name = "Tuned_models/BO_Test_20210323_180505" #very good BO_Test_20210323_180505
+    model_name = "Tuned_models/BO_Test_20210406_142303" #very good BO_Test_20210323_180505 < BO_Test_20210406_142303 BETTER
     model_NN = keras.models.load_model('Machine Learning/DNN_own_UTRFSP/'+model_name,
                                        custom_objects={'custom_distance_loss_function': custom_distance_loss_function}) # load the ML prediction model
     Decisions["Additional_text"] = "NN_Trial"
@@ -1081,7 +1082,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
         
         if Decisions["Choice_print_full_data_for_analysis"]:
-            df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
+            df_data_for_analysis.to_csv(path_results_per_run / ("Data_for_analysis_"+name_input_data+".csv"))
         
         df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
         

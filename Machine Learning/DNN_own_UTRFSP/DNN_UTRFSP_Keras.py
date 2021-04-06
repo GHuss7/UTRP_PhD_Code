@@ -31,6 +31,15 @@ from matplotlib import pyplot
 
 from sklearn.model_selection import StratifiedKFold
 
+# %% Set the decisions of the problem
+name_input_data = ["Mandl_UTRFSP_no_walk",
+                   "Mandl_UTRFSP_no_walk_prototype",
+                   "Mandl_UTRFSP_no_walk_trial",
+                   "Mandl_UTRFSP_no_walk_trial_0",
+                   "Mandl_UTRFSP_no_walk_trial_20",
+                   "Mandl_UTRFSP_no_walk_trial_50",
+                   "Mandl_UTRFSP_no_walk_quick"][-2]  # set the name of the input data
+
 #%% Load dictionaries and required settings
 
 param_ML = {
@@ -158,7 +167,7 @@ class RegressionHyperModel(HyperModel):
                     'dense_activation',
                     values=['relu'],
                     default='relu')))
-            loss_function = 'mse'
+            loss_function = 'mae'
         else:
             model.add(Dense(2, activation=hp.Choice(
                     'dense_activation',
@@ -181,7 +190,7 @@ if __name__ == "__main__":
 
     #%% Load data
     
-    X, Y = hf.load_data_UTRFSP_data("../../../Data/Training_data_UTRFSP_Mandl/Combined_Data.csv", "Mandl_Data") # nb the number of routes are still hardcoded
+    X, Y = hf.load_data_UTRFSP_data("../../../Data/Training_data_UTRFSP_Mandl/Combined_Data.csv", name_input_data) # nb the number of routes are still hardcoded
     
     if param_ML['train_f_1_only']:
         Y = Y[:,0].reshape(-1,1)
@@ -207,8 +216,8 @@ if __name__ == "__main__":
         model.add(Dense(90, activation='relu'))
         model.add(Dense(21, activation='relu'))
         model.add(Dense(1)) # default activation function is linear
-        model.compile(optimizer='adam', loss='mse', #loss used to be mse
-                      metrics=['mae', 'mape'])
+        model.compile(optimizer='adam', loss='mae', #loss used to be mse
+                      metrics=['mse', 'mape'])
         
         
         #%% Model training
@@ -265,7 +274,7 @@ if __name__ == "__main__":
         #%% BayesianOptimization
         tuner_bo = BayesianOptimization(
                 hypermodel,
-                objective='mse',
+                objective='mae',
                 seed=42,
                 max_trials=30,
                 executions_per_trial=1,

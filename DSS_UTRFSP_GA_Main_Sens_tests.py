@@ -73,11 +73,17 @@ from pymoo.factory import get_performance_indicator
 name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_prototype",
                    "Mandl_UTRFSP_no_walk_trial",
-                   "Mandl_UTRFSP_no_walk_trial_0",
+                   "Mandl_UTRFSP_no_walk_trial_gen_60",
                    "Mandl_UTRFSP_no_walk_trial_20",
                    "Mandl_UTRFSP_no_walk_trial_50",
                    "Mandl_UTRFSP_no_walk_quick",
-                   "Mandl_UTRFSP_no_walk_NN_trial_50"][-1]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_NN_trial_50"
+                   "Mandl_UTRFSP_no_walk_trial_gen_30",
+                   "Mandl_UTRFSP_no_walk_trial_gen_30_seed_20",
+                   "Mandl_UTRFSP_no_walk_trial_gen_30_seed_70",
+                   "Mandl_UTRFSP_no_walk_trial_gen_60",
+                   "Mandl_UTRFSP_no_walk_trial_gen_60_seed_20",
+                   "Mandl_UTRFSP_no_walk_trial_gen_60_seed_70",][3]  # set the name of the input data
 
 config_nr = 3 # 3 is the best
 
@@ -818,79 +824,90 @@ def generate_data_analysis_labels(num_objectives, num_variables):
 
 # %% BEGIN MAIN #######################################################
 
-#def main(UTRFSP_problem_1):
-
-""" Keep track of the stats """
-stats_overall = {
-    'execution_start_time' : datetime.now()} # enter the begin time
-
-stats = {} # define the stats dictionary
-
-#%% Define the Objective functions
-
-def get_links_list_and_distances(matrix_dist):
-    # Creates a list of all the links in a given adjacency matrix and a 
-    # corresponding vector of distances associated with each link
-    #  Output: (links_list, links_distances) [list,float64]
+def main(UTRFSP_problem_1):
     
-    max_distance = matrix_dist.max().max() # gets the max value in the matrix
-    matrix_dist_shape = (len(matrix_dist),len(matrix_dist[0])) # row = entry 0, col = entry 1, stores the values (efficiency)
-    links_list_dist_mx = list() # create an empty list to store the links
-
-    # from the distance matrix, get the links list
-    for i in range(matrix_dist_shape[0]):
-        for j in range(matrix_dist_shape[1]):
-            val = matrix_dist[i,j]
-            if val != 0 and val != max_distance and i<j: # i > j yields only single edges, and not double arcs
-                links_list_dist_mx.append((i,j))
-
-    # Create the array to store all the links' distances
-    links_list_distances = np.int64(np.empty(shape=(len(links_list_dist_mx),1))) # create the array
-
-    # from the distance matrix, store the distances for each link
-    for i in range(len(links_list_dist_mx)): 
-        links_list_distances[i] = matrix_dist[links_list_dist_mx[i]]
+    """ Keep track of the stats """
+    stats_overall = {
+        'execution_start_time' : datetime.now()} # enter the begin time
     
-    return links_list_dist_mx, links_list_distances
-
-def recast_decision_variable(routes, frequencies, UTRFSP_problem_1):
+    stats = {} # define the stats dictionary
     
-    mx_dist = UTRFSP_problem_1.problem_data.mx_dist
+    #%% Define the Objective functions
     
-    edge_list, edge_weights = get_links_list_and_distances(mx_dist)
-    con_r = UTRFSP_problem_1.problem_constraints.con_r
+    def get_links_list_and_distances(matrix_dist):
+        # Creates a list of all the links in a given adjacency matrix and a 
+        # corresponding vector of distances associated with each link
+        #  Output: (links_list, links_distances) [list,float64]
+        
+        max_distance = matrix_dist.max().max() # gets the max value in the matrix
+        matrix_dist_shape = (len(matrix_dist),len(matrix_dist[0])) # row = entry 0, col = entry 1, stores the values (efficiency)
+        links_list_dist_mx = list() # create an empty list to store the links
     
-    recast_decision_variable = np.zeros((len(edge_list)*con_r + con_r, 1))
+        # from the distance matrix, get the links list
+        for i in range(matrix_dist_shape[0]):
+            for j in range(matrix_dist_shape[1]):
+                val = matrix_dist[i,j]
+                if val != 0 and val != max_distance and i<j: # i > j yields only single edges, and not double arcs
+                    links_list_dist_mx.append((i,j))
     
-    num_edges = len(edge_list)
+        # Create the array to store all the links' distances
+        links_list_distances = np.int64(np.empty(shape=(len(links_list_dist_mx),1))) # create the array
     
-    #temp_route_set = convert_routes_str2list(routes)
-    for route_nr, route in enumerate(routes): 
-        for edge_nr in range(len(route) - 1):
-            if route[edge_nr]<route[edge_nr+1]:
-                temp_edge = (route[edge_nr],route[edge_nr+1])
-            else:
-                temp_edge = (route[edge_nr+1],route[edge_nr])
-                
-            recast_decision_variable[route_nr*num_edges + edge_list.index(temp_edge),0] = 1
+        # from the distance matrix, store the distances for each link
+        for i in range(len(links_list_dist_mx)): 
+            links_list_distances[i] = matrix_dist[links_list_dist_mx[i]]
+        
+        return links_list_dist_mx, links_list_distances
     
-    recast_decision_variable[-con_r:,0] = frequencies # adds the frequencies
+    def recast_decision_variable(routes, frequencies, UTRFSP_problem_1):
+        
+        mx_dist = UTRFSP_problem_1.problem_data.mx_dist
+        
+        edge_list, edge_weights = get_links_list_and_distances(mx_dist)
+        con_r = UTRFSP_problem_1.problem_constraints.con_r
+        
+        recast_decision_variable = np.zeros((len(edge_list)*con_r + con_r, 1))
+        
+        num_edges = len(edge_list)
+        
+        #temp_route_set = convert_routes_str2list(routes)
+        for route_nr, route in enumerate(routes): 
+            for edge_nr in range(len(route) - 1):
+                if route[edge_nr]<route[edge_nr+1]:
+                    temp_edge = (route[edge_nr],route[edge_nr+1])
+                else:
+                    temp_edge = (route[edge_nr+1],route[edge_nr])
+                    
+                recast_decision_variable[route_nr*num_edges + edge_list.index(temp_edge),0] = 1
+        
+        recast_decision_variable[-con_r:,0] = frequencies # adds the frequencies
+        
+        return recast_decision_variable.T
+        
     
-    return recast_decision_variable.T
+    if Decisions['Choice_use_NN_to_predict']:
+        def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+            """Objective function using the NN model to predict F_3 and F_4 values"""
+            F_3_pred = model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_input))
+            #_, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
+            F_4 = gf2.f4_TBR(routes, frequencies, 
+                             UTRFSP_problem_input.problem_data.mx_dist) #f4_TBR
+            return (F_3_pred, F_4)
+            #return (F_3_pred_rec[0][0], F_4)
     
-
-if Decisions['Choice_use_NN_to_predict']:
-    def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
-        """Objective function using the NN model to predict F_3 and F_4 values"""
-        F_3_pred = model_NN.predict(recast_decision_variable(routes, frequencies, UTRFSP_problem_input))
-        #_, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
-        F_4 = gf2.f4_TBR(routes, frequencies, 
-                         UTRFSP_problem_input.problem_data.mx_dist) #f4_TBR
-        return (F_3_pred, F_4)
-        #return (F_3_pred_rec[0][0], F_4)
-
-else:
-    def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+    else:
+        def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+            return (gf2.f3_ETT(routes,
+                               frequencies, 
+                               UTRFSP_problem_input.problem_data.mx_dist, 
+                               UTRFSP_problem_input.problem_data.mx_demand, 
+                               UTRFSP_problem_input.problem_inputs.__dict__,
+                               UTRFSP_problem_input.problem_data.mx_walk), #f3_ETT
+                    gf2.f4_TBR(routes, 
+                               frequencies, 
+                                   UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
+        
+    def fn_obj_f3_f4_real(routes, frequencies, UTRFSP_problem_input):
         return (gf2.f3_ETT(routes,
                            frequencies, 
                            UTRFSP_problem_input.problem_data.mx_dist, 
@@ -901,405 +918,393 @@ else:
                            frequencies, 
                                UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
     
-def fn_obj_f3_f4_real(routes, frequencies, UTRFSP_problem_input):
-    return (gf2.f3_ETT(routes,
-                       frequencies, 
-                       UTRFSP_problem_input.problem_data.mx_dist, 
-                       UTRFSP_problem_input.problem_data.mx_demand, 
-                       UTRFSP_problem_input.problem_inputs.__dict__,
-                       UTRFSP_problem_input.problem_data.mx_walk), #f3_ETT
-            gf2.f4_TBR(routes, 
-                       frequencies, 
-                           UTRFSP_problem_input.problem_data.mx_dist)) #f4_TBR
-
-'''Set the objective function'''
-UTRFSP_problem_1.fn_obj = fn_obj_f3_f4
-'''Set the reference point for the Hypervolume calculations'''
-UTRFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
-UTRFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']]) 
-
-#%% Function: Add/Delete individuals to/from population
-# Add/Delete individuals to/from population
+    '''Set the objective function'''
+    UTRFSP_problem_1.fn_obj = fn_obj_f3_f4
+    '''Set the reference point for the Hypervolume calculations'''
+    UTRFSP_problem_1.max_objs = np.array([parameters_input['ref_point_max_f1_AETT'],parameters_input['ref_point_max_f2_TBR']])
+    UTRFSP_problem_1.min_objs = np.array([parameters_input['ref_point_min_f1_AETT'],parameters_input['ref_point_min_f2_TBR']]) 
+    
+    #%% Function: Add/Delete individuals to/from population
+    # Add/Delete individuals to/from population
+                
+    def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, offspring_variables_freq_args, main_problem, rank_and_sort=True):
+        """Function to combine the offspring with the population for the UTRFSP routes
+        NB: avoid casting lists to numpy arrays, keep it lists"""
+        
+        len_pop = len(pop.objectives)
+        pop.variables_routes = pop.variables_routes + offspring_variables_routes # adds two routes lists to each other
+        pop.variable_freq_args = np.vstack([pop.variable_freq_args, np.asarray(offspring_variables_freq_args)]) # adds the frequencies together
+        offspring_variables_freq = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]] # determines the actual frequencies
+        pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables_freq]) # adds the actual frequencies together
+                
+        # Only evaluate the offspring's objective function values    
+        len_offspring = len(offspring_variables_routes)
+        offspring_variables_routes_str = [None] * len_offspring
+        offspring_objectives = np.empty([len_offspring,
+                                       main_problem.problem_GA_parameters.number_of_objectives])
+        
+        for index_i in range(len_offspring):
+            # Adds the string representations
+            offspring_variables_routes_str[index_i] = gf.convert_routes_list2str(offspring_variables_routes[index_i])
+            # Calculates the objectives
+            offspring_objectives[index_i,] = main_problem.fn_obj(offspring_variables_routes[index_i], offspring_variables_freq[index_i], main_problem) 
+    
+        # Add evaluated offspring to population
+        pop.variables_routes_str = pop.variables_routes_str + offspring_variables_routes_str # adds two routes str lists to each other
+        pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
+        
+        if rank_and_sort:
+            # This continues as normal
+            pop.rank = np.empty([len(pop.objectives), 1])
+            pop.crowding_dist = np.empty([len(pop.objectives), 1])
             
-def combine_offspring_with_pop_routes_UTRFSP(pop, offspring_variables_routes, offspring_variables_freq_args, main_problem, rank_and_sort=True):
-    """Function to combine the offspring with the population for the UTRFSP routes
-    NB: avoid casting lists to numpy arrays, keep it lists"""
+            # get the objective space values and objects
+            F = pop.objectives
+        
+            # do the non-dominated sorting until splitting front
+            fronts = gc.NonDominated_Sorting().do(F)
+        
+            for k, front in enumerate(fronts):
+        
+                # calculate the crowding distance of the front
+                crowding_of_front = gf.calc_crowding_distance(F[front, :])
+        
+                # save rank and crowding in the individual class
+                for j, i in enumerate(front):
+                    pop.rank[i] = k
+                    pop.crowding_dist[i] = crowding_of_front[j]
     
-    len_pop = len(pop.objectives)
-    pop.variables_routes = pop.variables_routes + offspring_variables_routes # adds two routes lists to each other
-    pop.variable_freq_args = np.vstack([pop.variable_freq_args, np.asarray(offspring_variables_freq_args)]) # adds the frequencies together
-    offspring_variables_freq = 1/gf2.Frequencies.theta_set[pop.variable_freq_args[len_pop:,]] # determines the actual frequencies
-    pop.variables_freq = np.vstack([pop.variables_freq, offspring_variables_freq]) # adds the actual frequencies together
+        
+    #%% GA Implementation UTRFSP ############################################
+    
+    for run_nr in range(0, parameters_GA["number_of_runs"]):
+    
+        # Create the initial population   
+        stats['begin_time'] = datetime.now() # enter the begin time
+        print("######################### RUN {0} #########################".format(run_nr+1))
+        print("Generation 0 initiated" + " ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+        pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
+        
+        if Decisions["Choice_use_seeding_route_Set"]:    # Implement seeding solutions
+            nr_seeding_solutions_to_include = parameters_GA["initial_seeding_solutions"]
+            seeding_route_set = pd.read_csv("./Input_Data/"+name_input_data+"/Seeding_route_set/Overall_Pareto_set.csv")
+            seeding_route_set = seeding_route_set.sort_values('f_1')
+            seed_indices = np.percentile(range(0,len(seeding_route_set)),np.linspace(0, 100, num=nr_seeding_solutions_to_include))
+            seeding_route_choices = seeding_route_set.iloc[seed_indices,:]
+            assert len(seeding_route_choices)*3 < UTRFSP_problem_1.problem_GA_parameters.population_size
             
-    # Only evaluate the offspring's objective function values    
-    len_offspring = len(offspring_variables_routes)
-    offspring_variables_routes_str = [None] * len_offspring
-    offspring_objectives = np.empty([len_offspring,
-                                   main_problem.problem_GA_parameters.number_of_objectives])
-    
-    for index_i in range(len_offspring):
-        # Adds the string representations
-        offspring_variables_routes_str[index_i] = gf.convert_routes_list2str(offspring_variables_routes[index_i])
-        # Calculates the objectives
-        offspring_objectives[index_i,] = main_problem.fn_obj(offspring_variables_routes[index_i], offspring_variables_freq[index_i], main_problem) 
-
-    # Add evaluated offspring to population
-    pop.variables_routes_str = pop.variables_routes_str + offspring_variables_routes_str # adds two routes str lists to each other
-    pop.objectives = np.vstack([pop.objectives, offspring_objectives])  
-    
-    if rank_and_sort:
-        # This continues as normal
-        pop.rank = np.empty([len(pop.objectives), 1])
-        pop.crowding_dist = np.empty([len(pop.objectives), 1])
+            pop_1.generate_initial_population_from_seed_route_set(UTRFSP_problem_1, fn_obj_f3_f4, seeding_route_choices) 
+         
+        else:
+            pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj_f3_f4) 
         
-        # get the objective space values and objects
-        F = pop.objectives
-    
-        # do the non-dominated sorting until splitting front
-        fronts = gc.NonDominated_Sorting().do(F)
-    
-        for k, front in enumerate(fronts):
-    
-            # calculate the crowding distance of the front
-            crowding_of_front = gf.calc_crowding_distance(F[front, :])
-    
-            # save rank and crowding in the individual class
-            for j, i in enumerate(front):
-                pop.rank[i] = k
-                pop.crowding_dist[i] = crowding_of_front[j]
-
-    
-#%% GA Implementation UTRFSP ############################################
-
-for run_nr in range(0, parameters_GA["number_of_runs"]):
-
-    # Create the initial population   
-    stats['begin_time'] = datetime.now() # enter the begin time
-    print("######################### RUN {0} #########################".format(run_nr+1))
-    print("Generation 0 initiated" + " ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
-    pop_1 = PopulationRouteFreq(UTRFSP_problem_1)   
-    
-    if Decisions["Choice_use_seeding_route_Set"]:    # Implement seeding solutions
-        nr_seeding_solutions_to_include = parameters_GA["initial_seeding_solutions"]
-        seeding_route_set = pd.read_csv("./Input_Data/"+name_input_data+"/Seeding_route_set/Overall_Pareto_set.csv")
-        seeding_route_set = seeding_route_set.sort_values('f_1')
-        seed_indices = np.percentile(range(0,len(seeding_route_set)),np.linspace(0, 100, num=nr_seeding_solutions_to_include))
-        seeding_route_choices = seeding_route_set.iloc[seed_indices,:]
-        assert len(seeding_route_choices)*3 < UTRFSP_problem_1.problem_GA_parameters.population_size
+        df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
         
-        pop_1.generate_initial_population_from_seed_route_set(UTRFSP_problem_1, fn_obj_f3_f4, seeding_route_choices) 
-     
-    else:
-        pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj_f3_f4) 
-    
-    df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
-    
-    if Decisions["Choice_print_full_data_for_analysis"]:
-        df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, 0)
-              
-    
-    df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
-    HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs) # Calculate HV
-
-    df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
-    df_data_generations.loc[0] = [0, HV]
+        if Decisions["Choice_print_full_data_for_analysis"]:
+            df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, 0)
+                  
         
-    stats['end_time'] = datetime.now() # enter the begin time
+        df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
+        HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs) # Calculate HV
     
-    print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
-                                                    ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
-                                                    round(HV, 4)))
-
-    """ ######## Run each generation ################################################################ """
-    
-    for i_generation in range(1, UTRFSP_problem_1.problem_GA_parameters.generations+1):    
-        # Some stats
-        stats['begin_time_run'] = datetime.now() # enter the begin time
-        stats['generation'] = i_generation
-        print("Generation " + str(int(i_generation)) + " initiated ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
-        
-        # Create a copy of pop_1 to use in both the routes and frequencies
-        pop_copy = copy.deepcopy(pop_1)
-        
-        if boolean_config[config_nr][0] or boolean_config[config_nr][4]:
-        # Crossover amd Mutation for Routes
-        # Crossover and Mutation is performed on routes, each frequency associated with its original route
-            offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_copy, UTRFSP_problem_1)
-            mutated_variables_routes = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
+        df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
+        df_data_generations.loc[0] = [0, HV]
             
-            if boolean_config[config_nr][0]:
-                combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
-                                                         variables_freq_args, 
-                                                         UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][1])
+        stats['end_time'] = datetime.now() # enter the begin time
         
-        if boolean_config[config_nr][2]:        
-        # Crossover and Mutation for Frequencies
-        # Crossover and Mutation is performed on frequencies, keeping the routes constant
-            offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
-            mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
+        print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
+                                                        ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
+                                                        round(HV, 4)))
+    
+        """ ######## Run each generation ################################################################ """
+        
+        for i_generation in range(1, UTRFSP_problem_1.problem_GA_parameters.generations+1):    
+            # Some stats
+            stats['begin_time_run'] = datetime.now() # enter the begin time
+            stats['generation'] = i_generation
+            print("Generation " + str(int(i_generation)) + " initiated ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+            
+            # Create a copy of pop_1 to use in both the routes and frequencies
+            pop_copy = copy.deepcopy(pop_1)
+            
+            if boolean_config[config_nr][0] or boolean_config[config_nr][4]:
+            # Crossover amd Mutation for Routes
+            # Crossover and Mutation is performed on routes, each frequency associated with its original route
+                offspring_variables_routes, variables_freq_args = gf.crossover_pop_routes_UTRFSP(pop_copy, UTRFSP_problem_1)
+                mutated_variables_routes = gf.mutate_route_population_UTRFSP(offspring_variables_routes, UTRFSP_problem_1)
+                
+                if boolean_config[config_nr][0]:
+                    combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
+                                                             variables_freq_args, 
+                                                             UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][1])
+            
+            if boolean_config[config_nr][2]:        
+            # Crossover and Mutation for Frequencies
+            # Crossover and Mutation is performed on frequencies, keeping the routes constant
+                offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
+                mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
+                               UTRFSP_problem_1.problem_constraints.con_r,
+                               UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
+                
+                combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, 
+                                                         mutated_variables_freq_args, 
+                                                         UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][3])
+    
+    
+            if boolean_config[config_nr][4]: #TODO: I think this one may be omitted --- it will happen naturally with the other two        
+            # Crossover and Mutation for Frequencies after Route Crossover and Mutation
+            # After the routes are Crossed over and Mutated, a Crossover and Mutation is also performed on the frequencies 
+                pop_copy.variable_freq_args = copy.deepcopy(variables_freq_args)
+                offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
+                mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
                            UTRFSP_problem_1.problem_constraints.con_r,
                            UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
-            
-            combine_offspring_with_pop_routes_UTRFSP(pop_1, pop_copy.variables_routes, 
-                                                     mutated_variables_freq_args, 
-                                                     UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][3])
-
-
-        if boolean_config[config_nr][4]: #TODO: I think this one may be omitted --- it will happen naturally with the other two        
-        # Crossover and Mutation for Frequencies after Route Crossover and Mutation
-        # After the routes are Crossed over and Mutated, a Crossover and Mutation is also performed on the frequencies 
-            pop_copy.variable_freq_args = copy.deepcopy(variables_freq_args)
-            offspring_variables_freq_args = crossover_pop_uniform_with_prob_UTRFSP(pop_copy, UTRFSP_problem_1)
-            mutated_variables_freq_args = mutate_pop_args(offspring_variables_freq_args, 
-                       UTRFSP_problem_1.problem_constraints.con_r,
-                       UTRFSP_problem_1.problem_GA_parameters.mutation_probability_freq)
-            
-            combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
-                                                     mutated_variables_freq_args, 
-                                                     UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][5])
-
-        
-        if Decisions["Choice_print_full_data_for_analysis"]:
-            df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, i_generation, df_data_for_analysis)
-          
-        df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
-
-        # Calculate the HV Quality Measure
-        HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-        df_data_generations.loc[i_generation] = [i_generation, HV]
-           
-        # Get new generation
-        pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
-        survivor_indices = get_survivors(pop_1, pop_size)
-        keep_individuals(pop_1, survivor_indices)
-        
-        # Adds the population to the dataframe
-        df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, i_generation, df_pop_generations)
-        
-        stats['end_time_run'] = datetime.now() # save the end time of the run
-        print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
-                                                    ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
-                                                    round(HV, 4)))
-        
-        
-    #%% Stats updates
-    stats['end_time'] = datetime.now() # save the end time of the run
-    stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
-    stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
-    stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
-    stats['HV obtained'] = HV
+                
+                combine_offspring_with_pop_routes_UTRFSP(pop_1, mutated_variables_routes,
+                                                         mutated_variables_freq_args, 
+                                                         UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][5])
     
-    
-    #%% Save the results #####################################################
-    if Decisions["Choice_print_results"]:
-    
-        '''Write all results and parameters to files'''
-        '''Main folder path'''
-        if Decisions["Choice_relative_results_referencing"]:
-            path_parent_folder = Path(os.path.dirname(os.getcwd()))
-        else:
-            path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
-        
-        path_results = path_parent_folder / ("Results/Results_"+
-                                             name_input_data+
-                                             "/"+name_input_data+
-                                             "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
-                                             " "+parameters_GA['method']+
-                                             f"_{UTRFSP_problem_1.add_text}")
-        
-        '''Sub folder path'''
-        path_results_per_run = path_results / ("Run_"+str(run_nr+1))
-        if not path_results_per_run.exists():
-            os.makedirs(path_results_per_run)
-        
-        # Create and save the dataframe 
-        df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
-        
-        if Decisions["Choice_print_full_data_for_analysis"]:
-            df_data_for_analysis.to_csv(path_results_per_run / ("Data_for_analysis_"+name_input_data+".csv"))
-        
-        df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
-        
-        if Decisions['Choice_use_NN_to_predict']:
-            real_objectives = np.zeros((len(df_non_dominated_set), 2))
-        
-            for x in range(len(df_non_dominated_set)):
-                R_x = gf.convert_routes_str2list(df_non_dominated_set["R_x"].iloc[x])
-                freq_var_names = ["f_"+str(i) for i in range(UTRFSP_problem_1.problem_constraints.con_r)]
-                F_x = df_non_dominated_set[freq_var_names].iloc[x].values
-                real_objectives[x,:] = fn_obj_f3_f4_real(R_x, F_x, UTRFSP_problem_1)
-                
-            df_non_dominated_set = df_non_dominated_set.assign(F_3_real = real_objectives[:,0],
-                                        F_4_real = real_objectives[:,1])
             
-        
-        df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
-        
-        df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['F_3'].mean().iloc[:,1],
-                               mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['F_4'].mean().iloc[:,1])
-        df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
-        
-        #%% Post analysis
-        pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
-        
-        with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
-            w = csv.writer(archive_file)
-            for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats, **Decisions}.items():
-                w.writerow([key, val])
-            del key, val
-        
-        print("End of generations: " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
-        
-        # Visualise the generations
-        if True: # becomes useless when more than 10 generations
-            plot_generations_objectives(df_pop_generations[["F_3", "F_4","Generation"]].values)
+            if Decisions["Choice_print_full_data_for_analysis"]:
+                df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, i_generation, df_data_for_analysis)
+              
+            df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
+    
+            # Calculate the HV Quality Measure
+            HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+            df_data_generations.loc[i_generation] = [i_generation, HV]
+               
+            # Get new generation
+            pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
+            survivor_indices = get_survivors(pop_1, pop_size)
+            keep_individuals(pop_1, survivor_indices)
             
-            manager = plt.get_current_fig_manager()
-            manager.window.showMaximized()
-            plt.show()
-            plt.savefig(path_results_per_run / "Results_generations_combined.pdf", bbox_inches='tight')
-            manager.window.close()
+            # Adds the population to the dataframe
+            df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, i_generation, df_pop_generations)
+            
+            stats['end_time_run'] = datetime.now() # save the end time of the run
+            print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
+                                                        ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
+                                                        round(HV, 4)))
+            
+            
+        #%% Stats updates
+        stats['end_time'] = datetime.now() # save the end time of the run
+        stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
+        stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
+        stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
+        stats['HV obtained'] = HV
         
-        #%% Print and save result summary figures:
-                        
-        if True:   
-            if False:
-                '''Print Archive'''   
-                fig = plt.figure()
-                ax1 = fig.add_subplot(111)
-                ax1.scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=1, c='b', marker="o", label='Non-dominated set')
-                #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
-                #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
-                plt.legend(loc='upper left');
-                plt.show()
-                
-            '''Load validation data'''
-            validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
-            initial_set = df_pop_generations.iloc[0:UTRFSP_problem_1.problem_GA_parameters.population_size,:]
         
-            if True:
-                '''Print Objective functions over time, all solutions and pareto set obtained'''
-                fig, axs = plt.subplots(2, 2)
-                fig.set_figheight(15)
-                fig.set_figwidth(20)
-                axs[0, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_1"], s=1, c='r', marker="o", label='f1_AETT')
-                axs[0, 0].set_title('Mean AETT over all generations')
-                axs[0, 0].set(xlabel='Generations', ylabel='f1_AETT')
-                axs[0, 0].legend(loc="upper right")
+        #%% Save the results #####################################################
+        if Decisions["Choice_print_results"]:
+        
+            '''Write all results and parameters to files'''
+            '''Main folder path'''
+            if Decisions["Choice_relative_results_referencing"]:
+                path_parent_folder = Path(os.path.dirname(os.getcwd()))
+            else:
+                path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+            
+            path_results = path_parent_folder / ("Results/Results_"+
+                                                 name_input_data+
+                                                 "/"+name_input_data+
+                                                 "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
+                                                 " "+parameters_GA['method']+
+                                                 f"_{UTRFSP_problem_1.add_text}")
+            
+            '''Sub folder path'''
+            path_results_per_run = path_results / ("Run_"+str(run_nr+1))
+            if not path_results_per_run.exists():
+                os.makedirs(path_results_per_run)
+            
+            # Create and save the dataframe 
+            df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
+            
+            if Decisions["Choice_print_full_data_for_analysis"]:
+                df_data_for_analysis.to_csv(path_results_per_run / ("Data_for_analysis_"+name_input_data+".csv"))
+            
+            df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
+            
+            if Decisions['Choice_use_NN_to_predict']:
+                real_objectives = np.zeros((len(df_non_dominated_set), 2))
+            
+                for x in range(len(df_non_dominated_set)):
+                    R_x = gf.convert_routes_str2list(df_non_dominated_set["R_x"].iloc[x])
+                    freq_var_names = ["f_"+str(i) for i in range(UTRFSP_problem_1.problem_constraints.con_r)]
+                    F_x = df_non_dominated_set[freq_var_names].iloc[x].values
+                    real_objectives[x,:] = fn_obj_f3_f4_real(R_x, F_x, UTRFSP_problem_1)
+                    
+                df_non_dominated_set = df_non_dominated_set.assign(F_3_real = real_objectives[:,0],
+                                            F_4_real = real_objectives[:,1])
                 
-                axs[1, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_2"], s=1, c='b', marker="o", label='f2_TBR')
-                axs[1, 0].set_title('Mean TBR over all generations')
-                axs[1, 0].set(xlabel='Generations', ylabel='f2_TBR')
-                axs[1, 0].legend(loc="upper right") 
-                
-                axs[0, 1].scatter(df_data_generations["Generation"], df_data_generations["HV"], s=1, c='r', marker="o", label='HV obtained')
-                #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs),\
-                #   s=1, c='g', marker="o", label='HV Mumford (2013)')
-                axs[0, 1].set_title('HV over all generations')
-                axs[0, 1].set(xlabel='Generations', ylabel='%')
-                axs[0, 1].legend(loc="upper right")
-                
-                axs[1, 1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
-                axs[1, 1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
-                axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
-                axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
-                axs[1, 1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
-                axs[1, 1].legend(loc="upper right")
+            
+            df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
+            
+            df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['F_3'].mean().iloc[:,1],
+                                   mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['F_4'].mean().iloc[:,1])
+            df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+            
+            #%% Post analysis
+            pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
+            
+            with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
+                w = csv.writer(archive_file)
+                for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats, **Decisions}.items():
+                    w.writerow([key, val])
+                del key, val
+            
+            print("End of generations: " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+            
+            # Visualise the generations
+            if True: # becomes useless when more than 10 generations
+                plot_generations_objectives(df_pop_generations[["F_3", "F_4","Generation"]].values)
                 
                 manager = plt.get_current_fig_manager()
                 manager.window.showMaximized()
                 plt.show()
-                plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
-            
+                plt.savefig(path_results_per_run / "Results_generations_combined.pdf", bbox_inches='tight')
                 manager.window.close()
+            
+            #%% Print and save result summary figures:
+                            
+            if True:   
+                if False:
+                    '''Print Archive'''   
+                    fig = plt.figure()
+                    ax1 = fig.add_subplot(111)
+                    ax1.scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=1, c='b', marker="o", label='Non-dominated set')
+                    #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
+                    #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
+                    plt.legend(loc='upper left');
+                    plt.show()
+                    
+                '''Load validation data'''
+                validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
+                initial_set = df_pop_generations.iloc[0:UTRFSP_problem_1.problem_GA_parameters.population_size,:]
+            
+                if True:
+                    '''Print Objective functions over time, all solutions and pareto set obtained'''
+                    fig, axs = plt.subplots(2, 2)
+                    fig.set_figheight(15)
+                    fig.set_figwidth(20)
+                    axs[0, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_1"], s=1, c='r', marker="o", label='f1_AETT')
+                    axs[0, 0].set_title('Mean AETT over all generations')
+                    axs[0, 0].set(xlabel='Generations', ylabel='f1_AETT')
+                    axs[0, 0].legend(loc="upper right")
+                    
+                    axs[1, 0].scatter(df_data_generations["Generation"], df_data_generations["mean_f_2"], s=1, c='b', marker="o", label='f2_TBR')
+                    axs[1, 0].set_title('Mean TBR over all generations')
+                    axs[1, 0].set(xlabel='Generations', ylabel='f2_TBR')
+                    axs[1, 0].legend(loc="upper right") 
+                    
+                    axs[0, 1].scatter(df_data_generations["Generation"], df_data_generations["HV"], s=1, c='r', marker="o", label='HV obtained')
+                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs),\
+                    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
+                    axs[0, 1].set_title('HV over all generations')
+                    axs[0, 1].set(xlabel='Generations', ylabel='%')
+                    axs[0, 1].legend(loc="upper right")
+                    
+                    axs[1, 1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
+                    axs[1, 1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
+                    axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
+                    axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
+                    axs[1, 1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
+                    axs[1, 1].legend(loc="upper right")
+                    
+                    manager = plt.get_current_fig_manager()
+                    manager.window.showMaximized()
+                    plt.show()
+                    plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
                 
-del i_generation, pop_size, survivor_indices
-
-# %% Save results after all runs
-if Decisions["Choice_print_results"]:
-    '''Save the parameters used in the runs'''
-    if not (path_results / "Parameters").exists():
-        os.makedirs(path_results / "Parameters")
+                    manager.window.close()
+                    
+    del i_generation, pop_size, survivor_indices
     
-    json.dump(parameters_input, open(path_results / "Parameters" / "parameters_input.json", "w")) # saves the parameters in a json file
-    json.dump(parameters_constraints, open(path_results / "Parameters" / "parameters_constraints.json", "w"))
-    json.dump(parameters_GA, open(path_results / "Parameters" / "parameters_GA.json", "w"))
-    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"))
-    
-    
-    '''Save the summarised results'''
-    df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
-    df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["F_3","F_4"]].values, True)] # reduce the pareto front from the total archive
-    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='F_3', ascending=True) # sort
-    df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
-    
-    
-    '''Save the stats for all the runs'''
-    # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
-    df_durations = ga.get_stats_from_model_runs(path_results)
-    
-    stats_overall['execution_end_time'] =  datetime.now()
-    
-    stats_overall['total_model_runs'] = run_nr + 1
-    stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
-    stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
-    stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
-    stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-    stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(initial_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-    stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-    if Decisions['Choice_use_NN_to_predict']:
-        stats_overall['HV obtained real'] = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3_real","F_4_real"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-
-    stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
-    
-    df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
-    df_durations.to_csv(path_results / "Run_durations.csv")
-    del df_durations
-    
-    with open(path_results / "Stats_overall.csv", "w") as archive_file:
-        w = csv.writer(archive_file)
-        for key, val in {**stats_overall,
-                         **UTRFSP_problem_1.problem_inputs.__dict__, 
-                         **UTRFSP_problem_1.problem_constraints.__dict__, 
-                         **UTRFSP_problem_1.problem_GA_parameters.__dict__}.items():
-            w.writerow([key, val])
-        del key, val
+    # %% Save results after all runs
+    if Decisions["Choice_print_results"]:
+        '''Save the parameters used in the runs'''
+        if not (path_results / "Parameters").exists():
+            os.makedirs(path_results / "Parameters")
         
-    ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
-    # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
-    
-    # %% Plot analysis graph after all runs
-    '''Plot the analysis graph'''
-    if True:
-        fig, axs = plt.subplots(1,1)
-        fig.set_figheight(15)
-        fig.set_figwidth(20)
+        json.dump(parameters_input, open(path_results / "Parameters" / "parameters_input.json", "w")) # saves the parameters in a json file
+        json.dump(parameters_constraints, open(path_results / "Parameters" / "parameters_constraints.json", "w"))
+        json.dump(parameters_GA, open(path_results / "Parameters" / "parameters_GA.json", "w"))
+        json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"))
+        json.dump(sensitivity_list, open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w'))
         
-        axs.scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
-        axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+        '''Save the summarised results'''
+        df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
+        df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["F_3","F_4"]].values, True)] # reduce the pareto front from the total archive
+        df_overall_pareto_set = df_overall_pareto_set.sort_values(by='F_3', ascending=True) # sort
+        df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+        
+        
+        '''Save the stats for all the runs'''
+        # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
+        df_durations = ga.get_stats_from_model_runs(path_results)
+        
+        stats_overall['execution_end_time'] =  datetime.now()
+        
+        stats_overall['total_model_runs'] = run_nr + 1
+        stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
+        stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
+        stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
+        stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
+        stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(initial_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+        stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
         if Decisions['Choice_use_NN_to_predict']:
-            axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='orange', marker="o", label='Real Pareto front values')
-        axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
-        axs.set_title('Pareto front obtained from all runs')
-        axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')
-        axs.legend(loc="upper right")
-        del axs
-        
-        manager = plt.get_current_fig_manager()
-        manager.window.showMaximized()
-        plt.show()
-        plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
-        manager.window.close()
-        del fig, manager
-    del archive_file, path_results_per_run, w
+            stats_overall['HV obtained real'] = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3_real","F_4_real"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     
-del run_nr
+        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+        
+        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
+        df_durations.to_csv(path_results / "Run_durations.csv")
+        del df_durations
+        
+        with open(path_results / "Stats_overall.csv", "w") as archive_file:
+            w = csv.writer(archive_file)
+            for key, val in {**stats_overall,
+                             **UTRFSP_problem_1.problem_inputs.__dict__, 
+                             **UTRFSP_problem_1.problem_constraints.__dict__, 
+                             **UTRFSP_problem_1.problem_GA_parameters.__dict__}.items():
+                w.writerow([key, val])
+            del key, val
+            
+        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
+        # ga.get_sens_tests_stats_from_UTFSP_GA_runs(path_results)            
+        
+        # %% Plot analysis graph after all runs
+        '''Plot the analysis graph'''
+        if True:
+            fig, axs = plt.subplots(1,1)
+            fig.set_figheight(15)
+            fig.set_figwidth(20)
+            
+            axs.scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
+            axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+            if Decisions['Choice_use_NN_to_predict']:
+                axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='orange', marker="o", label='Real Pareto front values')
+            axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
+            axs.set_title('Pareto front obtained from all runs')
+            axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')
+            axs.legend(loc="upper right")
+            del axs
+            
+            manager = plt.get_current_fig_manager()
+            manager.window.showMaximized()
+            plt.show()
+            plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+            manager.window.close()
+            del fig, manager
+        del archive_file, path_results_per_run, w
+        
+    del run_nr
 
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''
 
-# Single Thread
-if False: #__name__ == "__main__":
+if __name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         # define empty list
@@ -1310,11 +1315,7 @@ if False: #__name__ == "__main__":
             sensitivity_list = json.load(filehandle)
         
         start = time.perf_counter()
-        
-        '''Save the sensitivity list used'''
-        with open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w') as filehandle:
-            json.dump(sensitivity_list, filehandle)
-            
+                    
         for parameter_index in range(len(sensitivity_list)):
             sensitivity_list[parameter_index].insert(0, parameters_GA)
             

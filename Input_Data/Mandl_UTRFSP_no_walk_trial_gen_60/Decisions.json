@@ -1,0 +1,9 @@
+{"Choice_print_results": true, 
+"Choice_conduct_sensitivity_analysis": false, 
+"Choice_consider_walk_links": false, 
+"Choice_import_dictionaries": true, 
+"Choice_print_full_data_for_analysis": true, 
+"Choice_use_NN_to_predict": false, 
+"Choice_use_seeding_route_Set": true, 
+"Choice_relative_results_referencing" : false, 
+"Additional_text": "Tests"}

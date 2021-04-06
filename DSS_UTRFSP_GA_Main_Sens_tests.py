@@ -76,7 +76,7 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_trial_0",
                    "Mandl_UTRFSP_no_walk_trial_20",
                    "Mandl_UTRFSP_no_walk_trial_50",
-                   "Mandl_UTRFSP_no_walk_quick"][-2]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_quick"][1]  # set the name of the input data
 
 config_nr = 0
 

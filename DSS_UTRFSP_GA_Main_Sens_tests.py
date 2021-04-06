@@ -79,15 +79,15 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_quick",
                    "Mandl_UTRFSP_no_walk_NN_trial_50"][-1]  # set the name of the input data
 
-config_nr = 6
+config_nr = 3 # 3 is the best
 
-if True:
+if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
     Decisions = {
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : False,
+    "Choice_conduct_sensitivity_analysis" : True,
     "Choice_consider_walk_links" : False,
     "Choice_import_dictionaries" : False,
     "Choice_print_full_data_for_analysis" : True,
@@ -179,9 +179,9 @@ else:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 10, #should be an even number, John: 200
-    "generations" : 2, # John: 200
-    "initial_seeding_solutions" : 2, # Number of seeding solutions to incorporate from the non-dominated UTRP solution set, multiplied by 3, therefore should be at least 3 times smaller than population size
+    "population_size" : 4, #should be an even number, John: 200
+    "generations" : 1, # John: 200
+    "initial_seeding_solutions" : 1, # Number of seeding solutions to incorporate from the non-dominated UTRP solution set, multiplied by 3, therefore should be at least 3 times smaller than population size
     "number_of_runs" : 1, # John: 20
     "crossover_probability_routes" : 0.5,  
     "crossover_probability_freq" : 0.7,
@@ -207,6 +207,40 @@ else:
     'hp_tuning' : True,
     'train_f_1_only' : True,
     }
+    
+# Sensitivity analysis lists
+    sensitivity_list = [["population_size", 10, 20, 50, 100, 150, 200, 300],
+                        ["generations", 5, 10, 15, 20, 25, 50],
+                        ["crossover_probability", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
+                        ["mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+                        ]
+               
+    # Set up the list of parameters to test
+    sensitivity_list = [#["population_size", 10, 20, 50, 100, 150],
+                        #["population_size", 200],
+                        
+                        #["population_size", 300],
+                        
+                        #["generations", 10],
+                        ["generations", 60],
+                        
+                        #["crossover_probability", 0.7, 0.8, 0.9],
+                        #["crossover_probability", 0.95, 1],
+                        
+                        #["mutation_probability", 0.05, 0.1],
+                        #["mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+                        ]
+    
+    # Sensitivity analysis
+    sensitivity_list = [#["population_size", 200], # baseline
+                        #["population_size", 10],
+                        #["population_size", 300],
+                        #["generations", 5],
+                        #["generations", 60],
+                        ["crossover_probability", 0.5, 1],
+                        ["mutation_probability", 0.01, 0.5],
+                        ]
+    
 
 #%% Input parameter tests
 
@@ -1097,6 +1131,7 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
                 
             df_non_dominated_set = df_non_dominated_set.assign(F_3_real = real_objectives[:,0],
                                         F_4_real = real_objectives[:,1])
+            
         
         df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
         
@@ -1105,15 +1140,6 @@ for run_nr in range(0, parameters_GA["number_of_runs"]):
         df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
         
         #%% Post analysis
-        
-
-        
-        json.dump(parameters_input, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
-        json.dump(parameters_constraints, open(path_results_per_run / "parameters_constraints.json", "w"))
-        json.dump(parameters_GA, open(path_results_per_run / "parameters_GA.json", "w"))
-        json.dump(Decisions, open(path_results_per_run / "Decisions.json", "w"))
-
-        
         pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
         
         with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
@@ -1191,6 +1217,16 @@ del i_generation, pop_size, survivor_indices
 
 # %% Save results after all runs
 if Decisions["Choice_print_results"]:
+    '''Save the parameters used in the runs'''
+    if not (path_results / "Parameters").exists():
+        os.makedirs(path_results / "Parameters")
+    
+    json.dump(parameters_input, open(path_results / "Parameters" / "parameters_input.json", "w")) # saves the parameters in a json file
+    json.dump(parameters_constraints, open(path_results / "Parameters" / "parameters_constraints.json", "w"))
+    json.dump(parameters_GA, open(path_results / "Parameters" / "parameters_GA.json", "w"))
+    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"))
+    
+    
     '''Save the summarised results'''
     df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
     df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["F_3","F_4"]].values, True)] # reduce the pareto front from the total archive
@@ -1211,6 +1247,9 @@ if Decisions["Choice_print_results"]:
     stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
     stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(initial_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["F_3","F_4"]], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+    if Decisions['Choice_use_NN_to_predict']:
+        stats_overall['HV obtained real'] = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3_real","F_4_real"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
+
     stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs)
     
     df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
@@ -1263,54 +1302,23 @@ del run_nr
 if False: #__name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
-        start = time.perf_counter()
-        ''' Create copies of the original input data '''
-        #original_UTRFSP_problem_1 = copy.deepcopy(UTRFSP_problem_1)    
-        #original_parameters_constraints = copy.deepcopy(parameters_constraints)  
-        #original_parameters_GA = copy.deepcopy(parameters_GA)  
-        
-        # Set up the list of parameters to test
-        sensitivity_list = [[parameters_GA, "population_size", 10, 20, 50, 100, 150, 200, 300],
-                            [parameters_GA, "generations", 5, 10, 15, 20, 25, 50],
-                            [parameters_GA, "crossover_probability", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
-                            [parameters_GA, "mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
-                            ]
-        
-        # Set up the list of parameters to test
-        sensitivity_list = [#[parameters_GA, "population_size", 10, 20, 50, 100, 150],
-                            #[parameters_GA, "population_size", 200],
-                            
-                            #[parameters_GA, "population_size", 300],
-                            
-                            #[parameters_GA, "generations", 60],
-                            [parameters_GA, "generations", 60],
-                            
-                            #[parameters_GA, "crossover_probability", 0.7, 0.8, 0.9],
-                            #[parameters_GA, "crossover_probability", 0.95, 1],
-                            
-                            #[parameters_GA, "mutation_probability", 0.05, 0.1],
-                            #[parameters_GA, "mutation_probability", 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
-                            ]
-        # # Sensitivity analysis
-        sensitivity_list = [#[parameters_GA, "population_size", 200], # baseline
-                            #[parameters_GA, "population_size", 10],
-                            [parameters_GA, "population_size", 300],
-                            #[parameters_GA, "generations", 5],
-                            #[parameters_GA, "generations", 60],
-                            #[parameters_GA, "crossover_probability", 0.5, 1],
-                            #[parameters_GA, "mutation_probability", 0.01, 0.5],
-                            ]
-        
-        sensitivity_list = [#[parameters_GA, "population_size", 200], # baseline
-                            #[parameters_GA, "population_size", 10],
-                            [parameters_GA, "population_size", 10],
-                            #[parameters_GA, "generations", 5],
-                            #[parameters_GA, "generations", 60],
-                            #[parameters_GA, "crossover_probability", 0.5, 1],
-                            #[parameters_GA, "mutation_probability", 0.01, 0.5],
-                            ]
-        
+        # define empty list
+        sensitivity_list = []
 
+        # open file and read the content in a list
+        with open(("./Input_Data/"+name_input_data+"/Sensitivity_list.txt"), 'r') as filehandle:
+            sensitivity_list = json.load(filehandle)
+        
+        start = time.perf_counter()
+        
+        '''Save the sensitivity list used'''
+        with open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w') as filehandle:
+            json.dump(sensitivity_list, filehandle)
+            
+        for parameter_index in range(len(sensitivity_list)):
+            sensitivity_list[parameter_index].insert(0, parameters_GA)
+            
+            
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]

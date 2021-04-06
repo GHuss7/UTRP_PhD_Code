@@ -1,0 +1,7 @@
+[["population_size", 200],
+["population_size", 10],
+["population_size", 300],
+["generations", 5],
+["generations", 60],
+["crossover_probability", 0.5, 1],
+["mutation_probability", 0.01, 0.5]]

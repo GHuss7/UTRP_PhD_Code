@@ -29,11 +29,11 @@ import matplotlib.pyplot as plt
 import igraph as ig
 import networkx as nx
 import concurrent.futures
-from tensorflow import keras
+#from tensorflow import keras
 
 os.chdir("Machine Learning/DNN_own_UTRFSP")
 import dnn_helper_functions as hf
-from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
+#from DNN_UTRFSP_Keras import custom_distance_loss_function, recast_data_UTRFSP
 os.chdir(os.path.dirname(__file__))
 
 # Import personal functions
@@ -77,23 +77,26 @@ name_input_data = ["Mandl_UTRFSP_no_walk",
                    "Mandl_UTRFSP_no_walk_trial_20",
                    "Mandl_UTRFSP_no_walk_trial_50",
                    "Mandl_UTRFSP_no_walk_quick",
-                   "Mandl_UTRFSP_no_walk_NN_trial_50"
+                   "Mandl_UTRFSP_no_walk_NN_trial_50",
                    "Mandl_UTRFSP_no_walk_trial_gen_30",
                    "Mandl_UTRFSP_no_walk_trial_gen_30_seed_20",
                    "Mandl_UTRFSP_no_walk_trial_gen_30_seed_70",
                    "Mandl_UTRFSP_no_walk_trial_gen_60",
                    "Mandl_UTRFSP_no_walk_trial_gen_60_seed_20",
-                   "Mandl_UTRFSP_no_walk_trial_gen_60_seed_70",][3]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_trial_gen_60_seed_70",
+                   "Mandl_UTRFSP_no_walk_zero_tp_0",
+                   "Mandl_UTRFSP_no_walk_zero_tp_20",
+                   "Mandl_UTRFSP_no_walk_zero_tp_50",][-1]  # set the name of the input data
 
 config_nr = 3 # 3 is the best
 
-if False:
+if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
     Decisions = {
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : True,
+    "Choice_conduct_sensitivity_analysis" : False,
     "Choice_consider_walk_links" : False,
     "Choice_import_dictionaries" : False,
     "Choice_print_full_data_for_analysis" : True,
@@ -1353,6 +1356,7 @@ if __name__ == "__main__":
         print('Normal run initiated')
         main(UTRFSP_problem_1)
 
+    if False:
         R_x = gf.convert_routes_str2list("5-14*4-1-0*10-9-7-5-3-4*13-12-10-11*6-14-8*6-14-5-2*")	
         F_x = np.array([0.033333333, 0.033333333,	0.033333333,	0.2,	0.033333333,	0.033333333])
         fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1)
@@ -1379,10 +1383,10 @@ if __name__ == "__main__":
         fn_obj_f3_f4(R_x, F_x, UTRFSP_problem_1) # real ans: 19.32168948	13.68888889 no_walk
 
         
-    def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
-        """Objective function using the NN model to predict F_3 and F_4 values"""
-        F_3_pred = model_NN.predict(recast_decision_variable(R_x, F_x, UTRFSP_problem_1))
-        _, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
-        F_4 = gf2.f4_TBR(R_x, F_x, 
-                         UTRFSP_problem_1.problem_data.mx_dist) #f4_TBR
-        return (F_3_pred_rec[0][0], F_4)
+        def fn_obj_f3_f4(routes, frequencies, UTRFSP_problem_input):
+            """Objective function using the NN model to predict F_3 and F_4 values"""
+            F_3_pred = model_NN.predict(recast_decision_variable(R_x, F_x, UTRFSP_problem_1))
+            _, F_3_pred_rec = recast_data_UTRFSP(False, F_3_pred, parameters_ML)
+            F_4 = gf2.f4_TBR(R_x, F_x, 
+                             UTRFSP_problem_1.problem_data.mx_dist) #f4_TBR
+            return (F_3_pred_rec[0][0], F_4)

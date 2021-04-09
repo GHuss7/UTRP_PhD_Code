@@ -403,3 +403,90 @@ def plot_generations_objectives(pop_generations):
     for name, group in groups:
         plt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
     plt.legend()
+
+#%% Print summary figures
+def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run):
+    '''Print Objective functions over time, all solutions and pareto set obtained'''
+    fig, axs = plt.pyplot.subplots(1, 2)
+    fig.set_figheight(7.5)
+    fig.set_figwidth(20)
+    
+    axs[0].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker="o", label='HV obtained')
+    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs),\
+    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
+    axs[0].set_title('HV over all generations')
+    axs[0].set(xlabel='Generations', ylabel='%')
+    axs[0].legend(loc="upper right")
+    
+    axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
+    axs[1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
+    axs[1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
+    axs[1].set_title('Non-dominated set obtained vs benchmark results')
+    axs[1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
+    axs[1].legend(loc="upper right")
+    
+    manager = plt.pyplot.get_current_fig_manager()
+    manager.window.showMaximized()
+    plt.pyplot.show()
+    plt.pyplot.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
+
+    manager.window.close()
+
+def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run):
+    '''Print Objective functions over time, all solutions and pareto set obtained'''
+    fig, axs = plt.pyplot.subplots(2, 2)
+    fig.set_figheight(15)
+    fig.set_figwidth(20)
+    axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', marker="o", label='f1_AETT')
+    axs[0, 0].set_title('Mean AETT over all generations')
+    axs[0, 0].set(xlabel='Generations', ylabel='f1_AETT')
+    axs[0, 0].legend(loc="upper right")
+    
+    axs[1, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_2"], c='b', marker="o", label='f2_TBR')
+    axs[1, 0].set_title('Mean TBR over all generations')
+    axs[1, 0].set(xlabel='Generations', ylabel='f2_TBR')
+    axs[1, 0].legend(loc="upper right") 
+    
+    axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker="o", label='HV obtained')
+    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs),\
+    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
+    axs[0, 1].set_title('HV over all generations')
+    axs[0, 1].set(xlabel='Generations', ylabel='%')
+    axs[0, 1].legend(loc="upper right")
+
+    axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
+    axs[1, 1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
+    axs[1, 1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
+    axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
+    axs[1, 1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
+    axs[1, 1].legend(loc="upper right")
+    
+    manager = plt.pyplot.get_current_fig_manager()
+    manager.window.showMaximized()
+    plt.pyplot.show()
+    plt.pyplot.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+
+    manager.window.close()
+
+def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results):
+    fig, axs = plt.pyplot.subplots(1,1)
+    fig.set_figheight(15)
+    fig.set_figwidth(20)
+    
+    axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
+    axs.scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
+    axs.scatter(df_overall_pareto_set["F_3"], df_overall_pareto_set["F_4"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+    if Decisions['Choice_use_NN_to_predict']:
+        axs.scatter(df_overall_pareto_set["F_3_real"], df_overall_pareto_set["F_4_real"], s=10, c='orange', marker="o", label='Real Pareto front values')
+    axs.set_title('Pareto front obtained from all runs')
+    axs.set(xlabel='F_3_AETT', ylabel='F_4_TBR')
+    axs.legend(loc="upper right")
+    del axs
+    
+    manager = plt.pyplot.get_current_fig_manager()
+    manager.window.showMaximized()
+    plt.pyplot.show()
+    plt.pyplot.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+    manager.window.close()
+    del fig, manager
+    

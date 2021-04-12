@@ -59,7 +59,11 @@ from pymoo.util.randomized_argsort import randomized_argsort
 np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning) # find VisibleDeprecationWarning
     
 # %% Load the respective files
-name_input_data = ["Mandl_Data","Mumford0"][1]   # set the name of the input data
+name_input_data = ["Mandl_Data", #0
+                   "Mumford0", #1
+                   "Mumford1", #2
+                   "Mumford2", #3
+                   "Mumford3",][2]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set input parameters
@@ -75,7 +79,27 @@ Decisions = {
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
-    parameters_GA_route_design = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_route_design.json"))
+    #parameters_GA_route_design = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_route_design.json"))
+   
+    '''State the various GA input parameters for frequency setting''' 
+    parameters_GA_route_design={
+    'Problem_name' : f"{name_input_data}_UTRP_NSGAII", # Specify the name of the problem currently being addresses
+    "method" : "GA",
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "crossover_probability" : 0.6, 
+    "crossover_distribution_index" : 5,
+    "mutation_probability" : 1, # John: 1/|Route set| -> set later
+    "mutation_distribution_index" : 10,
+    "mutation_ratio" : 0.1, # Ratio used for the probabilites of mutations applied
+    "tournament_size" : 2,
+    "termination_criterion" : "StoppingByEvaluations",
+    "max_evaluations" : 25000,
+    "number_of_variables" : parameters_constraints["con_r"],
+    "number_of_objectives" : 2, # this could still be automated in the future
+    "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
+    }
  
 else:    
     '''State the various parameter constraints''' 

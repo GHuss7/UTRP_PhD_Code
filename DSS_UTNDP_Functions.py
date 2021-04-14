@@ -150,20 +150,51 @@ def create_igraph_from_dist_mx(matrix_dist):
     
     return g_tn
 
+def create_igraph_from_demand_mx(matrix_demand): 
+    # Creates an iGraph from the given demand matrix
+    # Output: iGraph
+    
+    # Gets the links and their associated demands
+    links_list_dist_mx, links_list_distances = get_links_list_and_distances(matrix_demand)
+    
+    # Create the transit network graph
+    g_tn = ig.Graph() 
+
+    g_tn.add_vertices(range(matrix_demand.shape[0])) # Add vertices
+
+    g_tn.add_edges(links_list_dist_mx) # Add edges
+
+    g_tn.es["demand"] = links_list_distances
+    
+    return g_tn
+
 # %% Generate all the shortest paths
 
-def get_all_shortest_paths(g_n):
+def get_all_shortest_paths(g_n, criteria="distance"):
     # Takes as input an iGraph object
     # Output: list of all the shortest routes
     paths_shortest_all = list()
     for i in range(g_n.vcount()):
-        paths_shortest_all.extend(g_n.get_all_shortest_paths(i, g_n.vs, "distance")) # figure out this function.... https://pythonhosted.org/python-igraph/igraph.GraphBase-class.html#get_all_paths_shortest_all
+        paths_shortest_all.extend(g_n.get_all_shortest_paths(i, g_n.vs, criteria)) # figure out this function.... https://pythonhosted.org/python-igraph/igraph.GraphBase-class.html#get_all_paths_shortest_all
     
     for i in range(len(paths_shortest_all)-1,-1,-1):
         if len(paths_shortest_all[i]) < 2:  
             del paths_shortest_all[i]
     
-    return paths_shortest_all   
+    return paths_shortest_all  
+
+def get_all_longest_paths(g_n, criteria="demand"):
+    # Takes as input an iGraph object
+    # Output: list of all the shortest routes
+    paths_longest_all = list()
+    for i in range(g_n.vcount()):
+        paths_longest_all.extend(g_n.get_all_longest_paths(i, g_n.vs, criteria)) # figure out this function.... https://pythonhosted.org/python-igraph/igraph.GraphBase-class.html#get_all_paths_longest_all
+    
+    for i in range(len(paths_longest_all)-1,-1,-1):
+        if len(paths_longest_all[i]) < 2:  
+            del paths_longest_all[i]
+    
+    return paths_longest_all
 
 # %% Calculate the shortest distance matrix
 def calculate_shortest_dist_matrix(paths_shortest_all, mx_dist):
@@ -491,9 +522,10 @@ def f1_total_route_length(routes_R, mx_dist):
 def calc_seperate_route_length(routes_R, mx_dist):
     # Takes as input the route set R and the associated distance matrix
     # Output: an array of
-    lengths_of_routes = np.full(len(routes_R), 0)
+    num_of_routes = len(routes_R)
+    lengths_of_routes = np.full(num_of_routes, 0)
     
-    for i in range(len(routes_R)):
+    for i in range(num_of_routes):
         path = routes_R[i]
         dist = 0
         length_path = len(path)
@@ -552,6 +584,20 @@ def remove_duplicate_routes(shortest_routes, N):
             tick_list.append(test_list[i])
             
     return shortest_routes
+
+def remove_half_duplicate_routes(shortest_routes):
+    # removes the double entries in the shortest routes list, but which are in reverse order
+    # keeps the doubles between same source and targer
+    # shortest_routes is the shortest bus routes in the network from node i to all other nodes
+    # N is the number of nodes in the network
+    # Output: the shortest_routes where the duplicates are removed
+    shortest_routes_half = copy.deepcopy(shortest_routes)
+    
+    for i in range(len(shortest_routes)-1,-1,-1):
+        if shortest_routes[i][0] > shortest_routes[i][-1]:
+            shortest_routes_half.pop(i)
+            
+    return shortest_routes_half
 
 # %% Generate transfer matrix
 def generate_transfer_mx(routes_R, paths_shortest_bus_routes, N):    
@@ -893,6 +939,14 @@ def create_nx_graph_from_routes_list(routes_R):
     G = nx.MultiGraph()
     for i in range(len(routes_R)):
         G.add_edges_from(route_links[i])
+    return G
+
+def create_nx_graph_from_adj_matrix(mx_dist):
+    """Create a weigthed graph from adj matrix"""
+    links_list_dist_mx, links_list_distances = get_links_list_and_distances(mx_dist)
+    G = nx.Graph()
+    for i in range(len(links_list_dist_mx)): # add edges
+        G.add_edge(links_list_dist_mx[i][0], links_list_dist_mx[i][1], weight = links_list_distances[i])
     return G
 
 def visualise_nx_multi_graph(routes_R_nx, mx_coords):
@@ -2059,3 +2113,7 @@ def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', ob
     df_non_dominated_set = df_non_dominated_set[is_pareto_efficient(df_non_dominated_set[[obj_1_name,obj_2_name]].values, True)]
     df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
     return df_non_dominated_set
+
+
+
+

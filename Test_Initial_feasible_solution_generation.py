@@ -15,7 +15,6 @@ import pickle
 import pandas as pd 
 import numpy as np
 from math import inf
-import pygmo as pg
 import random
 import copy
 import datetime
@@ -38,7 +37,7 @@ import EvaluateRouteSet as ev
 # def main():
 # %% Load the respective files
 #name_input_data = "SSML_STB_DAY_SUM_0700_1700"      # set the name of the input data
-name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = "Mandl_UTRP"      # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -224,3 +223,31 @@ routes_R = gf.repair_add_missing_from_terminal_multiple(routes_R, UTNDP_problem_
 
 R_set_3 = gc.Routes(routes_R)
 R_set_3.plot_routes(UTNDP_problem_1)
+
+#%% Mutation tests
+# route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*1-3-11-10-9-6-14-8*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
+paths_shortest_all_unique = gf.remove_half_duplicate_routes(paths_shortest_all)
+
+route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
+R_to_mutate = gc.Routes(route_to_mutate)
+R_to_mutate.plot_routes(UTNDP_problem_1)
+
+demand_for_routes_list = gf.determine_demand_per_route(paths_shortest_all_unique, mx_demand)
+
+all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
+    
+# Initial test for all nodes present:
+if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+    missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+
+indices_of_compatible_routes = []
+for path_index in range(len(paths_shortest_all_unique)):
+    if set(missing_nodes).issubset(set(paths_shortest_all_unique[path_index])):
+        indices_of_compatible_routes.append(path_index)
+
+path_to_add = paths_shortest_all_unique[random.choice(indices_of_compatible_routes)]
+new_route = copy.deepcopy(route_to_mutate)
+new_route.extend([path_to_add])
+
+R_new = gc.Routes(new_route)
+R_new.plot_routes(UTNDP_problem_1)

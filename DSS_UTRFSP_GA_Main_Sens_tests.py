@@ -222,8 +222,10 @@ else:
 # Sensitivity analysis lists
     sensitivity_list = [["population_size", 10, 20, 50, 100, 150, 200, 300],
                         ["generations", 5, 10, 15, 20, 25, 50],
-                        ["crossover_probability", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
-                        ["mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
+                        ["crossover_probability_routes", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
+                        ["mutation_probability_routes", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5],
+                        ["crossover_probability_freq", 0.7, 0.8, 0.9, 0.95, 1], # bottom two takes WAY longer, subdivide better
+                        ["mutation_probability_freq", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3, 0.5]
                         ]
                
     # Set up the list of parameters to test
@@ -783,7 +785,7 @@ def mutate_pop_args(offspring_variable_args, variable_len, mutation_probability)
     return offspring_variable_args
 
 
-def keep_individuals(pop, survivor_indices):
+def keep_individuals_UTRFSP(pop, survivor_indices):
     # Function that only keeps to individuals with the specified indices
     pop.variables_routes = [pop.variables_routes[x] for x in survivor_indices]
     pop.variables_routes_str = [pop.variables_routes_str[y] for y in survivor_indices]
@@ -1022,7 +1024,6 @@ def main(UTRFSP_problem_1):
             if not path_results_per_run.exists():
                 os.makedirs(path_results_per_run)
         
-    
         # Create the initial population   
         stats['begin_time'] = datetime.now() # enter the begin time
         print("######################### RUN {0} #########################".format(run_nr+1))
@@ -1042,12 +1043,14 @@ def main(UTRFSP_problem_1):
         else:
             pop_1.generate_initial_population(UTRFSP_problem_1, fn_obj_f3_f4) 
         
+        # Create generational dataframe
         df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, 0)
         
+        # Create data for analysis dataframe
         if Decisions["Choice_print_full_data_for_analysis"]:
             df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, 0)
                   
-        
+        # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
         HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["F_3","F_4"]].values, UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs) # Calculate HV
     
@@ -1066,7 +1069,7 @@ def main(UTRFSP_problem_1):
         
         for i_generation in range(1, UTRFSP_problem_1.problem_GA_parameters.generations+1):    
             # Some stats
-            stats['begin_time_run'] = datetime.now() # enter the begin time
+            stats['begin_time_gen'] = datetime.now() # enter the begin time
             stats['generation'] = i_generation
             print("Generation " + str(int(i_generation)) + " initiated ("+datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
             
@@ -1110,7 +1113,7 @@ def main(UTRFSP_problem_1):
                                                          mutated_variables_freq_args, 
                                                          UTRFSP_problem_1, rank_and_sort=boolean_config[config_nr][5])
     
-            
+            # Append data for analysis
             if Decisions["Choice_print_full_data_for_analysis"]:
                 df_data_for_analysis = ga.add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, i_generation, df_data_for_analysis)
               
@@ -1132,14 +1135,14 @@ def main(UTRFSP_problem_1):
             # Get new generation
             pop_size = UTRFSP_problem_1.problem_GA_parameters.population_size
             survivor_indices = get_survivors(pop_1, pop_size)
-            keep_individuals(pop_1, survivor_indices)
+            keep_individuals_UTRFSP(pop_1, survivor_indices)
             
             # Adds the population to the dataframe
             df_pop_generations = ga.add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, i_generation, df_pop_generations)
             
-            stats['end_time_run'] = datetime.now() # save the end time of the run
+            stats['end_time_gen'] = datetime.now() # save the end time of the run
             print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
-                                                        ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
+                                                        ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                         round(HV, 4)))
             
             
@@ -1153,14 +1156,13 @@ def main(UTRFSP_problem_1):
         
         #%% Save the results #####################################################
         if Decisions["Choice_print_results"]:
-            '''Write all results and parameters to files'''
+            '''Write all results to files'''
             
             # Create and save the dataframe 
             df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis)
             
             if Decisions["Choice_print_full_data_for_analysis"]:
                 df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
-            
             
             if Decisions['Choice_use_NN_to_predict']:
                 real_objectives = np.zeros((len(df_non_dominated_set), 2))
@@ -1173,7 +1175,8 @@ def main(UTRFSP_problem_1):
                     
                 df_non_dominated_set = df_non_dominated_set.assign(F_3_real = real_objectives[:,0],
                                             F_4_real = real_objectives[:,1])
-                
+            
+            # Compute means for generations
             df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['F_3'].mean().iloc[:,1],
                                    mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['F_4'].mean().iloc[:,1])
             
@@ -1181,8 +1184,10 @@ def main(UTRFSP_problem_1):
             df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
             df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
             df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+            
             # Print and save result summary figures:
-            gv.save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run)
+            labels = ["F_3", "F_4", "F_3_AETT", "F_4_TBR"]
+            gv.save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, labels)
             
             
             #%% Post analysis
@@ -1265,19 +1270,17 @@ def main(UTRFSP_problem_1):
 if __name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
+        start = time.perf_counter()
+
         # define empty list
         sensitivity_list = []
 
         # open file and read the content in a list
         with open(("./Input_Data/"+name_input_data+"/Sensitivity_list.txt"), 'r') as filehandle:
             sensitivity_list = json.load(filehandle)
-        
-        start = time.perf_counter()
-                    
+                            
         for parameter_index in range(len(sensitivity_list)):
             sensitivity_list[parameter_index].insert(0, parameters_GA)
-            
-            
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]

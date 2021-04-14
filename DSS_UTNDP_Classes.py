@@ -15,6 +15,7 @@ import random
 from itertools import compress
 import networkx as nx
 import copy
+from datetime import timedelta, datetime
 #import pygmo as pg
 from math import inf
 import matplotlib.pyplot as plt
@@ -22,6 +23,7 @@ import matplotlib.pyplot as plt
 import DSS_UTNDP_Functions as gf
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
+import DSS_Admin as ga
 
 from pymoo.util.function_loader import load_function
 from pymoo.model.survival import Survival
@@ -172,12 +174,20 @@ class PopulationRoutes(Routes):
         
     
     def generate_initial_population(self, main_problem, fn_obj):
+        t_now = datetime.now() # TIMING FUNCTION
+        average_at = 5 # TIMING FUNCTION
+        
         for i in range(self.population_size):
             #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
             self.variables[i] = Routes.return_feasible_route(main_problem)
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
  
+            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
+                tot_iter = ga.determine_total_iterations(main_problem, 1)
+                sec_per_iter_time_delta = datetime.now() - t_now
+                ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+   
             # get the objective space values and objects
             # F = pop.get("F").astype(np.float, copy=False)
         F = self.objectives
@@ -196,12 +206,20 @@ class PopulationRoutes(Routes):
                 self.crowding_dist[i] = crowding_of_front[j]
                 
     def generate_initial_population_robust(self, main_problem, fn_obj):
+        t_now = datetime.now() # TIMING FUNCTION
+        average_at = 5 # TIMING FUNCTION
+        
         for i in range(self.population_size):
             #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
             self.variables[i] = Routes.return_feasible_route_robust(main_problem)
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
  
+            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
+                tot_iter = ga.determine_total_iterations(main_problem, 1)
+                sec_per_iter_time_delta = datetime.now() - t_now
+                ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+
             # get the objective space values and objects
             # F = pop.get("F").astype(np.float, copy=False)
         F = self.objectives

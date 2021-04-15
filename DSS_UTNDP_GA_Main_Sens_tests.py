@@ -63,7 +63,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][2]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 if True:
@@ -91,9 +91,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 6, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 4, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -338,11 +338,11 @@ def main(UTNDP_problem_1):
     
     
     '''################## Initiate the runs ##################'''
-    for run_nr in range(0, parameters_GA["number_of_runs"]):
+    for run_nr in range(1, parameters_GA["number_of_runs"]+1):
 
         if Decisions["Choice_print_results"]:           
             '''Sub folder path'''
-            path_results_per_run = path_results / ("Run_"+str(run_nr+1))
+            path_results_per_run = path_results / ("Run_"+str(run_nr))
             if not path_results_per_run.exists():
                 os.makedirs(path_results_per_run)  
                 
@@ -351,7 +351,7 @@ def main(UTNDP_problem_1):
         # TODO: Remove duplicate functions! (compare set similarity and obj function values)
         
         stats['begin_time'] = datetime.datetime.now() # enter the begin time
-        print("######################### RUN {0} #########################".format(run_nr+1))
+        print("######################### RUN {0} #########################".format(run_nr))
         print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)   
         pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
@@ -385,7 +385,9 @@ def main(UTNDP_problem_1):
             # Some stats
             stats['begin_time_gen'] = datetime.datetime.now() # enter the begin time
             stats['generation'] = i_generation
-            print("Generation " + str(int(i_generation)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+            
+            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+                print("Generation " + str(int(i_generation)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
             
             # Crossover amd Mutation
             offspring_variables = gf.crossover_pop_routes_individuals(pop_1, UTNDP_problem_1)
@@ -416,7 +418,8 @@ def main(UTNDP_problem_1):
             df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
             df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
             
-            # gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run) 
+            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+                gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run) 
             
             # Get new generation
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
@@ -428,7 +431,9 @@ def main(UTNDP_problem_1):
             pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),i_generation)])]) # add the population to the generations
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
-            print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
+            
+            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+                print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
                                                                 ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                                 round(HV, 4)))
                 
@@ -501,7 +506,7 @@ def main(UTNDP_problem_1):
         
         stats_overall['execution_end_time'] =  datetime.datetime.now()
         
-        stats_overall['total_model_runs'] = run_nr + 1
+        stats_overall['total_model_runs'] = run_nr
         stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
         stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
         stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")

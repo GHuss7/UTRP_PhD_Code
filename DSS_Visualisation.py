@@ -456,11 +456,46 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
         manager = plt.pyplot.get_current_fig_manager()
         manager.window.showMaximized()
         plt.pyplot.show()
-        manager.window.close()
         plt.pyplot.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
+        manager.window.close()
+
     except:
         plt.pyplot.show()
         plt.pyplot.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
+        plt.pyplot.close(fig)
+        
+def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text="",
+                                               labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"]):
+    '''Print Objective functions over time, all solutions and pareto set obtained'''
+    fig, axs = plt.pyplot.subplots(1, 2)
+    fig.set_figheight(7.5)
+    fig.set_figwidth(20)
+    
+    axs[0].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker="o", label='HV obtained')
+    axs[0].set_title('HV over all generations')
+    axs[0].set(xlabel='Generations', ylabel='%')
+    axs[0].legend(loc="upper right")
+    
+    axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
+    axs[1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
+    axs[1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
+    axs[1].set_title('Non-dominated set obtained vs benchmark results')
+    axs[1].set(xlabel=labels[2], ylabel=labels[3])
+    axs[1].legend(loc="upper right")
+    
+    if not (path_results_per_run /"Interim").exists():
+        os.makedirs(path_results_per_run /"Interim")
+    
+    try:
+        manager = plt.pyplot.get_current_fig_manager()
+        manager.window.showMaximized()
+        plt.pyplot.show()
+        plt.pyplot.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
+        manager.window.close()
+
+    except:
+        plt.pyplot.show()
+        plt.pyplot.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
         plt.pyplot.close(fig)
 
 def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, labels):

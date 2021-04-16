@@ -86,7 +86,8 @@ name_input_data = ["Mandl_UTRFSP_no_walk", #0
                    "Mandl_UTRFSP_no_walk_trial_gen_60_seed_70", #13
                    "Mandl_UTRFSP_no_walk_zero_tp_0", # 14
                    "Mandl_UTRFSP_no_walk_zero_tp_20", #15
-                   "Mandl_UTRFSP_no_walk_zero_tp_50",][13]  # set the name of the input data
+                   "Mandl_UTRFSP_no_walk_zero_tp_50", # 16
+                   "Mandl_UTRFSP_no_walk_zero_tp_70"][13]  # set the name of the input data
 
 config_nr = 3 # 3 is the best
 speed_testing = False # NB ONLY put TRUE when you want random obj function values so that you can code admin quicker

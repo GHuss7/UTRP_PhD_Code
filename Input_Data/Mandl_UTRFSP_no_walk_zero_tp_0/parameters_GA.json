@@ -1,6 +1,6 @@
 {"method": "GA", 
 "population_size": 300, 
-"generations": 40, 
+"generations": 70, 
 "initial_seeding_solutions" : 0,
 "number_of_runs": 1, 
 "crossover_probability_routes": 0.5, 

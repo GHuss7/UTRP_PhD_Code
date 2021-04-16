@@ -361,7 +361,6 @@ def main(UTNDP_problem_1):
         df_pop_generations = ga.add_UTRP_pop_generations_data(pop_1, UTNDP_problem_1, generation_num=0)
         
         # Create data for analysis dataframe
-        data_for_analysis = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str)]) # create an object to contain all the data for analysis
         df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, generation_num=0) 
         
         # Determine non-dominated set
@@ -401,7 +400,6 @@ def main(UTNDP_problem_1):
             
             # Append data for analysis
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
-            data_for_analysis = np.vstack([data_for_analysis, np.hstack([pop_1.objectives[pop_size:,], ga.extractDigits(pop_1.variables_str)[pop_size:]])])
             df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, i_generation, df_data_for_analysis) 
 
             # Determine non-dominated set
@@ -420,7 +418,8 @@ def main(UTNDP_problem_1):
             
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
                 gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run) 
-            
+            #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_generation)
+                
             # Get new generation
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
             survivor_indices = gf.get_survivors(pop_1, pop_size)

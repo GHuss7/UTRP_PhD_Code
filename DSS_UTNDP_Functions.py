@@ -132,7 +132,7 @@ def get_graph_distance_levels_from_vertex_u(vertex_u, max_depth, mapping_adjacen
     return distance_list
     
 # %% Create igraph from dist matrix 
-def create_igraph_from_dist_mx(matrix_dist): 
+def create_igraph_from_dist_mx(matrix_dist, edge_name="distance"): 
     # Creates an iGraph from the given distance matrix
     # Output: iGraph
     
@@ -146,11 +146,11 @@ def create_igraph_from_dist_mx(matrix_dist):
 
     g_tn.add_edges(links_list_dist_mx) # Add edges
 
-    g_tn.es["distance"] = links_list_distances
+    g_tn.es[edge_name] = links_list_distances
     
     return g_tn
 
-def create_igraph_from_demand_mx(matrix_demand): 
+def create_igraph_from_demand_mx(matrix_demand, edge_name="demand"): 
     # Creates an iGraph from the given demand matrix
     # Output: iGraph
     
@@ -164,7 +164,7 @@ def create_igraph_from_demand_mx(matrix_demand):
 
     g_tn.add_edges(links_list_dist_mx) # Add edges
 
-    g_tn.es["demand"] = links_list_distances
+    g_tn.es[edge_name] = links_list_distances
     
     return g_tn
 

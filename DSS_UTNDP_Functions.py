@@ -705,6 +705,40 @@ def generate_initial_feasible_route_set(mx_dist, parameters_constraints):
 
     return routes_R
 
+def convert_path_list2str(path_list):
+    # converts a routes list into a string standarised version
+    path_str = str()
+
+    for j in range(len(path_list)):
+        if j != 0:
+            path_str = path_str + "-" + str(path_list[j])
+        else:
+            path_str = path_str +  str(path_list[j])
+    path_str = path_str + "*"
+    return path_str
+
+def convert_path_str2list(path_str):
+    # converts a string standarised version of routes list into a routes list
+    path_list = list()
+    temp_list = list()
+    flag_end_node = True
+    for i in range(len(path_str)):
+        if path_str[i] != "-" and path_str[i] != "*":
+            if flag_end_node:
+                temp_list.append(int(path_str[i]))
+                flag_end_node = False
+            else:
+                temp_list[len(temp_list)-1] = int(str(temp_list[len(temp_list)-1]) + path_str[i])
+        else:   
+            if path_str[i] == "*":          # indicates the end of the route
+                path_list.append(temp_list)
+                temp_list = list()
+                flag_end_node = True
+            else:
+                if path_str[i] == "-":
+                    flag_end_node = True
+    return path_list[0]
+
 def convert_routes_list2str(routes_R_list):
     # converts a routes list into a string standarised version
     routes_R_str = str()

@@ -63,9 +63,11 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 
 # %% Set input parameters
+sens_from = 1
+sens_to = (sens_from + 1) if True else -1
 if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
@@ -156,10 +158,7 @@ else:
     "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
     }
     
-# Sensitivity analysis lists
-    sens_from = 5
-    sens_to = sens_from + 1
-    
+# Sensitivity analysis lists    
     sensitivity_list = [#[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
                         #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
                         ["population_size", 10, 20, 50, 100, 150, 200, 300, 400],
@@ -553,6 +552,8 @@ if __name__ == "__main__":
         # open file and read the content in a list
         with open(("./Input_Data/"+name_input_data+"/Sensitivity_list.txt"), 'r') as filehandle:
             sensitivity_list = json.load(filehandle)   
+ 
+        sensitivity_list = sensitivity_list[sens_from:sens_to]   
  
         for parameter_index in range(len(sensitivity_list)):
             sensitivity_list[parameter_index].insert(0, parameters_GA)

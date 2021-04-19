@@ -371,6 +371,32 @@ class Problem_data():
         self.mx_demand = mx_demand
         self.mx_coords = mx_coords
         
+class K_shortest_paths():
+    """A class for storing the data of a generic problem"""
+    def __init__(self, df_k_shortest_paths: pd.DataFrame):
+        
+        k_shortest_paths = []
+        for index_i in range(len(df_k_shortest_paths)):
+            k_shortest_paths.append(gf.convert_path_str2list(df_k_shortest_paths["Routes"].iloc[index_i]))
+        
+        self.df = df_k_shortest_paths
+        self.paths = k_shortest_paths
+        self.lengths = np.float64(df_k_shortest_paths["Travel_time"].values)
+        self.demand = np.float64(df_k_shortest_paths["Demand"].values)
+        self.demand_per_length = df_k_shortest_paths["Demand_per_minute"].values
+
+    def create_paths_bool(self, tot_num_vertices):
+        """A function that creates a boolean matrix indicating the vertices 
+        each path contains"""
+        paths_bool = np.zeros((len(self.paths), tot_num_vertices))
+        for index_i in range(len(self.paths)):
+            for vertex in self.paths[index_i]:
+                paths_bool[index_i,vertex] = 1
+              
+        self.paths_bool = paths_bool
+        
+        return paths_bool
+        
 class Problem_constraints():
     """A class for storing the constraints of a generic problem"""
     def __init__(self, parameters_constraints: dict, **kwargs):

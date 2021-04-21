@@ -63,10 +63,10 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][2]   # set the name of the input data
+                   "Mumford3_UTRP",][1]   # set the name of the input data
 
 # %% Set input parameters
-sens_from = 1
+sens_from = 0
 sens_to = (sens_from + 1) if True else -1
 if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -89,6 +89,13 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
     #parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
+    if not os.path.exists("./Input_Data/"+name_input_data+"/K_shortest_paths.csv"): 
+        print("Creating k_shortest paths and saving csv file...")
+        df_k_shortest_paths = gf.create_k_shortest_paths_df(mx_dist, mx_demand, parameters_constraints["con_maxNodes"])
+        df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
+    else:
+        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
+
    
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
@@ -226,6 +233,7 @@ UTNDP_problem_1.problem_data = gc.Problem_data(mx_dist, mx_demand, mx_coords)
 UTNDP_problem_1.problem_constraints = gc.Problem_constraints(parameters_constraints)
 UTNDP_problem_1.problem_inputs = gc.Problem_inputs(parameters_input)
 UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
+UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
@@ -410,10 +418,11 @@ def main(UTNDP_problem_1):
             df_data_generations.loc[i_generation] = [i_generation, HV]
             
             # Intermediate print-outs for observance 
-            df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
-            df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
-            df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
-            df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+                df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
+                df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
+                df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
+                df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
             
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
                 gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run) 

@@ -129,6 +129,7 @@ class Routes():
             paths_shortest_all = gf.get_all_shortest_paths(g_tn) # Generate all the shortest paths
     
             """Remove duplicate lists in reverse order""" #can be added for efficiency, but not that neccessary
+            paths_shortest_all = gf.remove_half_duplicate_routes(paths_shortest_all)
             
             # Shorten the candidate routes according to the constraints
             for i in range(len(paths_shortest_all)-1, -1, -1):
@@ -136,6 +137,27 @@ class Routes():
                     del paths_shortest_all[i]
             
             initial_route_set = gf.routes_generation_unseen_prob(paths_shortest_all, paths_shortest_all, UTNDP_problem_input.problem_constraints.con_r)
+            
+            if gf.test_all_four_constraints(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
+                return initial_route_set
+                
+            else:
+                routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)
+                if gf.test_all_four_constraints(routes_R, UTNDP_problem_input.problem_constraints.__dict__):
+                    return routes_R
+                
+    def return_feasible_route_robust_k_shortest(UTNDP_problem_input):
+        """Generate feasible route based on appending random shortest paths"""
+        for try_number in range(1000):   
+            
+            k_short_paths = copy.deepcopy(UTNDP_problem_input.k_short_paths.paths)
+            
+            # Shorten the candidate routes according to the constraints
+            for i in range(len(k_short_paths)-1, -1, -1):
+                if len(k_short_paths[i]) < UTNDP_problem_input.problem_constraints.con_minNodes or len(k_short_paths[i]) > UTNDP_problem_input.problem_constraints.con_maxNodes:  
+                    del k_short_paths[i]
+            
+            initial_route_set = gf.routes_generation_unseen_prob(k_short_paths, k_short_paths, UTNDP_problem_input.problem_constraints.con_r)
             
             if gf.test_all_four_constraints(initial_route_set, UTNDP_problem_input.problem_constraints.__dict__):
                 return initial_route_set
@@ -206,6 +228,38 @@ class PopulationRoutes(Routes):
                 self.crowding_dist[i] = crowding_of_front[j]
                 
     def generate_initial_population_robust(self, main_problem, fn_obj):
+        t_now = datetime.now() # TIMING FUNCTION
+        average_at = 5 # TIMING FUNCTION
+        
+        for i in range(self.population_size):
+            #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+            self.variables[i] = Routes.return_feasible_route_robust(main_problem)
+            self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
+            self.objectives[i,] = fn_obj(self.variables[i], main_problem)
+ 
+            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
+                tot_iter = ga.determine_total_iterations(main_problem, 1)
+                sec_per_iter_time_delta = datetime.now() - t_now
+                ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+
+            # get the objective space values and objects
+            # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+        
+            # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
+
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = gf.calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
+                
+    def generate_initial_population_robust_k_shortest_paths(self, main_problem, fn_obj):
         t_now = datetime.now() # TIMING FUNCTION
         average_at = 5 # TIMING FUNCTION
         
@@ -362,7 +416,7 @@ class Frequencies():
 
 
     
-#%% Class: UTFSP_problem
+#%% Class: UTFSP_problem and main components
 
 class Problem_data():
     """A class for storing the data of a generic problem"""
@@ -372,7 +426,7 @@ class Problem_data():
         self.mx_coords = mx_coords
         
 class K_shortest_paths():
-    """A class for storing the data of a generic problem"""
+    """A class for storing the k_shortest path specific data"""
     def __init__(self, df_k_shortest_paths: pd.DataFrame):
         
         k_shortest_paths = []

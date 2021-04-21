@@ -196,6 +196,76 @@ def get_all_longest_paths(g_n, criteria="demand"):
     
     return paths_longest_all
 
+#%% K-shortest paths with counting vertices
+def get_path_length(G, path, weight='weight'):
+    length = 0
+    if len(path) > 1:
+        for i in range(len(path) - 1):
+            u = path[i]
+            v = path[i + 1]
+            
+            length += G.get_edge_data(u,v).get(weight)
+    
+    return length
+
+def get_k_shortest_paths(G, source, target, k_cutoff):
+    """Get all the k-shortest paths from a graph in terms of vertex counts for
+    a given source and target vertex with a cutoff of k vertices
+    Returns the paths and lengths between source and target """
+    # https://networkx.org/documentation/stable/_modules/networkx/algorithms/simple_paths.html
+
+    k_shortest_paths = []
+    k_shortest_paths_lengths = []
+    for path in nx.all_simple_paths(G, source, target, cutoff=k_cutoff):
+        k_shortest_paths.append(path)
+        k_shortest_paths_lengths.append(get_path_length(G, path, weight='weight'))
+        
+    return k_shortest_paths, k_shortest_paths_lengths
+
+def get_all_k_shortest_paths(G, k_cutoff):
+    """Get all the k-shortest paths from a graph in terms of vertex counts for
+    all vertices with a cutoff of k vertices
+    Returns all the paths and lengths"""
+    num_nodes = len(G.nodes)
+    k_shortest_paths_all = []
+    k_shortest_paths_lengths_all = []
+    
+    for v_i in range(num_nodes):
+        for v_j in range(num_nodes):
+            if v_i < v_j:
+                k_shortest_paths, k_shortest_paths_lengths = get_k_shortest_paths(G, v_i, v_j, k_cutoff)
+                k_shortest_paths_all.extend(k_shortest_paths)
+                k_shortest_paths_lengths_all.extend(k_shortest_paths_lengths)
+                
+    return k_shortest_paths_all, k_shortest_paths_lengths_all
+
+def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff): 
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
+
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))    
+
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff)
+    k_shortest_paths_demand = determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    return df_k_shortest_paths
+
 # %% Calculate the shortest distance matrix
 def calculate_shortest_dist_matrix(paths_shortest_all, mx_dist):
     # Takes as input list of all shortest paths and the associated distance matrix

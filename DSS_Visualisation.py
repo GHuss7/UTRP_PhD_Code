@@ -13,7 +13,8 @@ import pandas as pd
 import igraph as ig
 import copy
 import networkx as nx
-import matplotlib as plt
+import matplotlib.pyplot as plt
+import matplotlib as mplt
 
 #from timeit import default_timer as timer
 
@@ -376,7 +377,7 @@ def plot_nx_graph_with_labels(G):
     
     nx.draw(G, with_labels=True, pos=pos)
     nx.draw_networkx_edge_labels(G,pos,edge_labels=labels)
-    plt.show() # display
+    mplt.show() # display
 
 ''' Create minimum spanning tree from networkx graph'''
 #def create_min_spanning_tree_from_nx_graph(G):
@@ -384,7 +385,7 @@ def plot_nx_graph_with_labels(G):
 #    labels = nx.get_edge_attributes(G2,'weight')
 #    nx.draw(G2, with_labels=True, pos=pos)
 #    nx.draw_networkx_edge_labels(G2,pos,edge_labels=labels)
-#    plt.show() # display
+#    mplt.show() # display
 #    G2.size(weight='weight')
 
 #%% Function: Visualisation of generations in UTRP GA
@@ -397,19 +398,19 @@ def plot_generations_objectives(pop_generations):
                       f_2 = pop_generations[:,1],
                       Generation = pop_generations[:,3])
     
-    plt.style.use('seaborn-whitegrid')
+    mplt.style.use('seaborn-whitegrid')
     
     groups = df_to_plot.groupby("Generation")
     for name, group in groups:
-        plt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
-    plt.legend()
+        mplt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
+    mplt.legend()
 
 #%% Print summary figures
 def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     f_1_col_name, f_2_col_name, f_1_label, f_2_label = "f_1", "f_2", "F_1_ATT", "F_2_TRT"
     
-    fig, axs = plt.pyplot.subplots(1, 2)
+    fig, axs = plt.subplots(1, 2)
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
     
@@ -427,16 +428,16 @@ def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, va
     axs[1].set(xlabel=f_1_label, ylabel=f_2_label)
     axs[1].legend(loc="upper right")
     
-    manager = plt.pyplot.get_current_fig_manager()
+    manager = plt.get_current_fig_manager()
     manager.window.showMaximized()
-    plt.pyplot.show()
-    plt.pyplot.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
+    plt.show()
+    plt.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
 
     manager.window.close()
     
 def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
-    fig, axs = plt.pyplot.subplots(1, 2)
+    fig, axs = plt.subplots(1, 2)
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
     
@@ -453,21 +454,21 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
     axs[1].legend(loc="upper right")
     
     try:
-        manager = plt.pyplot.get_current_fig_manager()
+        manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
+        plt.show()
+        plt.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
         manager.window.close()
 
     except:
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
-        plt.pyplot.close(fig)
+        plt.show()
+        plt.savefig(path_results_per_run / "Results_summary_interim.pdf", bbox_inches='tight')
+        plt.close(fig)
         
 def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text="",
                                                labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"]):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
-    fig, axs = plt.pyplot.subplots(1, 2)
+    fig, axs = plt.subplots(1, 2)
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
     
@@ -486,22 +487,23 @@ def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set
     if not (path_results_per_run /"Interim").exists():
         os.makedirs(path_results_per_run /"Interim")
     
-    try:
-        manager = plt.pyplot.get_current_fig_manager()
+    if False:
+        manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
+        plt.show()
+        plt.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
         manager.window.close()
 
-    except:
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
-        plt.pyplot.close(fig)
+    else:
+        plt.ioff()
+        plt.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
+        
+
 
 def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, labels):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''
-    fig, axs = plt.pyplot.subplots(2, 2)
+    fig, axs = plt.subplots(2, 2)
     fig.set_figheight(15)
     fig.set_figwidth(20)
     axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', marker="o", label=labels[2])
@@ -526,21 +528,20 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
     axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
     axs[1, 1].legend(loc="upper right")
     
-    try:
-        manager = plt.pyplot.get_current_fig_manager()
+    if False:
+        manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+        plt.show()
+        plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
         manager.window.close()
         
-    except:
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
-        plt.pyplot.close(fig)
+    else:
+        plt.ioff()
+        plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
 
 def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels):
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''
-    fig, axs = plt.pyplot.subplots(1,1)
+    fig, axs = plt.subplots(1,1)
     fig.set_figheight(15)
     fig.set_figwidth(20)
     
@@ -554,15 +555,13 @@ def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_dat
     axs.legend(loc="upper right")
     del axs
     
-    try:
-        manager = plt.pyplot.get_current_fig_manager()
+    if False:
+        manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+        plt.show()
+        plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
         manager.window.close()
 
-    except:
-        plt.pyplot.show()
-        plt.pyplot.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
-        plt.pyplot.close(fig)
-        
+    else:
+        plt.ioff()
+        plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')

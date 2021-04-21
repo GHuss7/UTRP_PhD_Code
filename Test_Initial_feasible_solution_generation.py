@@ -437,56 +437,72 @@ def remove_edge_and_return_cost(graph, u, v):
         return -1
     
 
-def ksp_yen(graph, node_start, node_end, max_k=2):
-    """credits https://stackoverflow.com/questions/15878204/k-shortest-paths-implementation-in-igraph-networkx-yens-algorithm"""
-    distances, previous, path = dijkstra(graph, node_start, node_end) #nx.single_source_dijkstra(graph, node_start, target, weight=weight)
+G_nx = copy.deepcopy(G)
+#ksp_yen(graph=G_nx, node_start=0, node_end=5, max_k=2)
+graph=G_nx 
+node_start=0 
+node_end=13 
+max_k=10
 
-    A = [{'cost': distances[node_end], 
-          'path': path}]
-    B = []
+#def ksp_yen(graph, node_start, node_end, max_k=2):
+"""credits https://stackoverflow.com/questions/15878204/k-shortest-paths-implementation-in-igraph-networkx-yens-algorithm"""
+large_weight = 10000
 
-    if not A[0]['path']: return A
+distances, previous, path = dijkstra(graph, node_start, node_end) #nx.single_source_dijkstra(graph, node_start, target, weight=weight)
 
-    for k in range(1, max_k):
-        for i in range(0, len(A[-1]['path']) - 1):
-            node_spur = A[-1]['path'][i]
-            path_root = A[-1]['path'][:i+1]
+A = [{'cost': distances[node_end], 
+      'path': path}]
+B = []
 
-            edges_removed = []
-            for path_k in A:
-                curr_path = path_k['path']
-                if len(curr_path) > i and path_root == curr_path[:i+1]:
-                    cost = remove_edge_and_return_cost(graph, curr_path[i], curr_path[i+1])
-                    if cost == -1:
-                        continue
-                    edges_removed.append([curr_path[i], curr_path[i+1], cost])
+graph_original = copy.deepcopy(graph)
 
-            path_spur = dijkstra(graph, node_spur, node_end)
+if not A[0]['path']: print(A) #TODO: return A
 
-            if path_spur['path']:
-                path_total = path_root[:-1] + path_spur['path']
+for k in range(1, max_k):
+    for i in range(0, len(A[-1]['path']) - 1):
+        node_spur = A[-1]['path'][i]
+        path_root = A[-1]['path'][:i+1]
+
+        edges_removed = []
+        for path_k in A:
+            curr_path = path_k['path']
+            if len(curr_path) > i and path_root == curr_path[:i+1]:
+                #cost = remove_edge_and_return_cost(graph, curr_path[i], curr_path[i+1])
+                #if cost == -1:
+                #    continue
+                #edges_removed.append([curr_path[i], curr_path[i+1], cost])
+                
+                #TODO:
+                graph.edges[curr_path[i], curr_path[i+1]]['weight'] = large_weight
+
+        path_only_spur, dist_only_spur = dijkstra(graph, node_spur, node_end, False)
+
+        path_spur = {'cost': dist_only_spur, 
+              'path': path_only_spur}
+
+        if path_spur['path']:
+            path_total = path_root[:-1] + path_spur['path']
+            if len(path_total) == len(set(path_total)):
                 dist_total = distances[node_spur] + path_spur['cost']
                 potential_k = {'cost': dist_total, 'path': path_total}
-
+    
                 if not (potential_k in B):
                     B.append(potential_k)
 
-            for edge in edges_removed:
-                graph.add_edge(edge[0], edge[1], edge[2])
+        #for edge in edges_removed:
+        #    graph.add_edge(edge[0], edge[1], edge[2])
+            
+        #TODO:
+        graph = copy.deepcopy(graph_original)
 
-        if len(B):
-            B = sorted(B, key=itemgetter('cost'))
-            A.append(B[0])
-            B.pop(0)
-        else:
-            break
+    if len(B):
+        B = sorted(B, key=itemgetter('cost'))
+        A.append(B[0])
+        B.pop(0)
+    else:
+        break
 
-    return A
-
-G_nx = copy.deepcopy(G)
-dijkstra(G_nx,0,14)
-
-ksp_yen(graph=G_nx, node_start=0, node_end=14, max_k=2)
+    #return A
 
 
 

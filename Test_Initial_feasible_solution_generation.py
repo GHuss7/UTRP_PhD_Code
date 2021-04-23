@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][1]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -195,146 +195,18 @@ for i in range(len(nx_adj_mx)):
     for j in range(len(nx_adj_mx)):
         if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
             nx_adj_mx[i,j] = 0
+del i, j
 G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))
 
 #df_k_shortest_paths_prelim = gf.create_k_shortest_paths_df(mx_dist, mx_demand, 10)
 #df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
 
 #df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
-
-k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
-k_short_paths.create_paths_bool(len(UTNDP_problem_1.mapping_adjacent))
-
-k_shortest_paths_all = k_short_paths.paths
-
 if False:
-    #%% Yen's K-shortest path algorithm
-    # -*- coding: utf-8 -*-
-    """
-    A NetworkX based implementation of Yen's algorithm for computing K-shortest paths.   
-    Yen's algorithm computes single-source K-shortest loopless paths for a 
-    graph with non-negative edge cost. For more details, see: 
-    http://networkx.github.io
-    http://en.m.wikipedia.org/wiki/Yen%27s_algorithm
-    """
-    __author__ = 'Guilherme Maia <guilhermemm@gmail.com>'
+    k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
+    k_short_paths.create_paths_bool(len(UTNDP_problem_1.mapping_adjacent))
     
-    __all__ = ['k_shortest_paths']
-    
-    from heapq import heappush, heappop
-    from itertools import count
-    
-    import networkx as nx
-    
-    def k_shortest_paths(G, source, target, k=1, weight='weight'):
-        """Returns the k-shortest paths from source to target in a weighted graph G.
-        Parameters
-        ----------
-        G : NetworkX graph
-        source : node
-           Starting node
-        target : node
-           Ending node
-           
-        k : integer, optional (default=1)
-            The number of shortest paths to find
-        weight: string, optional (default='weight')
-           Edge data key corresponding to the edge weight
-        Returns
-        -------
-        lengths, paths : lists
-           Returns a tuple with two lists.
-           The first list stores the length of each k-shortest path.
-           The second list stores each k-shortest path.  
-        Raises
-        ------
-        NetworkXNoPath
-           If no path exists between source and target.
-        Examples
-        --------
-        >>> G=nx.complete_graph(5)    
-        >>> print(k_shortest_paths(G, 0, 4, 4))
-        ([1, 2, 2, 2], [[0, 4], [0, 1, 4], [0, 2, 4], [0, 3, 4]])
-        Notes
-        ------
-        Edge weight attributes must be numerical and non-negative.
-        Distances are calculated as sums of weighted edges traversed.
-        """
-        if source == target:
-            return ([0], [[source]]) 
-           
-        length, path = nx.single_source_dijkstra(G, source, target, weight=weight)
-        if target not in path: # change
-            raise nx.NetworkXNoPath("node %s not reachable from %s" % (source, target))
-            
-        lengths = [length] # change
-        paths = [path] # change
-        c = count()        
-        B = []                        
-        G_original = G.copy()    
-        
-        for i_cutoff in range(1, k): # change
-            G = G_original.copy()    
-        
-            for j in range(len(paths[-1]) - 1):            
-                spur_node = paths[-1][j]
-                root_path = paths[-1][:j + 1]
-                
-                edges_removed = []
-                for c_path in paths:
-                    if len(c_path) > j and root_path == c_path[:j + 1]:
-                        u = c_path[j]
-                        v = c_path[j + 1]
-                        if G.has_edge(u, v):
-                            edge_attr = G.get_edge_data(u,v)
-                            G.remove_edge(u, v)
-                            edges_removed.append((u, v, edge_attr))
-                
-                for n in range(len(root_path) - 1):
-                    node = root_path[n]
-                    # out-edges
-                    for u, v, edge_attr in G_original.edges(data=True): #G.edges_iter(node, data=True)
-                        if u == node:    
-                            G.remove_edge(u, v)
-                            edges_removed.append((u, v, edge_attr))
-                    
-                    if G.is_directed():
-                        # in-edges
-                        for u, v, edge_attr in G.in_edges_iter(node, data=True):
-                            G.remove_edge(u, v)
-                            edges_removed.append((u, v, edge_attr))
-                
-                spur_path_length, spur_path = nx.single_source_dijkstra(G_original, spur_node, target, weight=weight)            
-                if target in spur_path:
-                    total_path = root_path[:-1] + spur_path # change
-                    total_path_length = get_path_length(G_original, root_path, weight) + spur_path_length # change                
-                    heappush(B, (total_path_length, next(c), total_path))
-                    
-                #for e in edges_removed:
-                #    u, v, edge_attr = e
-                #    G.add_edge(u, v, edge_attr)
-                           
-            if B:
-                (l, _, p) = heappop(B)        
-                lengths.append(l)
-                paths.append(p)
-            else:
-                break
-        
-        return (lengths, paths)
-    
-    def get_path_length(G, path, weight='weight'):
-        length = 0
-        if len(path) > 1:
-            for i in range(len(path) - 1):
-                u = path[i]
-                v = path[i + 1]
-                
-                length += G.get_edge_data(u,v).get(weight)  #Change
-                
-        return length    
-    
-    k_shortest_paths(G, 0, 14, k=10, weight='weight')
+    k_shortest_paths_all = k_short_paths.paths
 
 #%% Yens KSP
 # dependencies for our dijkstra's implementation
@@ -345,7 +217,7 @@ import networkx as nx
 
 
 """Dijkstra's shortest path algorithm"""
-def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_and_dist=True) -> list:
+def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_and_dist=True, print_progress=False) -> list:
     """Get the shortest path of nodes by going backwards through prev list
     credits: https://github.com/blkrt/dijkstra-python/blob/3dfeaa789e013567cd1d55c9a4db659309dea7a5/dijkstra.py#L5-L10"""
     def backtrace(prev, start, end):
@@ -380,7 +252,7 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
     while 0 != pq.qsize():
         curr_cost, curr = pq.get()
         visited.add(curr)
-        print(f'visiting {curr}')
+        if print_progress: print(f'visiting {curr}')
         # look at curr's adjacent nodes
         neighbors = dict(graph.adjacency()).get(curr)
         if bool(neighbors):
@@ -399,24 +271,34 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
                         pq.put((dist[neighbor],neighbor))
                     # otherwise update the entry in the priority queue
                     else:
-                        # remove old
-                        _ = pq.get((dist[neighbor],neighbor))
+                        # if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
                         # insert new
                         pq.put((dist[neighbor],neighbor))
+                        # remove old
+                        _ = pq.get((dist[neighbor],neighbor))
+                            
                         
-    print("=== Dijkstra's Algo Output ===")
-    print("Distances")
-    print(dist)
-    print("Visited")
-    print(visited)
-    print("Previous")
-    print(prev)
+    if print_progress:
+        print("=== Dijkstra's Algo Output ===")
+        print("Distances")
+        print(dist)
+        print("Visited")
+        print(visited)
+        print("Previous")
+        print(prev)
+        
     # we are done after every possible path has been checked 
-    path_to_return = backtrace(prev, start, end)
-    if return_prev_and_dist:
-        return dist, prev, path_to_return
+    if len(prev)+1 == len(graph.nodes()):
+        path_to_return = backtrace(prev, start, end)
+        if return_prev_and_dist:
+            return dist, prev, path_to_return
+        else:
+            return path_to_return, dist[end]
     else:
-        return path_to_return, dist[end]
+        if return_prev_and_dist:
+            return dist, False, False
+        else:
+            return False, dist[end]
     
 def itemgetter(*items):
     if len(items) == 1:
@@ -440,105 +322,188 @@ def remove_edge_and_return_cost(graph, u, v):
 G_nx = copy.deepcopy(G)
 #ksp_yen(graph=G_nx, node_start=0, node_end=5, max_k=2)
 graph=G_nx 
-node_start=0 
-node_end=13 
+node_start=10 
+node_end=5 
 max_k=10
+large_weight=10000
 
-#def ksp_yen(graph, node_start, node_end, max_k=2):
-"""credits https://stackoverflow.com/questions/15878204/k-shortest-paths-implementation-in-igraph-networkx-yens-algorithm"""
-large_weight = 10000
-
-distances, previous, path = dijkstra(graph, node_start, node_end) #nx.single_source_dijkstra(graph, node_start, target, weight=weight)
-
-A = [{'cost': distances[node_end], 
-      'path': path}]
-B = []
-
-graph_original = copy.deepcopy(graph)
-
-if not A[0]['path']: print(A) #TODO: return A
-
-for k in range(1, max_k):
-    for i in range(0, len(A[-1]['path']) - 1):
-        node_spur = A[-1]['path'][i]
-        path_root = A[-1]['path'][:i+1]
-
-        edges_removed = []
-        for path_k in A:
-            curr_path = path_k['path']
-            if len(curr_path) > i and path_root == curr_path[:i+1]:
-                #cost = remove_edge_and_return_cost(graph, curr_path[i], curr_path[i+1])
-                #if cost == -1:
-                #    continue
-                #edges_removed.append([curr_path[i], curr_path[i+1], cost])
-                
-                #TODO:
-                graph.edges[curr_path[i], curr_path[i+1]]['weight'] = large_weight
-
-        path_only_spur, dist_only_spur = dijkstra(graph, node_spur, node_end, False)
-
-        path_spur = {'cost': dist_only_spur, 
-              'path': path_only_spur}
-
-        if path_spur['path']:
-            path_total = path_root[:-1] + path_spur['path']
-            if len(path_total) == len(set(path_total)):
-                dist_total = distances[node_spur] + path_spur['cost']
-                potential_k = {'cost': dist_total, 'path': path_total}
+def ksp_yen(graph, node_start, node_end, max_k=2, large_weight = 10000):
+    """credits https://stackoverflow.com/questions/15878204/k-shortest-paths-implementation-in-igraph-networkx-yens-algorithm"""
     
-                if not (potential_k in B):
-                    B.append(potential_k)
+    distances, previous, path = dijkstra(graph, node_start, node_end) #nx.single_source_dijkstra(graph, node_start, target, weight=weight)
+    
+    A = [{'cost': distances[node_end], 
+          'path': path}]
+    B = []
+    
+    graph_copy = copy.deepcopy(graph)
+    
+    if not A[0]['path']: print(A) #return A 
+    
+    for k in range(1, max_k):
+        edges_removed = []
+        for i in range(0, len(A[-1]['path']) - 1):
+            node_spur = A[-1]['path'][i]
+            path_root = A[-1]['path'][:i+1]
+    
+            #edges_removed = []
+            for path_k in A:
+                curr_path = path_k['path']
+                if len(curr_path) > i and path_root == curr_path[:i+1]:
+                    #cost = remove_edge_and_return_cost(graph_copy, curr_path[i], curr_path[i+1])
+                    #if cost == -1:
+                    #    continue
+                    #edges_removed.append([curr_path[i], curr_path[i+1], cost])
+                    
+                    #TODO:
+                    edges_removed.append((curr_path[i], curr_path[i+1]))
+                    graph_copy.edges[curr_path[i], curr_path[i+1]]['weight'] = large_weight
+    
+            path_only_spur, dist_only_spur = dijkstra(graph_copy, node_spur, node_end, return_prev_and_dist=False, print_progress=False)
+    
+            path_spur = {'cost': dist_only_spur, 
+                  'path': path_only_spur}
+    
+            if path_spur['path']:
+                path_total = path_root[:-1] + path_spur['path']
+                if len(path_total) == len(set(path_total)):
+                    dist_total = distances[node_spur] + path_spur['cost']
+                    potential_k = {'cost': dist_total, 'path': path_total}
+                    
+                    if dist_total < large_weight:  # avoids useless distances             
+                        if not (potential_k in B):
+                            B.append(potential_k)    
+                
+            # returns graph to original state
+            graph_copy = copy.deepcopy(graph)
+    
+        if len(B):
+            B = sorted(B, key=itemgetter('cost'))
+            A.append(B[0])
+            B.pop(0)
+        else:
+            break
+    
+    return A
 
-        #for edge in edges_removed:
-        #    graph.add_edge(edge[0], edge[1], edge[2])
-            
-        #TODO:
-        graph = copy.deepcopy(graph_original)
+G_nx
+max_k=10
+large_weight=10000
 
-    if len(B):
-        B = sorted(B, key=itemgetter('cost'))
-        A.append(B[0])
-        B.pop(0)
-    else:
-        break
+def ksp_yen_all(G_nx, max_k=2, large_weight=10000):
+    num_vertices = len(G_nx.nodes())
+    
+    A_all = []
+    
+    for vertex_i in range(num_vertices):
+        for vertex_j in range(num_vertices):
+            if vertex_i != vertex_j:
+                print(f"=== Vertex {vertex_i} -> {vertex_j} ==========")
+                A = ksp_yen(G_nx, node_start=vertex_i, node_end=vertex_j, 
+                            max_k=max_k,large_weight=large_weight)
+                if vertex_i > vertex_j:
+                    for path_A in A:
+                       path_A['path'].reverse()
+                A_all.extend(A)
+    
+    return A_all
 
-    #return A
+def remove_duplicates_ksp_yen(A_all):
+    # remove duplicates
+    A_unique = []
+    
+    for A_all_i in A_all:
+        if A_all_i not in A_unique:
+                A_unique.append(A_all_i)
+                
+    return A_unique
+
+"""Tests"""
+if False:
+    dist, prev, path_to_return = dijkstra(graph, node_start, node_end, print_progress=True)
+    A = ksp_yen(G_nx, node_start=10, node_end=5, max_k=10)
+    A_all = ksp_yen_all(G_nx, max_k=10)
+    A_unique = remove_duplicates_ksp_yen(A_all)
 
 
+# %% Formatting functions
+def get_k_shortest_paths(G, source, target, k_cutoff):
+    """Get all the k-shortest paths from a graph in terms of vertex counts for
+    a given source and target vertex with a cutoff of k vertices
+    Returns the paths and lengths between source and target """
+
+    A = ksp_yen(G, node_start=source, node_end=target, max_k=k_cutoff)
+    k_shortest_paths = []
+    k_shortest_paths_lengths = []
+     
+    for i in range(len(A)):
+        k_shortest_paths.append(A[i]['path'])
+        k_shortest_paths_lengths.append(A[i]['cost'])
+
+    return k_shortest_paths, k_shortest_paths_lengths
+
+def get_all_k_shortest_paths(G, k_cutoff):
+    """Get all the k-shortest paths from a graph in terms of vertex counts for
+    all vertices with a cutoff of k vertices
+    Returns all the paths and lengths"""
+   
+    A_all = ksp_yen_all(G, max_k=k_cutoff)
+    A_unique = remove_duplicates_ksp_yen(A_all)
+
+    k_shortest_paths_all = []
+    k_shortest_paths_lengths_all = []
+
+    for i in range(len(A_unique)):
+        k_shortest_paths_all.append(A_unique[i]['path'])
+        k_shortest_paths_lengths_all.append(A_unique[i]['cost'])
+
+    return k_shortest_paths_all, k_shortest_paths_lengths_all
+
+def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff): 
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
+
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))    
+
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff)
+    k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    return df_k_shortest_paths
+
+df_k_shortest_paths_prelim = create_k_shortest_paths_df(mx_dist, mx_demand, 10)
+df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
+
+df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
 
 #%% Mutation tests
-# route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*1-3-11-10-9-6-14-8*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
-
-route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
-#route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-12-13*8-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
-
-R_to_mutate = gc.Routes(route_to_mutate)
-R_to_mutate.plot_routes(UTNDP_problem_1)
-
-
-all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
+if False:    
+    # route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*1-3-11-10-9-6-14-8*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
     
-# Initial test for all nodes present:
-if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
-    missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
-
-indices_of_compatible_routes = []
-for path_index in range(len(k_shortest_paths_all)):
-    if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
-        indices_of_compatible_routes.append(path_index)
-
-path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)]
-new_route = copy.deepcopy(route_to_mutate)
-new_route.extend([path_to_add])
-
-R_new = gc.Routes(new_route)
-R_new.plot_routes(UTNDP_problem_1)
-
-def add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all):
+    route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
+    #route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-12-13*8-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
     
-    n_nodes = len(UTNDP_problem_1.mapping_adjacent)    
+    R_to_mutate = gc.Routes(route_to_mutate)
+    R_to_mutate.plot_routes(UTNDP_problem_1)
+    
+    
     all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
-    
+        
     # Initial test for all nodes present:
     if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
         missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
@@ -552,12 +517,33 @@ def add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_pa
     new_route = copy.deepcopy(route_to_mutate)
     new_route.extend([path_to_add])
     
-    return new_route
-
-add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all)
-
-
-# %% Test another route generation procedure
-new_gen_route = gf.routes_generation_unseen_prob(k_shortest_paths_all, k_shortest_paths_all, UTNDP_problem_1.problem_constraints.con_r)
-R_set_4 = gc.Routes(new_gen_route)
-R_set_4.plot_routes(UTNDP_problem_1)
+    R_new = gc.Routes(new_route)
+    R_new.plot_routes(UTNDP_problem_1)
+    
+    def add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all):
+        
+        n_nodes = len(UTNDP_problem_1.mapping_adjacent)    
+        all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
+        
+        # Initial test for all nodes present:
+        if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
+            missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
+        
+        indices_of_compatible_routes = []
+        for path_index in range(len(k_shortest_paths_all)):
+            if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
+                indices_of_compatible_routes.append(path_index)
+        
+        path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)]
+        new_route = copy.deepcopy(route_to_mutate)
+        new_route.extend([path_to_add])
+        
+        return new_route
+    
+    add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all)
+    
+    
+    # %% Test another route generation procedure
+    new_gen_route = gf.routes_generation_unseen_prob(k_shortest_paths_all, k_shortest_paths_all, UTNDP_problem_1.problem_constraints.con_r)
+    R_set_4 = gc.Routes(new_gen_route)
+    R_set_4.plot_routes(UTNDP_problem_1)

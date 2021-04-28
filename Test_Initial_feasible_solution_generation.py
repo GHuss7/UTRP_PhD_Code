@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][1]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -215,6 +215,55 @@ from math import inf
 # graph dependency  
 import networkx as nx
 
+__author__ = 'blkrt'
+
+def backtrace2(parent, start, end):
+    path = [end]
+    while path[-1] != start:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path
+
+def dijkstra2(graph, source, target, return_prev_and_dist=True, print_progress=False):
+    queue = []
+    visited = {}
+    distance = {}
+    shortest_distance = {}
+    parent = {}
+
+    for node in range(len(graph)):
+        distance[node] = None
+        visited[node] = False
+        parent[node] = None
+        shortest_distance[node] = float("inf")
+
+    queue.append(source)
+    distance[source] = 0
+    while len(queue) != 0:
+        current = queue.pop(0)
+        visited[current] = True
+        if current == target:
+            if print_progress: print(backtrace2(parent, source, target))
+            #break
+        for neighbor in graph[current]:
+            if visited[neighbor] == False:
+                distance[neighbor] = distance[current] + 1
+                if distance[neighbor] < shortest_distance[neighbor]:
+                    shortest_distance[neighbor] = distance[neighbor]
+                    parent[neighbor] = current
+                    queue.append(neighbor)
+    
+    if print_progress:
+        print(distance)
+        print(shortest_distance)
+        print(parent)
+        print(target)
+    
+    path_to_return = backtrace2(parent, source, target)
+    if return_prev_and_dist:
+        return distance, parent, path_to_return
+    else:
+        return path_to_return, distance[target]
 
 """Dijkstra's shortest path algorithm"""
 def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_and_dist=True, print_progress=False) -> list:
@@ -271,11 +320,11 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
                         pq.put((dist[neighbor],neighbor))
                     # otherwise update the entry in the priority queue
                     else:
-                        # if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
-                        # insert new
-                        pq.put((dist[neighbor],neighbor))
-                        # remove old
-                        _ = pq.get((dist[neighbor],neighbor))
+                        if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
+                            # insert new
+                            pq.put((dist[neighbor],neighbor))
+                            # remove old
+                            _ = pq.get((dist[neighbor],neighbor))
                             
                         
     if print_progress:
@@ -290,15 +339,114 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
     # we are done after every possible path has been checked 
     if len(prev)+1 == len(graph.nodes()):
         path_to_return = backtrace(prev, start, end)
-        if return_prev_and_dist:
-            return dist, prev, path_to_return
-        else:
-            return path_to_return, dist[end]
+    if return_prev_and_dist:
+        return dist, prev, path_to_return
     else:
         if return_prev_and_dist:
             return dist, False, False
         else:
             return False, dist[end]
+    
+def dijkstra3(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_and_dist=True, print_progress=False) -> list:
+    """Get the shortest path of nodes by going backwards through prev list
+    credits: https://github.com/blkrt/dijkstra-python/blob/3dfeaa789e013567cd1d55c9a4db659309dea7a5/dijkstra.py#L5-L10"""
+    def backtrace(prev, start, end):
+        node = end
+        path = []
+        while node != start:
+            path.append(node)
+            node = prev[node]
+        path.append(node) 
+        path.reverse()
+        return path
+        
+    """get the cost of edges from node -> node
+    cost(u,v) = edge_weight(u,v)"""
+    def get_cost(u, v):
+        return graph.get_edge_data(u,v).get('weight')
+        
+    """main algorithm""" 
+
+    # predecessor of current node on shortest path 
+    prev = {} 
+    # initialize distances from start -> given node i.e. dist[node] = dist(start, node)
+    dist = {v: inf for v in list(nx.nodes(graph))} 
+    # nodes we've visited
+    visited = set() 
+    visited_bool = {}
+    shortest_distance = {}
+
+    # prioritize nodes from start -> node with the shortest distance!
+    ## elements stored as tuples (distance, node) 
+    pq = PriorityQueue()  
+    
+    for node in range(len(graph)):
+        #dist[node] = None
+        visited_bool[node] = False
+        prev[node] = None
+        shortest_distance[node] = float("inf")
+    
+    dist[start] = 0  # dist from start -> start is zero
+    pq.put((dist[start], start))
+    
+    while 0 != pq.qsize():
+        curr_cost, curr = pq.get()
+        visited.add(curr)
+        visited_bool[curr] = True
+        if curr == end:
+            if print_progress: print(backtrace2(prev, start, end))
+            #break #TODO
+        if print_progress: print(f'visiting {curr}')
+        # look at curr's adjacent nodes
+        neighbors = dict(graph.adjacency()).get(curr)
+
+        for neighbor in neighbors:
+            if visited_bool[neighbor] == False:
+                path_dist = dist[curr] + get_cost(curr, neighbor)
+                
+                # if we found a shorter path 
+                if path_dist < dist[neighbor]:
+                    # update the distance, we found a shorter one!
+                    dist[neighbor] = path_dist
+                    # update the previous node to be prev on new shortest path
+                    prev[neighbor] = curr
+                    # if we haven't visited the neighbor
+                    if neighbor not in visited:
+                        # insert into priority queue and mark as visited
+                        visited.add(neighbor)
+                        pq.put((dist[neighbor],neighbor)) #TODO TAB
+                    # otherwise update the entry in the priority queue
+                    else:
+                        # if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
+                        # insert new
+                        pq.put((dist[neighbor],neighbor))
+                        # remove old
+                        _ = pq.get((dist[neighbor],neighbor))
+
+
+                            
+                        
+    if print_progress:
+        print("=== Dijkstra's Algo Output ===")
+        print("Distances")
+        print(dist)
+        print("Visited")
+        print(visited)
+        print("Previous")
+        print(prev)
+        
+    # we are done after every possible path has been checked 
+    #if len(prev)+1 == len(graph.nodes()):
+    path_to_return = backtrace2(prev, start, end)
+    if return_prev_and_dist:
+        return dist, prev, path_to_return
+    else:
+        return path_to_return, dist[end]
+    # else:
+    #     if return_prev_and_dist:
+    #         return dist, False, False
+    #     else:
+    #         return False, dist[end]
     
 def itemgetter(*items):
     if len(items) == 1:
@@ -319,13 +467,13 @@ def remove_edge_and_return_cost(graph, u, v):
         return -1
     
 
-G_nx = copy.deepcopy(G)
+#G_nx = copy.deepcopy(G)
 #ksp_yen(graph=G_nx, node_start=0, node_end=5, max_k=2)
-graph=G_nx 
-node_start=10 
-node_end=5 
-max_k=10
-large_weight=10000
+#graph=G_nx 
+#node_start=10 
+#node_end=5 
+#max_k=10
+#large_weight=10000
 
 def ksp_yen(graph, node_start, node_end, max_k=2, large_weight = 10000):
     """credits https://stackoverflow.com/questions/15878204/k-shortest-paths-implementation-in-igraph-networkx-yens-algorithm"""
@@ -386,9 +534,9 @@ def ksp_yen(graph, node_start, node_end, max_k=2, large_weight = 10000):
     
     return A
 
-G_nx
-max_k=10
-large_weight=10000
+#G_nx
+#max_k=10
+#large_weight=10000
 
 def ksp_yen_all(G_nx, max_k=2, large_weight=10000):
     num_vertices = len(G_nx.nodes())
@@ -484,12 +632,14 @@ def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff):
         df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
         df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
         
+    df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target"])
+        
     return df_k_shortest_paths
 
 df_k_shortest_paths_prelim = create_k_shortest_paths_df(mx_dist, mx_demand, 10)
 df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
 
-df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
+#df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
 
 #%% Mutation tests
 if False:    

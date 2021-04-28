@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][1]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -320,11 +320,11 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
                         pq.put((dist[neighbor],neighbor))
                     # otherwise update the entry in the priority queue
                     else:
-                        if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
-                            # insert new
-                            pq.put((dist[neighbor],neighbor))
-                            # remove old
-                            _ = pq.get((dist[neighbor],neighbor))
+                        #if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
+                        # insert new
+                        pq.put((dist[neighbor],neighbor))
+                        # remove old
+                        _ = pq.get((dist[neighbor],neighbor))
                             
                         
     if print_progress:
@@ -339,8 +339,10 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
     # we are done after every possible path has been checked 
     if len(prev)+1 == len(graph.nodes()):
         path_to_return = backtrace(prev, start, end)
-    if return_prev_and_dist:
-        return dist, prev, path_to_return
+        if return_prev_and_dist:
+            return dist, prev, path_to_return
+        else:
+            return path_to_return, dist[end]
     else:
         if return_prev_and_dist:
             return dist, False, False

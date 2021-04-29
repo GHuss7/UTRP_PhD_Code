@@ -19,22 +19,22 @@ library(extrafont)
 # 0.) Define user specified parameters ----------
 
 #problemName <- "SSML_STB_DAY_SUM_0700_1700" # NB copy this from the folders as it is used in file names
-problemName <- "Mumford3_UTRP" # NB copy this from the folders as it is used in file names
+problemName <- "Mumford1_UTRP" # NB copy this from the folders as it is used in file names
 
 
 # 1.) Load the appropriate files and data for the network ------------
 # Create and format a distance matrix S
-S <- read.csv(paste("./Input_Data/",problemName,"/Distance_Matrix.csv", sep=""))
+S <- read.csv(paste("./../../Input_Data/",problemName,"/Distance_Matrix.csv", sep=""))
 S <- formatDistMatrix(S)
 
 # Create and format the demand matrix
-demandMatrix <- read.csv(paste("./Input_Data/",problemName,"/OD_Demand_Matrix.csv", sep=""))
+demandMatrix <- read.csv(paste("./../../Input_Data/",problemName,"/OD_Demand_Matrix.csv", sep=""))
 demandMatrix <- formatDemandMatrix(demandMatrix)
 
 # Collect the correct co-ordinates of the graph
 # coords <- layout.auto(g) # to generate coordinates for graph automatically
 # write.csv(coords,"MandlSwissNetworkCoords.csv") # use this to store the coords
-coords <- read.csv(file = paste("./Input_Data/",problemName,"/Node_Coords.csv", sep=""))
+coords <- read.csv(file = paste("./../../Input_Data/",problemName,"/Node_Coords.csv", sep=""))
 coords <- as.matrix(coords)
 
 ###### THESIS FUNCTIONS #######
@@ -74,6 +74,42 @@ customGraphPlotThesis <- function(g, coords, titleName){
   
 } # end customGraphPlotThesis
 
+customGraphPlotLarge <- function(g, coords, titleName){
+  
+  if(missing(titleName)){
+    titleName <- ""
+  }
+  
+  plot(g, 
+       # === vertex
+       vertex.size=4, 
+       vertex.color="lightgrey",
+       vertex.frame.color="black", 
+       
+       # === vertex label
+       vertex.label.color="black", 
+       #vertex.label.family="Serif", # Font family of the label (e.g."Times", "Helvetica")
+       vertex.label.cex=1.4,
+       vertex.label = 0:(nrow(coords)-1),
+       
+       # === edge
+       edge.width = E(g)$width,
+       edge.arrow.size=0.5,
+       #edge.curved = 0.1,
+       
+       # === edge label
+       edge.label.cex = 1,
+       edge.label.color="black",
+       #edge.label.family="Serif",
+       edge.label = E(g)$weight,
+       
+       # layout
+       layout = coords,
+       
+       main = titleName)
+  
+} # end customGraphPlotLarge
+
 
 plot_and_save_route_set_thesis <- function(routes_str, fileName, dist_mx, demand_mx, coords_mx){
   # function to save a normal plot in a folder
@@ -93,6 +129,25 @@ plot_and_save_route_set_thesis <- function(routes_str, fileName, dist_mx, demand
   dev.off()
   
 } # end plot_and_save_route_set_thesis
+
+plot_and_save_route_set_folder <- function(routes_str, fileName, dist_mx, demand_mx, coords_mx, folder){
+  # function to save a normal plot in a folder
+  g <- createGraph(dist_mx,coords_mx)
+  
+  R_routes = convertRouteStringToList(routes_str)
+  for(i in 1:length(R_routes)){
+    for (j in 1:length(R_routes[[i]])){
+      R_routes[[i]][j] = R_routes[[i]][j] + 1
+    }
+  }
+  
+  g_R <- addAdditionalEdges(g,R_routes) # adding the bus network routes
+  # names(pdfFonts())
+  pdf(file=paste("./savedFigures/",folder,"/",paste(fileName, "pdf", sep = "."),sep = ""), height = 18, width = 18)
+  customGraphPlotLarge(g_R, coords, "") # Plots the road network
+  dev.off()
+  
+} # end plot_and_save_route_set_folder
 
 
 ###### INPUT ROUTES ######
@@ -143,10 +198,23 @@ plot_and_save_route_set_thesis("5-7-2-8-3-9*1-7*7-6*4-8-5*7-0*7-8*1-0*2-1-0-6-8-
                                S, demandMatrix, coords) # f_1=3.381915975	f_2=40
 }
 
+if (problemName == "Mumford1_UTRP") {
+  
+  pdf(file=paste("./savedFigures/",problemName,"/",paste("TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 18, width = 18) # fonts = "fontcm"
+  g <- createGraph(S,coords)
+  customGraphPlotLarge(g, coords, "") # Plots the road network
+  dev.off()
+  
+  plot_and_save_route_set_folder("42-49-26-8-56-51-41-45-36-54-18-65*", 
+                                 "Test", 
+                                 S, demandMatrix, coords, problemName) # f_1=3.018588598	f_2=94
+  
+}
+
 
 
 if (problemName == "Mumford1_UTRP") {
-  if(T){
+  if(F){
   #"""Function to set the coordinates for the instances"""
   g <- createGraph(S)
   
@@ -180,12 +248,13 @@ if (problemName == "Mumford1_UTRP") {
   plot_coords = norm_coords(tk_coords(tk_plot_id))
   
   if(FALSE){
-    write.csv(plot_coords, file=paste("./Input_Data/",problemName,"/Node_Coords_own.csv", sep=""), row.names = F, col.names = c("V1","V2"))
+    write.csv(plot_coords, file=paste("./../../Input_Data/",problemName,"/Node_Coords_own.csv", sep=""), row.names = F, col.names = c("V1","V2"))
   }
   } # end overall if(F)
 }
 
-plot_and_save_route_set_thesis("4-24*23-9-3-24-7-27-15-10-6-13-0-12-8*2-15*5-6-13-18-0-22-17-11-3-1-9*10-21-6-16-7-14-23-3-1*25-28*17-19*12-8-19-18-0-25-7-20-4*4-24-14-11-17-12-8*23-20-14*9-23*2-29-27-16-28-17-22-0-26*
-", "Mumford0_attempt", S, demandMatrix, coords) # f_1, f_2 = 17.25575754	225
-  
+if (problemName == "Mumford0_UTRP") {
+  plot_and_save_route_set_thesis("4-24*23-9-3-24-7-27-15-10-6-13-0-12-8*2-15*5-6-13-18-0-22-17-11-3-1-9*10-21-6-16-7-14-23-3-1*25-28*17-19*12-8-19-18-0-25-7-20-4*4-24-14-11-17-12-8*23-20-14*9-23*2-29-27-16-28-17-22-0-26*
+  ", "Mumford0_attempt", S, demandMatrix, coords) # f_1, f_2 = 17.25575754	225
+} 
   

@@ -1,5 +1,5 @@
 # Skripsie 2018 functions focusing on the graph analytics and generation
-
+library(stringr)
 # Function for testing if packages are installed, and if not, install and load
 
 testInstallAndLoadPackages <- function(list_of_packages){

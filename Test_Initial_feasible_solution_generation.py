@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][2]   # set the name of the input data
+                   "Mumford3_UTRP",][3]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -819,7 +819,7 @@ def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff):
         
     return df_k_shortest_paths
 
-k_cutoff = 10
+k_cutoff = 20
 #def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff): 
 df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
 
@@ -846,12 +846,14 @@ for index_i in range(len(k_shortest_paths_all)):
     df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
     
 df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
-        
+df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
+   
 #return df_k_shortest_paths
 
-if True:
-    df_k_shortest_paths_prelim = create_k_shortest_paths_df(mx_dist, mx_demand, 10)
-    df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
+if False:
+    k_cutoff=10
+    df_k_shortest_paths_prelim = create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff)
+    df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
 
 #df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
 

@@ -284,6 +284,42 @@ customGraphPlot3 <- function(g , titleName){
   
 }
 
+customGraphPlotThesis <- function(g , titleName, coords){
+  
+  if(missing(titleName)){
+    titleName <- ""
+  }
+  
+  plot(g, 
+       # === vertex
+       vertex.size=13, 
+       vertex.color="lightgrey",
+       vertex.frame.color="black", 
+       
+       # === vertex label
+       vertex.label.color="black", 
+       vertex.label.family="Times", # Font family of the label (e.g."Times", "Helvetica")
+       vertex.label.cex=1.2,
+       
+       # === edge
+       edge.width = E(g)$width,
+       edge.arrow.size=0.3,
+       # edge.curved = 0.5,
+       
+       # === edge label
+       edge.label.cex = 1.2,
+       edge.label.color="black",
+       edge.label.family="Times",
+       edge.label = E(g)$weight,
+       
+       # layout
+       layout = coords,
+       
+       main = titleName)
+  
+}
+
+
 saveInPlotsFolder <- function(g,fileName){
  # function is used to save iGraph plots 
   mypath <- file.path("C:","Users","Günther","OneDrive - Stellenbosch University",
@@ -312,6 +348,15 @@ savePlotInFolder <- function(plot,fileName){
   # function to save a normal plot in a folder
   
   png(file=paste("./Plots",paste(fileName, ".png", sep = "")))
+  plot
+  dev.off()
+  
+} # end savePlotInFolder
+
+savePlotInFolderPDF <- function(plot,fileName){
+  # function to save a normal plot in a folder
+  
+  pdf(file=paste("./Plots/",paste(fileName, "pdf", sep = ".")))
   plot
   dev.off()
   

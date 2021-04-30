@@ -19,8 +19,13 @@ library(extrafont)
 # 0.) Define user specified parameters ----------
 
 #problemName <- "SSML_STB_DAY_SUM_0700_1700" # NB copy this from the folders as it is used in file names
-problemName <- "Mumford1_UTRP" # NB copy this from the folders as it is used in file names
+problemName <- list("Mandl_UTRP",
+                    "Mumford0_UTRP",
+                    "Mumford1_UTRP",
+                    "Mumford2_UTRP",
+                    "Mumford3_UTRP")[[3]] # NB copy this from the folders as it is used in file names
 
+print_true = FALSE
 
 # 1.) Load the appropriate files and data for the network ------------
 # Create and format a distance matrix S
@@ -143,7 +148,7 @@ plot_and_save_route_set_folder <- function(routes_str, fileName, dist_mx, demand
   
   g_R <- addAdditionalEdges(g,R_routes) # adding the bus network routes
   # names(pdfFonts())
-  pdf(file=paste("./savedFigures/",folder,"/",paste(fileName, "pdf", sep = "."),sep = ""), height = 18, width = 18)
+  pdf(file=paste("./../../Figures/",folder,"/",paste(fileName, "pdf", sep = "."),sep = ""), height = 18, width = 18)
   customGraphPlotLarge(g_R, coords, "") # Plots the road network
   dev.off()
   
@@ -152,7 +157,7 @@ plot_and_save_route_set_folder <- function(routes_str, fileName, dist_mx, demand
 
 ###### INPUT ROUTES ######
 # Rotate coordinates
-if (TRUE) {
+if (FALSE) {
   temp = coords[1:nrow(coords),2]
   coords[1:nrow(coords),2] = coords[1:nrow(coords),1]
   coords[1:nrow(coords),1] = temp
@@ -178,7 +183,7 @@ if (TRUE) {
 #                                "John_2016_best_operator_obj", 
 #                                S, demandMatrix, coords)
 
-if (problemName == "SSML_STB_DAY_SUM_0700_1700") {
+if (problemName == "SSML_STB_DAY_SUM_0700_1700" & print_true == TRUE) {
   
 pdf(file=paste("./savedFigures/",paste("Case_study_UTRP_TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 7, width = 7) # fonts = "fontcm"
   g <- createGraph(S,coords)
@@ -198,6 +203,45 @@ plot_and_save_route_set_thesis("5-7-2-8-3-9*1-7*7-6*4-8-5*7-0*7-8*1-0*2-1-0-6-8-
                                S, demandMatrix, coords) # f_1=3.381915975	f_2=40
 }
 
+if (problemName == "Mandl_UTRP") {
+  
+  pdf(file=paste("./savedFigures/",problemName,"/",paste("TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 18, width = 18) # fonts = "fontcm"
+  g <- createGraph(S,coords)
+  customGraphPlotLarge(g, coords, "") # Plots the road network
+  dev.off()
+  
+  plot_and_save_route_set_folder("3-1-2-5-7-14-6-9*", 
+                                 "HighestDemandPerTime", 
+                                 S, demandMatrix, coords, problemName) 
+  
+  plot_and_save_route_set_folder("0-1-4-3-11-10-12-9-7-5-2*", 
+                                 "HighestDemand", 
+                                 S, demandMatrix, coords, problemName)
+  
+  plot_and_save_route_set_folder("1-2-5-3-11-10-12-13-9-7-14*0-1-4-3-5-2*0-1-2-5-3-11-10-12-9-7*", 
+                                 "Test", 
+                                 S, demandMatrix, coords, problemName)
+  
+  
+}
+
+if (problemName == "Mumford0_UTRP") {
+  
+  pdf(file=paste("./savedFigures/",problemName,"/",paste("TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 18, width = 18) # fonts = "fontcm"
+  g <- createGraph(S,coords)
+  customGraphPlotLarge(g, coords, "") # Plots the road network
+  dev.off()
+  
+  plot_and_save_route_set_folder("8-12-19-22-0-13-6-5-21*", 
+                                 "HighestDemand", 
+                                 S, demandMatrix, coords, problemName) 
+  
+  plot_and_save_route_set_folder("17-19-22-0-18*", 
+                                 "HighestDemandPerTime", 
+                                 S, demandMatrix, coords, problemName)
+  
+}
+
 if (problemName == "Mumford1_UTRP") {
   
   pdf(file=paste("./savedFigures/",problemName,"/",paste("TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 18, width = 18) # fonts = "fontcm"
@@ -205,9 +249,47 @@ if (problemName == "Mumford1_UTRP") {
   customGraphPlotLarge(g, coords, "") # Plots the road network
   dev.off()
   
-  plot_and_save_route_set_folder("42-49-26-8-56-51-41-45-36-54-18-65*", 
-                                 "Test", 
-                                 S, demandMatrix, coords, problemName) # f_1=3.018588598	f_2=94
+  plot_and_save_route_set_folder("2-0-23-3-66-69-38-36-45-58-33-50*", 
+                                 "HighestDemandPerTime", 
+                                 S, demandMatrix, coords, problemName) 
+  
+  plot_and_save_route_set_folder("39-18-54-36-45-41-34-51-56-8-26-49-42*", 
+                                 "HighestDemand", 
+                                 S, demandMatrix, coords, problemName)
+  
+}
+
+if (problemName == "Mumford2_UTRP") {
+  
+  pdf(file=paste("./savedFigures/",problemName,"/",paste("TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 18, width = 18) # fonts = "fontcm"
+  g <- createGraph(S,coords)
+  customGraphPlotLarge(g, coords, "") # Plots the road network
+  dev.off()
+  
+  plot_and_save_route_set_folder("29-43-30-26-72-79-73-106-57-10-52-100-18-9-19-33-99-69*", 
+                                 "HighestDemandPerTime", 
+                                 S, demandMatrix, coords, problemName)
+  
+  plot_and_save_route_set_folder("29-43-30-26-72-79-73-106-57-10-52-100-18-9-19-33-99-69*", 
+                                 "HighestDemand", 
+                                 S, demandMatrix, coords, problemName) 
+  
+}
+
+if (problemName == "Mumford3_UTRP" & print_true == TRUE) {
+  
+  pdf(file=paste("./savedFigures/",problemName,"/",paste("TRANSIT_NETWORK", "pdf", sep = "."),sep = ""), height = 18, width = 18) # fonts = "fontcm"
+  g <- createGraph(S,coords)
+  customGraphPlotLarge(g, coords, "") # Plots the road network
+  dev.off()
+  
+  plot_and_save_route_set_folder("78-96-71-100-3-115-106-14-53-23-114*", 
+                                 "HighestDemandPerTime", 
+                                 S, demandMatrix, coords, problemName) 
+  
+  plot_and_save_route_set_folder("17-43-109-86-24-5-80-66-74-114-16-55-60-32-20*", 
+                                 "HighestDemand", 
+                                 S, demandMatrix, coords, problemName)
   
 }
 
@@ -257,4 +339,3 @@ if (problemName == "Mumford0_UTRP") {
   plot_and_save_route_set_thesis("4-24*23-9-3-24-7-27-15-10-6-13-0-12-8*2-15*5-6-13-18-0-22-17-11-3-1-9*10-21-6-16-7-14-23-3-1*25-28*17-19*12-8-19-18-0-25-7-20-4*4-24-14-11-17-12-8*23-20-14*9-23*2-29-27-16-28-17-22-0-26*
   ", "Mumford0_attempt", S, demandMatrix, coords) # f_1, f_2 = 17.25575754	225
 } 
-  

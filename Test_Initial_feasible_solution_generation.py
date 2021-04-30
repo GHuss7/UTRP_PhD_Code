@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][3]   # set the name of the input data
+                   "Mumford3_UTRP",][4]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -291,7 +291,6 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
     dist = {v: inf for v in list(nx.nodes(graph))} 
     # nodes we've visited
     visited = set() 
-    #visited.add(start) #TODO
     # prioritize nodes from start -> node with the shortest distance!
     ## elements stored as tuples (distance, node) 
     pq = PriorityQueue()  
@@ -321,12 +320,18 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
                         pq.put((dist[neighbor],neighbor))
                     # otherwise update the entry in the priority queue
                     else:
-                        #if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
-                        # insert new
-                        pq.put((dist[neighbor],neighbor))
-                        # remove old
-                        _ = pq.get((dist[neighbor],neighbor))
-                            
+                        if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
+                            if print_progress: print(f"Dist {dist[neighbor]} \t Neigh: {neighbor}")
+                            if print_progress: print(pq.queue, end=" -> ")
+                            try:
+                                # remove old
+                                #_ = pq.get((dist[neighbor],neighbor))
+                                # insert new
+                                pq.put((dist[neighbor],neighbor))
+                                print(pq.queue)
+                            except:
+                                if print_progress: print("Nothing to get in queue")
+
                         
     if print_progress:
         print("=== Dijkstra's Algo Output ===")
@@ -349,7 +354,105 @@ def dijkstra(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_an
             return dist, False, False
         else:
             return False, dist[end]
+ 
     
+"""Dijkstra's shortest path algorithm"""
+def dijkstra_upgrade(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_and_dist=True, print_progress=False) -> list:
+    """Get the shortest path of nodes by going backwards through prev list
+    credits: https://github.com/blkrt/dijkstra-python/blob/3dfeaa789e013567cd1d55c9a4db659309dea7a5/dijkstra.py#L5-L10"""
+    def backtrace(prev, start, end):
+        node = end
+        path = []
+        while node != start:
+            path.append(node)
+            node = prev[node]
+        path.append(node) 
+        path.reverse()
+        return path
+        
+    """get the cost of edges from node -> node
+    cost(u,v) = edge_weight(u,v)"""
+    def get_cost(u, v):
+        return graph.get_edge_data(u,v).get('weight')
+        
+    """main algorithm"""
+    # predecessor of current node on shortest path 
+    prev = {} 
+    # initialize distances from start -> given node i.e. dist[node] = dist(start, node)
+    dist = {v: inf for v in list(nx.nodes(graph))} 
+    # nodes we've visited
+    visited = set() 
+    # prioritize nodes from start -> node with the shortest distance!
+    ## elements stored as tuples (distance, node) 
+    pq = PriorityQueue()  
+    
+    dist[start] = 0  # dist from start -> start is zero
+    pq.put((dist[start], start))
+    
+    while len(visited)!=len(graph.nodes()):   
+    #while not all(value != inf for value in dist.values()) or len(visited)!=len(graph.nodes()):   
+    #while 0 != pq.qsize():
+        curr_cost, curr = pq.get()
+        if print_progress: print(f"VISITING: Dist {curr_cost} \t Curr: {curr}")
+        visited.add(curr)
+        # look at curr's adjacent nodes
+        neighbors = dict(graph.adjacency()).get(curr)
+        if bool(neighbors):
+            for neighbor in neighbors:
+                # if we found a shorter path 
+                path = dist[curr] + get_cost(curr, neighbor)
+                if path < dist[neighbor]:
+                    # update the distance, we found a shorter one!
+                    dist[neighbor] = path
+                    # update the previous node to be prev on new shortest path
+                    prev[neighbor] = curr
+                    # if we haven't visited the neighbor
+                    if neighbor not in visited:
+                        # insert into priority queue and mark as visited
+                        #visited.add(neighbor)
+                        pq.put((dist[neighbor],neighbor))
+                        if print_progress: print("******* NEW VISIT *******")
+                        if print_progress: print(f"Dist {dist[neighbor]} \t Neigh: {neighbor}")
+                        if print_progress: print(pq.queue)
+
+
+                    # otherwise update the entry in the priority queue
+                    else:
+                        if len(visited) != len(graph.nodes()): # this was added to avoid trying to get something that is not there
+                            if print_progress: print(f"Dist {dist[neighbor]} \t Neigh: {neighbor}")
+                            if print_progress: print(pq.queue, end=" -> ")
+                            try:
+                                # remove old
+                                #_ = pq.get((dist[neighbor],neighbor))
+                                # insert new
+                                pq.put((dist[neighbor],neighbor))
+                                if print_progress: print(pq.queue)
+                            except:
+                                if print_progress: print("Nothing to get in queue")
+
+                        
+    if print_progress:
+        print("=== Dijkstra's Algo Output ===")
+        print("Distances")
+        print(dist)
+        print("Visited")
+        print(visited)
+        print("Previous")
+        print(prev)
+        
+    # we are done after every possible path has been checked 
+    if len(prev)+1 == len(graph.nodes()):
+        path_to_return = backtrace(prev, start, end)
+        if return_prev_and_dist:
+            return dist, prev, path_to_return
+        else:
+            return path_to_return, dist[end]
+    else:
+        if return_prev_and_dist:
+            return dist, False, False
+        else:
+            return False, dist[end]
+     
 def dijkstra3(graph: nx.classes.graph.Graph, start: str, end: str, return_prev_and_dist=True, print_progress=False) -> list:
     """Get the shortest path of nodes by going backwards through prev list
     credits: https://github.com/blkrt/dijkstra-python/blob/3dfeaa789e013567cd1d55c9a4db659309dea7a5/dijkstra.py#L5-L10"""
@@ -570,7 +673,7 @@ def remove_edge_and_return_cost(graph, u, v):
 def ksp_yen(graph, node_start, node_end, max_k=2, large_weight = 10000):
     """credits https://stackoverflow.com/questions/15878204/k-shortest-paths-implementation-in-igraph-networkx-yens-algorithm"""
     
-    distances, previous, path = dijkstra4(graph, node_start, node_end) #nx.single_source_dijkstra(graph, node_start, target, weight=weight)
+    distances, previous, path = dijkstra_upgrade(graph, node_start, node_end) #nx.single_source_dijkstra(graph, node_start, target, weight=weight)
     
     A = [{'cost': distances[node_end], 
           'path': path}]
@@ -599,9 +702,9 @@ def ksp_yen(graph, node_start, node_end, max_k=2, large_weight = 10000):
                     
                     #TODO:
                     edges_removed.append((curr_path[i], curr_path[i+1]))
-                    graph_copy.edges[curr_path[i], curr_path[i+1]]['weight'] = large_weight
+                    graph_copy.edges[curr_path[i], curr_path[i+1]]['weight'] = large_weight + graph_copy.edges[curr_path[i], curr_path[i+1]]['weight']
     
-            path_only_spur, dist_only_spur = dijkstra4(graph_copy, node_spur, node_end, return_prev_and_dist=False, print_progress=False)
+            path_only_spur, dist_only_spur = dijkstra_upgrade(graph_copy, node_spur, node_end, return_prev_and_dist=False, print_progress=False)
     
             path_spur = {'cost': dist_only_spur, 
                   'path': path_only_spur}
@@ -748,13 +851,13 @@ def remove_duplicates_ksp_yen(A_all):
     return A_unique
 
 """Tests"""
-if False:
-    dist, prev, path_to_return = dijkstra(graph, node_start, node_end, print_progress=True)
-    A = ksp_yen(G_nx, node_start=45, node_end=0, max_k=10)
+if True:
+    dist, prev, path_to_return = dijkstra_upgrade(G_nx, 0, 1, print_progress=True)
+    A = ksp_yen(G_nx, node_start=9, node_end=0, max_k=10)
     A_all = ksp_yen_all(G_nx, max_k=10)
     A_unique = remove_duplicates_ksp_yen(A_all)
 
-    A = ksp_yen_2(G, node_start=45, node_end=7, max_k=10)
+    #A = ksp_yen_2(G, node_start=9, node_end=7, max_k=10)
 
 
 # %% Formatting functions
@@ -774,6 +877,23 @@ def get_k_shortest_paths(G, source, target, k_cutoff):
     return k_shortest_paths, k_shortest_paths_lengths
 
 def get_all_k_shortest_paths(G, k_cutoff):
+    """Get all the k-shortest paths from a graph in terms of vertex counts for
+    all vertices with a cutoff of k vertices
+    Returns all the paths and lengths"""
+   
+    A_all = ksp_yen_all(G, max_k=k_cutoff)
+    A_unique = remove_duplicates_ksp_yen(A_all)
+
+    k_shortest_paths_all = []
+    k_shortest_paths_lengths_all = []
+
+    for i in range(len(A_unique)):
+        k_shortest_paths_all.append(A_unique[i]['path'])
+        k_shortest_paths_lengths_all.append(A_unique[i]['cost'])
+
+    return k_shortest_paths_all, k_shortest_paths_lengths_all
+
+def get_all_k_shortest_paths_2(G, k_cutoff):
     """Get all the k-shortest paths from a graph in terms of vertex counts for
     all vertices with a cutoff of k vertices
     Returns all the paths and lengths"""
@@ -819,34 +939,64 @@ def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff):
         
     return df_k_shortest_paths
 
-k_cutoff = 20
+def create_k_shortest_paths_df_2(mx_dist, mx_demand, k_cutoff): 
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
+
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))    
+
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths_2(G, k_cutoff)
+    k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
+        
+    return df_k_shortest_paths
+
+k_cutoff = 50
 #def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff): 
-df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
-
-nx_adj_mx = copy.deepcopy(mx_dist)
-for i in range(len(nx_adj_mx)):   
-    for j in range(len(nx_adj_mx)):
-        if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
-            nx_adj_mx[i,j] = 0
-G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))    
-
-k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff)
-k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
-demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
-
-for index_i in range(len(k_shortest_paths_all)):
-    df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
-                                         k_shortest_paths_all[index_i][-1],
-                                         k_shortest_paths_lengths[index_i],
-                                         k_shortest_paths_demand[index_i],
-                                         demand_per_minute[index_i],
-                                         gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+if True:    
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
     
-    df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
-    df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))    
     
-df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
-df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff)
+    k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
+    df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
    
 #return df_k_shortest_paths
 
@@ -854,6 +1004,9 @@ if False:
     k_cutoff=10
     df_k_shortest_paths_prelim = create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff)
     df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
+
+    #df_k_shortest_paths_prelim_2 = create_k_shortest_paths_df_2(mx_dist, mx_demand, k_cutoff)
+    #df_k_shortest_paths_prelim_2.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_test_"+str(k_cutoff)+".csv")
 
 #df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
 

@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -50,13 +50,13 @@ if True:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
     parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
-    if not os.path.exists("./Input_Data/"+name_input_data+"/K_shortest_paths.csv"): 
+    if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv"): 
         print("Creating k_shortest paths and saving csv file...")
         #df_k_shortest_paths = gf.create_k_shortest_paths_df(mx_dist, mx_demand, parameters_constraints["con_maxNodes"])
         #df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
         df_k_shortest_paths = False
     else:
-        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
+        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv")
 
 else:
     # %% Set variables
@@ -1091,7 +1091,7 @@ if False:
     R_set_4.plot_routes(UTNDP_problem_1)
 
 """Tests"""
-if True:
+if False:
     #dist, prev, path_to_return = dijkstra_upgrade(G_nx, 0, 2, print_progress=True)
     A = ksp_yen(G_nx, node_start=0, node_end=2, max_k=50, print_progress=True)
 
@@ -1104,14 +1104,14 @@ if True:
 if False:
     k_cutoff=10
     df_k_shortest_paths_prelim = create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff)
-    df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
+    df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_prelim_"+str(k_cutoff)+".csv")
 
     #df_k_shortest_paths_prelim_2 = create_k_shortest_paths_df_2(mx_dist, mx_demand, k_cutoff)
-    #df_k_shortest_paths_prelim_2.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_test_"+str(k_cutoff)+".csv")
+    #df_k_shortest_paths_prelim_2.to_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_prelim_test_"+str(k_cutoff)+".csv")
 
-#df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
+#df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths.csv")
 
-if False:
+if True:
     k_cutoff = 50
 #def create_k_shortest_paths_df(mx_dist, mx_demand, k_cutoff): 
     
@@ -1140,8 +1140,47 @@ if False:
         df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
         
     df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
-    df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim_upgrade_"+str(k_cutoff)+".csv")
+    df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_prelim_upgrade_"+str(k_cutoff)+".csv")
    
 #return df_k_shortest_paths
 
+def add_extra_info_to_KSP(df_k_shortest_paths, UTNDP_problem_1):
+    
+    data = df_k_shortest_paths
+    nr_vertices = UTNDP_problem_1.problem_inputs.n    
+    
+    vertex_count = np.zeros((len(data), 1))
+    binary_cast_routes = np.zeros((len(data), nr_vertices))
+        
+    for m_route in range(data.shape[0]): 
+        temp_route = gf.convert_routes_str2list(data["Routes"].iloc[m_route])[0]
+        
+        for route_vertex in temp_route:
+            binary_cast_routes[m_route, route_vertex] = 1
+            
+        vertex_count[m_route] = len(temp_route)
+
+    data["|V|"] = vertex_count
+    
+    for vertex_i in range(binary_cast_routes.shape[1]):
+        data["v_"+str(vertex_i)] = binary_cast_routes[:,vertex_i]
+        
+    return data
+
+def shorten_KSPs_by_constraints(df_k_shortest_paths, UTNDP_problem_1):
+    data = df_k_shortest_paths
+    min_nodes = UTNDP_problem_1.problem_constraints.con_minNodes
+    max_nodes = UTNDP_problem_1.problem_constraints.con_maxNodes
+    
+    data = data[(data['|V|']>=min_nodes) & \
+                (data['|V|']<=max_nodes)]
+
+    return data
+
+
+df_k_shortest_paths = add_extra_info_to_KSP(df_k_shortest_paths, UTNDP_problem_1)
+
+df_k_shortest_paths = shorten_KSPs_by_constraints(df_k_shortest_paths, UTNDP_problem_1)
+
+df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_"+str(k_cutoff)+"_shortened.csv")
 

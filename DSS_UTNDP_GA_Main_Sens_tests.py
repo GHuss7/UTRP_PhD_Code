@@ -68,16 +68,16 @@ name_input_data = ["Mandl_UTRP", #0
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if True else -1
-if True:
+if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
     Decisions = {
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : True,
+    "Choice_conduct_sensitivity_analysis" : False,
     "Choice_import_dictionaries" : True,
     "Choice_print_full_data_for_analysis" : True,
-    "Choice_relative_results_referencing" : False,
+    "Choice_relative_results_referencing" : True,
     "Additional_text" : "Tests"
     }
 
@@ -89,12 +89,12 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
     #parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
-    if not os.path.exists("./Input_Data/"+name_input_data+"/K_shortest_paths.csv"): 
+    if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv"): 
         print("Creating k_shortest paths and saving csv file...")
         df_k_shortest_paths = gf.create_k_shortest_paths_df(mx_dist, mx_demand, parameters_constraints["con_maxNodes"])
-        df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
+        df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_prelim_50.csv")
     else:
-        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
+        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv")
 
    
     '''State the various GA input parameters for frequency setting''' 
@@ -102,7 +102,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -595,3 +595,5 @@ if __name__ == "__main__":
         
         print(f'Finished in {round(finish-start, 6)} second(s)')
         
+    else:
+        main(UTNDP_problem_1) 

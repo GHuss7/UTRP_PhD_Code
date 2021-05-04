@@ -438,6 +438,10 @@ class K_shortest_paths():
         self.lengths = np.float64(df_k_shortest_paths["Travel_time"].values)
         self.demand = np.float64(df_k_shortest_paths["Demand"].values)
         self.demand_per_length = df_k_shortest_paths["Demand_per_minute"].values
+        
+        loc_v_0 = df_k_shortest_paths.columns.get_loc("v_0")
+        self.vertices_bin = df_k_shortest_paths.iloc[: , loc_v_0:].to_numpy()
+
 
     def create_paths_bool(self, tot_num_vertices):
         """A function that creates a boolean matrix indicating the vertices 

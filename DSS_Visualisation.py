@@ -406,7 +406,7 @@ def plot_generations_objectives(pop_generations):
     mplt.legend()
 
 #%% Print summary figures
-def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run):
+def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, validation_line=False):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     f_1_col_name, f_2_col_name, f_1_label, f_2_label = "f_1", "f_2", "F_1_ATT", "F_2_TRT"
     
@@ -420,6 +420,9 @@ def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, va
     axs[0].set_title('HV over all generations')
     axs[0].set(xlabel='Generations', ylabel='%')
     axs[0].legend(loc="upper right")
+    if validation_line:
+        axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
+                        c='black', marker=".", label='Benchmark')
     
     axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set[f_1_col_name], initial_set[f_2_col_name], s=10, c='g', marker="o", label='Initial set')
@@ -435,7 +438,7 @@ def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, va
 
     manager.window.close()
     
-def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run):
+def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, validation_line=False):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     fig, axs = plt.subplots(1, 2)
     fig.set_figheight(7.5)
@@ -445,6 +448,9 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
     axs[0].set_title('HV over all generations')
     axs[0].set(xlabel='Generations', ylabel='%')
     axs[0].legend(loc="upper right")
+    if validation_line:
+        axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
+                        c='black', marker=".", label='Benchmark')
     
     axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
@@ -466,8 +472,9 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
         plt.close(fig)
         
 def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text="",
-                                               labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"]):
-    '''Print Objective functions over time, all solutions and pareto set obtained'''
+                                               labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"], validation_line=False):
+    '''Print Objective functions over time, all solutions and pareto set obtained
+    If the value of the validation HV line is given, it is printed'''
     fig, axs = plt.subplots(1, 2)
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
@@ -476,6 +483,9 @@ def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set
     axs[0].set_title('HV over all generations')
     axs[0].set(xlabel='Generations', ylabel='%')
     axs[0].legend(loc="upper right")
+    if validation_line:
+        axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
+                        c='black', marker=".", label='Benchmark')
     
     axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
@@ -497,12 +507,14 @@ def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set
     else:
         plt.ioff()
         plt.savefig(path_results_per_run /"Interim"/f"Results_summary_interim_{str(add_text)}.pdf", bbox_inches='tight')
-        
+        plt.close()
 
 
-def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, labels):
+
+def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, labels, validation_line=False):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
-    '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''
+    '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format
+    If the value of the validation HV line is given, it is printed'''
     fig, axs = plt.subplots(2, 2)
     fig.set_figheight(15)
     fig.set_figwidth(20)
@@ -520,6 +532,9 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
     axs[0, 1].set_title('HV over all generations')
     axs[0, 1].set(xlabel='Generations', ylabel='%')
     axs[0, 1].legend(loc="upper right")
+    if validation_line:
+        axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
+                        c='black', marker=".", label='Benchmark')
 
     axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
     axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
@@ -538,6 +553,7 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
     else:
         plt.ioff()
         plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+        plt.close()
 
 def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels):
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''
@@ -565,3 +581,4 @@ def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_dat
     else:
         plt.ioff()
         plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
+        plt.close()

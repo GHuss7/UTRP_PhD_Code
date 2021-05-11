@@ -1519,6 +1519,43 @@ def get_survivors(pop, n_survive, D=None, **kwargs):
     # return pop[survivors]
     return survivors
 
+def get_survivors_norm(pop, n_survive, D=None, **kwargs):
+
+    # get the objective space values and objects
+    # F = pop.get("F").astype(np.float, copy=False)
+    F = pop.objs_norm
+
+    # the final indices of surviving individuals
+    survivors = []
+
+    # do the non-dominated sorting until splitting front
+    fronts = gc.NonDominated_Sorting().do(F, n_stop_if_ranked=n_survive)
+
+    for k, front in enumerate(fronts):
+
+        # calculate the crowding distance of the front
+        crowding_of_front = calc_crowding_distance(F[front, :])
+
+        # save rank and crowding in the individual class
+        for j, i in enumerate(front):
+            pop.rank[i] = k
+            pop.crowding_dist[i] = crowding_of_front[j]
+            
+        # current front sorted by crowding distance if splitting
+        if len(survivors) + len(front) > n_survive:
+            I = randomized_argsort(crowding_of_front, order='descending', method='numpy')
+            I = I[:(n_survive - len(survivors))]
+
+        # otherwise take the whole front unsorted
+        else:
+            I = np.arange(len(front))
+
+        # extend the survivors by all or selected individuals
+        survivors.extend(front[I])
+
+    # return pop[survivors]
+    return survivors
+
 # %% Tournament selection
 def tournament_selection_g2(pop, n_select, n_parents=2, pressure=2):
     # pop should be in Günther's format: pop.objectives -> array
@@ -1563,7 +1600,8 @@ def keep_individuals(pop, survivor_indices):
     # Function that only keeps to individuals with the specified indices
     pop.variables_str = [pop.variables_str[i] for i in survivor_indices]
     pop.variables = [pop.variables[i] for i in survivor_indices]
-    pop.objectives = pop.objectives[survivor_indices,]  
+    pop.objectives = pop.objectives[survivor_indices,] 
+    pop.objs_norm = pop.objs_norm[survivor_indices,]  
     pop.rank = pop.rank[survivor_indices]
     pop.crowding_dist = pop.crowding_dist[survivor_indices]
 

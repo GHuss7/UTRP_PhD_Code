@@ -35,6 +35,7 @@ import DSS_UTNDP_Classes as gc
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
+import DSS_K_Shortest_Paths as ksp
 
     
 #%% Pymoo functions
@@ -67,14 +68,14 @@ name_input_data = ["Mandl_UTRP", #0
 
 # %% Set input parameters
 sens_from = 0
-sens_to = (sens_from + 1) if True else -1
+sens_to = (sens_from + 1) if False else -1
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
     Decisions = {
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : False,
+    "Choice_conduct_sensitivity_analysis" : True,
     "Choice_import_dictionaries" : True,
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : True,
@@ -89,12 +90,18 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
     #parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
-    if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv"): 
+    
+    file_name_ksp = "K_shortest_paths_50_shortened_5_demand"
+    if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv"): 
+        file_to_find = "./Input_Data/"+name_input_data+"/K_Shortest_Paths/"+file_name_ksp+".csv"
+        if os.path.exists(file_to_find):
+            print(f"Move file {file_name_ksp} to Saved folder")
         print("Creating k_shortest paths and saving csv file...")
-        df_k_shortest_paths = gf.create_k_shortest_paths_df(mx_dist, mx_demand, parameters_constraints["con_maxNodes"])
-        df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_prelim_50.csv")
+        df_k_shortest_paths = ksp.create_polished_ksp(mx_dist, mx_demand, k_cutoff=50, save_csv=True)
+        df_k_shortest_paths = pd.read_csv(file_to_find)
+
     else:
-        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv")
+        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
 
    
     '''State the various GA input parameters for frequency setting''' 
@@ -102,12 +109,12 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
-    "mutation_ratio" : 0.2, # Ratio used for the probabilites of mutations applied
+    "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
@@ -240,7 +247,7 @@ UTNDP_problem_1.min_objs = min_objs
 UTNDP_problem_1.add_text = "" # define the additional text for the file name
 # UTNDP_problem_1.R_routes = R_routes
 
-
+#if True:
 def main(UTNDP_problem_1):
     
     """ Keep track of the stats """
@@ -318,7 +325,8 @@ def main(UTNDP_problem_1):
     #%% GA Implementation UTNDP ############################################
     '''Load validation data'''
     validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
-    
+    stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+
     '''Main folder path'''
     if Decisions["Choice_relative_results_referencing"]:
         path_parent_folder = Path(os.path.dirname(os.getcwd()))
@@ -360,8 +368,10 @@ def main(UTNDP_problem_1):
         stats['begin_time'] = datetime.datetime.now() # enter the begin time
         print("######################### RUN {0} #########################".format(run_nr))
         print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+        
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)   
-        pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
         
         # Create generational dataframe
         pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
@@ -382,9 +392,10 @@ def main(UTNDP_problem_1):
         
         initial_set = df_pop_generations.iloc[0:UTNDP_problem_1.problem_GA_parameters.population_size,:] # load initial set
 
-        print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
+        print("Generation {0} duration: {1} [HV:{2} | BM:{3}]".format(str(0),
                                                         ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
-                                                        round(HV, 4)))
+                                                        round(HV, 4),
+                                                        round(stats_overall['HV Benchmark'],4)))
         
         """ ######## Run each generation ################################################################ """
         for i_generation in range(1, UTNDP_problem_1.problem_GA_parameters.generations + 1):    
@@ -393,7 +404,7 @@ def main(UTNDP_problem_1):
             stats['generation'] = i_generation
             
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
-                print("Generation " + str(int(i_generation)) + " initiated ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
+                print("Generation " + str(int(i_generation)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
             # Crossover amd Mutation
             offspring_variables = gf.crossover_pop_routes_individuals(pop_1, UTNDP_problem_1)
@@ -411,26 +422,35 @@ def main(UTNDP_problem_1):
 
             # Determine non-dominated set
             df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
-            HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
 
             # Calculate the HV Quality Measure
-            HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+            HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
             df_data_generations.loc[i_generation] = [i_generation, HV]
             
             # Intermediate print-outs for observance 
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
-                df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
-                df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
-                df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
-                df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
-            
+                try: 
+                    df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
+                    df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
+                    df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
+                    df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+                except PermissionError:
+                    pass
+                    
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
-                gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run) 
-            #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_generation)
+                try: 
+                    gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, 
+                                                              validation_data, df_data_generations, 
+                                                              name_input_data, path_results_per_run,
+                                                              stats_overall['HV Benchmark']) 
+                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_generation)
+                except PermissionError:
+                    pass
                 
             # Get new generation
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
-            survivor_indices = gf.get_survivors(pop_1, pop_size)
+            pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
+            survivor_indices = gf.get_survivors_norm(pop_1, pop_size)
             gf.keep_individuals(pop_1, survivor_indices)
         
             # Adds the population to the dataframe
@@ -440,9 +460,9 @@ def main(UTNDP_problem_1):
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
             
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
-                print("Generation {0} duration: {1} [HV:{2}]".format(str(int(i_generation)),
-                                                                ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
-                                                                round(HV, 4)))
+                print("Dur: {0} [HV:{1} | BM:{2}]".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
+                                                                round(HV, 4),
+                                                                round(stats_overall['HV Benchmark'],4)))
                 
         #%% Stats updates
         stats['end_time'] = datetime.datetime.now() # save the end time of the run
@@ -471,7 +491,10 @@ def main(UTNDP_problem_1):
             
             # Print and save result summary figures:
             labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations
-            gv.save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, labels)
+            gv.save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, 
+                                         df_data_generations, name_input_data, 
+                                         path_results_per_run, labels,
+                                         stats_overall['HV Benchmark'])
             
             #%% Post analysis 
             pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
@@ -521,7 +544,6 @@ def main(UTNDP_problem_1):
         #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         
         df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")
@@ -549,7 +571,7 @@ def main(UTNDP_problem_1):
 
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''
-
+#if False:
 if __name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:

@@ -21,6 +21,8 @@ for results_folder_name in result_entries:
     if os.path.isdir(path_to_main_folder / results_folder_name):
         if os.path.exists(path_to_main_folder / results_folder_name / file_name):
             stats_dataframe = pd.read_csv(path_to_main_folder / results_folder_name / file_name)
-            results_captured.loc[len(results_captured)] = [results_folder_name, stats_dataframe.iloc[5,1]]
+            HV = stats_dataframe[stats_dataframe.iloc[:,0] == "HV obtained"].iloc[0,1]
+            results_captured.loc[len(results_captured)] = [results_folder_name, HV]
 
 results_captured.to_csv(path_to_main_folder / f"HV_per_folder.csv")
+

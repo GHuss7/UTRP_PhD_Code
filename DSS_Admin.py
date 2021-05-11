@@ -656,3 +656,31 @@ def progress(percent=0, width=30):
 #     progress(i)
 #     sleep(0.1)
 
+# %% Normalising functions
+
+def normalise_data_UTRP(objectives, UTRP_problem):
+    """A function to normalise data"""
+    max_f_1 = UTRP_problem.problem_inputs.ref_point_max_f1_ATT
+    min_f_1 = UTRP_problem.problem_inputs.ref_point_min_f1_ATT
+    max_f_2 = UTRP_problem.problem_inputs.ref_point_max_f2_TRT
+    min_f_2 = UTRP_problem.problem_inputs.ref_point_min_f2_TRT
+
+    objs_norm = np.zeros(objectives.shape)
+    objs_norm[:,0] = (objectives[:,0] - min_f_1)/(max_f_1 - min_f_1)
+    objs_norm[:,1] = (objectives[:,1] - min_f_2)/(max_f_2 - min_f_2)
+    
+    return objs_norm
+
+def recast_data_UTRP(objs_norm, UTRP_problem):
+    """A function to recast normalised data"""
+    max_f_1 = UTRP_problem.problem_inputs.ref_point_max_f1_ATT
+    min_f_1 = UTRP_problem.problem_inputs.ref_point_min_f1_ATT
+    max_f_2 = UTRP_problem.problem_inputs.ref_point_max_f2_TRT
+    min_f_2 = UTRP_problem.problem_inputs.ref_point_min_f2_TRT
+
+    objs_rec = np.zeros(objs_norm.shape)
+    objs_rec[:,0] = objs_norm[:,0] * (max_f_1 - min_f_1) + min_f_1
+    objs_rec[:,1] = objs_norm[:,1] * (max_f_2 - min_f_2) + min_f_2
+    
+    return objs_rec
+

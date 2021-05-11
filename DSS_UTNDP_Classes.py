@@ -146,6 +146,9 @@ class Routes():
                 if gf.test_all_four_constraints(routes_R, UTNDP_problem_input.problem_constraints.__dict__):
                     return routes_R
                 
+        return False
+
+                
     def return_feasible_route_robust_k_shortest(UTNDP_problem_input):
         """Generate feasible route based on appending random shortest paths"""
         for try_number in range(1000):   
@@ -166,6 +169,8 @@ class Routes():
                 routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)
                 if gf.test_all_four_constraints(routes_R, UTNDP_problem_input.problem_constraints.__dict__):
                     return routes_R
+        
+        return False
          
     
     def plot_routes(self, main_problem):
@@ -259,13 +264,13 @@ class PopulationRoutes(Routes):
                 self.rank[i] = k
                 self.crowding_dist[i] = crowding_of_front[j]
                 
-    def generate_initial_population_robust_k_shortest_paths(self, main_problem, fn_obj):
+    def generate_initial_population_robust_ksp(self, main_problem, fn_obj):
         t_now = datetime.now() # TIMING FUNCTION
         average_at = 5 # TIMING FUNCTION
         
         for i in range(self.population_size):
             #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
-            self.variables[i] = Routes.return_feasible_route_robust(main_problem)
+            self.variables[i] = Routes.return_feasible_route_robust_k_shortest(main_problem)
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
  

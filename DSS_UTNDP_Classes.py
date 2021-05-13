@@ -180,6 +180,10 @@ class Routes():
     def plot_routes_no_coords(self, main_problem,layout_style="kk"):
         """A function that plots the routes of a problem based on the problem defined, where no coords are defined"""
         gv.plotRouteSet(main_problem.problem_data.mx_dist, self.routes,layout_style) # using iGraph
+        
+    def to_str(self):
+        """A function that returns the string representation of a route set"""
+        return gf.convert_routes_list2str(self.routes)
      
 
 # %% Class: PopulationRoutes
@@ -210,7 +214,7 @@ class PopulationRoutes(Routes):
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
  
-            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
+            if i == average_at-1 or i == 9 or i == self.population_size-1: # TIMING FUNCTION
                 tot_iter = ga.determine_total_iterations(main_problem, 1)
                 sec_per_iter_time_delta = datetime.now() - t_now
                 ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
@@ -242,7 +246,7 @@ class PopulationRoutes(Routes):
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
  
-            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
+            if i == average_at-1 or i == 9 or i == self.population_size-1: # TIMING FUNCTION
                 tot_iter = ga.determine_total_iterations(main_problem, 1)
                 sec_per_iter_time_delta = datetime.now() - t_now
                 ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
@@ -266,18 +270,30 @@ class PopulationRoutes(Routes):
                 
     def generate_initial_population_robust_ksp(self, main_problem, fn_obj):
         t_now = datetime.now() # TIMING FUNCTION
+        st = [] # List for starting times
+        ft = [] # List for finishing times
         average_at = 5 # TIMING FUNCTION
         
         for i in range(self.population_size):
             #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+            
+            # Create a feasible route set
             self.variables[i] = Routes.return_feasible_route_robust_k_shortest(main_problem)
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
+            
+            # Determine the objective function values
+            st.append(datetime.now()) # TIMING FUNCTION
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
- 
-            if i == average_at-1 or i == 10 or i == self.population_size-1: # TIMING FUNCTION
+            ft.append(datetime.now()) # TIMING FUNCTION
+    
+            # Determine and print projections
+            if i == average_at-1 or i == 9 or i == self.population_size-1: # TIMING FUNCTION
+                diffs = [x-y for x,y in zip(ft,st)]
+                diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
+                avg_time = np.average(np.asarray(diffs_sec))
+                tot_time = np.sum(np.asarray(diffs_sec))
                 tot_iter = ga.determine_total_iterations(main_problem, 1)
-                sec_per_iter_time_delta = datetime.now() - t_now
-                ga.time_projection((sec_per_iter_time_delta.seconds)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+                ga.time_projection((tot_time)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
 
             # get the objective space values and objects
             # F = pop.get("F").astype(np.float, copy=False)

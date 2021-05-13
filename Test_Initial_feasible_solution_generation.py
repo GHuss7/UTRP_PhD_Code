@@ -50,13 +50,15 @@ if True:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
     parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
+    
+    file_name_ksp = "K_shortest_paths_50_shortened_5_demand"
     if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv"): 
         print("Creating k_shortest paths and saving csv file...")
         #df_k_shortest_paths = gf.create_k_shortest_paths_df(mx_dist, mx_demand, parameters_constraints["con_maxNodes"])
         #df_k_shortest_paths.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
         df_k_shortest_paths = False
     else:
-        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/K_shortest_paths_50.csv")
+        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
 
 else:
     # %% Set variables
@@ -124,7 +126,7 @@ UTNDP_problem_1.problem_data = gc.Problem_data(mx_dist, mx_demand, mx_coords)
 UTNDP_problem_1.problem_constraints = gc.Problem_constraints(parameters_constraints)
 UTNDP_problem_1.problem_inputs = gc.Problem_inputs(parameters_input)
 #UTNDP_problem_1.problem_SA_parameters = gc.Problem_metaheuristic_inputs(parameters_SA_routes)
-#UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
+UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
@@ -202,7 +204,7 @@ G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))
 #df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
 
 #df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
-if False:
+if True:
     k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
     k_short_paths.create_paths_bool(len(UTNDP_problem_1.mapping_adjacent))
     
@@ -210,8 +212,9 @@ if False:
 
 
 
-#%% Mutation tests
-if False:    
+#%% Mutation tests: Repair by KSP   
+if False:  
+    
     # route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*1-3-11-10-9-6-14-8*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
     
     route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
@@ -220,107 +223,113 @@ if False:
     R_to_mutate = gc.Routes(route_to_mutate)
     R_to_mutate.plot_routes(UTNDP_problem_1)
     
-    
-    all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
-        
-    # Initial test for all nodes present:
-    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
-        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
-    
-    indices_of_compatible_routes = []
-    for path_index in range(len(k_shortest_paths_all)):
-        if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
-            indices_of_compatible_routes.append(path_index)
-    
-    path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)]
-    new_route = copy.deepcopy(route_to_mutate)
-    new_route.extend([path_to_add])
-    
-    R_new = gc.Routes(new_route)
-    R_new.plot_routes(UTNDP_problem_1)
-    
-    def add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all):
-        
-        n_nodes = len(UTNDP_problem_1.mapping_adjacent)    
-        all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
-        
-        # Initial test for all nodes present:
-        if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
-            missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
-        
-        indices_of_compatible_routes = []
-        for path_index in range(len(k_shortest_paths_all)):
-            if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
-                indices_of_compatible_routes.append(path_index)
-        
-        path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)]
-        new_route = copy.deepcopy(route_to_mutate)
-        new_route.extend([path_to_add])
-        
-        return new_route
-    
-    add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all)
-   
-#%% Mutation tests: Merge two routes at common vertex
-if True:    
-    n_nodes = len(UTNDP_problem_1.mapping_adjacent)
+    repaired_route = gf.repair_add_path_to_route_set_ksp(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all)
 
-    # route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*1-3-11-10-9-6-14-8*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
-    
-    route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-10-12-13*6-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
-    #route_to_mutate = gf.convert_routes_str2list("13-9-7-5-3-4*0-1-2-5-7-9-12-13*8-14-5-2-1-4*6-14-5-3-1-0*6-14-7*")
-    
-    R_to_mutate = gc.Routes(route_to_mutate)
-    R_to_mutate.plot_routes(UTNDP_problem_1)
-    
-    
-    all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
-        
-    # Initial test for all nodes present:
-    if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
-        missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
-    
-    indices_of_compatible_routes = []
-    for path_index in range(len(k_shortest_paths_all)):
-        if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
-            indices_of_compatible_routes.append(path_index)
-    
-    path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)]
-    new_route = copy.deepcopy(route_to_mutate)
-    new_route.extend([path_to_add])
-    
-    R_new = gc.Routes(new_route)
+    R_new = gc.Routes(repaired_route)
     R_new.plot_routes(UTNDP_problem_1)
+     
     
-    def add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all):
-        
-        n_nodes = len(UTNDP_problem_1.mapping_adjacent)    
-        all_nodes = [y for x in route_to_mutate for y in x] # flatten all the elements in route
-        
-        # Initial test for all nodes present:
-        if (len(set(all_nodes)) != n_nodes): # if not true, go on to testing for what nodes are ommited
-            missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
-        
-        indices_of_compatible_routes = []
-        for path_index in range(len(k_shortest_paths_all)):
-            if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
-                indices_of_compatible_routes.append(path_index)
-        
-        path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)]
-        new_route = copy.deepcopy(route_to_mutate)
-        new_route.extend([path_to_add])
-        
-        return new_route
-    
-    add_path_to_route_set_random(route_to_mutate, UTNDP_problem_1, k_shortest_paths_all)
-    
-    # %% Test another route generation procedure
+# %% Test another route generation procedure
     new_gen_route = gf.routes_generation_unseen_prob(k_shortest_paths_all, k_shortest_paths_all, UTNDP_problem_1.problem_constraints.con_r)
     R_set_4 = gc.Routes(new_gen_route)
     R_set_4.plot_routes(UTNDP_problem_1)
+    
+    
+# %% Mutation tests: Merge two routes at common vertex 
+if False:
+    routes_R = gf.convert_routes_str2list('9-7-5-3-11-10-12*0-1-2-5-14-8*3-4*9-13*6-14*8-14-5-3-11-10-9-12*')
+
+#def mutate_merge_routes_at_common_terminal(routes_R, parameters_constraints, mapping_adjacent):
+    """Mutate a route set by randomly choosing two routes that have a common 
+    terminal point, and merge the segments with each other"""
+    random_list = list(range(len(routes_R)))
+    random.shuffle(random_list)
+    
+    # Get terminal nodes
+    terminal_nodes_front = [x[0] for x in routes_R] # get all the terminal nodes in the first position
+    terminal_nodes_back = [x[-1] for x in routes_R] # get all the terminal nodes in the last position
+    
+    
+    terminal_vertex = terminal_nodes_front.pop()
+    try:
+        common_front = terminal_nodes_front.index(terminal_vertex)
+        common_back = terminal_nodes_back.index(terminal_vertex)
+    except:
+        pass
+    
+    candidate_routes_R = copy.deepcopy(routes_R)
+    
+    for i in random_list:
+        for j in random_list:    
+            if i != j:
+                transfer_node = set(routes_R[i]).intersection(set(routes_R[j]))
+                if bool(transfer_node): # test whether there are intersections
+                    mutation_node = random.sample(transfer_node, 1)[0]
+                    mutation_i_index = routes_R[i].index(mutation_node)
+                    mutation_j_index = routes_R[j].index(mutation_node)
+    
+                    # Assigns the two segments across the mutation node
+                    if random.random() < 0.5: # Randomises the mutation
+                        route_front_i = routes_R[i][0:mutation_i_index]
+                        route_end_i = routes_R[j][mutation_j_index:]
+                        
+                        route_front_j = routes_R[j][0:mutation_j_index]
+                        route_end_j = routes_R[i][mutation_i_index:]
+
+                    else:
+                        reversed_route = routes_R[j][::-1] # Reverses the one route
+                        mutation_j_index = reversed_route.index(mutation_node) # Recalc index node
+                        
+                        route_front_i = routes_R[i][0:mutation_i_index]
+                        route_end_i = reversed_route[mutation_j_index:]
+                        
+                        route_front_j = reversed_route[0:mutation_j_index]
+                        route_end_j = routes_R[i][mutation_i_index:]  
+    
+                    new_route_i = route_front_i + route_end_i
+                    new_route_j = route_front_j + route_end_j
+                    #print("mutation_node = {0} and i index = {1} and j index = {2}".format(str(mutation_node),str(mutation_i_index), str(mutation_j_index)))
+                    #print("{0} to {1}".format(str(routes_R[i]),str(new_route_i)))
+                    #print("{0} to {1}".format(str(routes_R[j]),str(new_route_j)))
+                    
+                    candidate_routes_R[i] = new_route_i
+                    candidate_routes_R[j] = new_route_j
+                    
+    #                 if gf.test_all_four_constraints(candidate_routes_R, parameters_constraints):
+    #                     return candidate_routes_R
+    #                 else:
+    #                     candidate_routes_R = gf.repair_add_missing_from_terminal(candidate_routes_R,
+    #                                                      parameters_constraints['con_N_nodes'],
+    #                                                      mapping_adjacent)
+    #                     if gf.test_all_four_constraints(candidate_routes_R, parameters_constraints):
+    #                         return candidate_routes_R
+    #                     else:
+    #                         candidate_routes_R = copy.deepcopy(routes_R) # reset the candidate routes if unsuccessful
+                    
+    # return routes_R # if no successful mutation was found
 
 
 
 
+new_gen_route = gf.routes_generation_unseen_prob(k_shortest_paths_all, k_shortest_paths_all, UTNDP_problem_1.problem_constraints.con_r)
+R_set_4 = gc.Routes(new_gen_route)
+#R_set_4.plot_routes(UTNDP_problem_1)
+#R_set_4.to_str()
+
+new_gen_route = gf.convert_routes_str2list('9-7-5-3-11-10-12*0-1-2-5-14-8*3-4*9-13*6-14*8-14-5-3-11-10-9-12*')
+R_set_4 = gc.Routes(new_gen_route)
+R_set_4.plot_routes(UTNDP_problem_1)
+
+mutated_route = gf.mutate_merge_routes_at_common_terminal(new_gen_route, UTNDP_problem_1)
+R_mut = gc.Routes(mutated_route)
+R_mut.plot_routes(UTNDP_problem_1)
 
 
+st = [datetime.now() for _ in range(4)]
+ft = [datetime.now() for _ in range(4)]
+
+diffs = [x-y for x,y in zip(ft,st)]
+
+diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
+
+np.average(np.asarray(diffs_sec))

@@ -16,6 +16,14 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib as mplt
 
+mplt.rcParams['font.family'] = 'serif'
+cmfont = mplt.font_manager.FontProperties(fname=mplt.get_data_path() + '/fonts/ttf/cmunrm.ttf')
+mplt.rcParams['font.serif'] = cmfont.get_name()
+mplt.rcParams['mathtext.fontset']= 'cm'
+mplt.rcParams['font.size']= 11
+mplt.rcParams['axes.unicode_minus']= False
+
+
 #from timeit import default_timer as timer
 
 # %% Import personal functions

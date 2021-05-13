@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][1]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -75,7 +75,7 @@ if False:
 else:
     Decisions = {
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : True,
+    "Choice_conduct_sensitivity_analysis" : False,
     "Choice_import_dictionaries" : True,
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : True,

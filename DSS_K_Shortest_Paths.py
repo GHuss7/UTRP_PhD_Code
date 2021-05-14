@@ -947,6 +947,141 @@ def create_k_shortest_paths_df_2(mx_dist, mx_demand, k_cutoff):
         
     return df_k_shortest_paths
 
+def create_k_shortest_paths_df_largest_weight_minus(mx_dist, mx_demand, k_cutoff, dijkstra_alg=dijkstra_upgrade): 
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
+
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    
+    # Eliminate the large weights
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+    del i, j
+    
+    # Rescale the weights
+    largest_weight = np.max(nx_adj_mx) 
+    nx_adj_mx = largest_weight + 1 - nx_adj_mx #* mx_demand #nx_adj_mx 
+    
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+    del i, j    
+    
+    # Create the graph
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))    
+
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff, dijkstra_alg=dijkstra_alg)
+    k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
+        
+    return df_k_shortest_paths
+
+def create_k_shortest_paths_df_largest_demand_minus(mx_dist, mx_demand, k_cutoff, dijkstra_alg=dijkstra_upgrade): 
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
+
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    nx_adj_mx_demand = copy.deepcopy(mx_demand)
+
+    
+    # Eliminate the large weights
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+                nx_adj_mx_demand[i,j] = 0 # update the demand where there are no connections
+            else:
+                if nx_adj_mx_demand[i,j] == 0:
+                    nx_adj_mx_demand[i,j] = 1
+    del i, j
+    
+    # Rescale the weights
+    largest_weight = np.max(nx_adj_mx_demand) 
+    nx_adj_mx_demand = largest_weight + 1 - nx_adj_mx_demand #* mx_demand #nx_adj_mx 
+    
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx_demand[i,j] == np.max(nx_adj_mx_demand): 
+                nx_adj_mx_demand[i,j] = 0
+    del i, j    
+    
+    # Create the graph
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx_demand))    
+
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff, dijkstra_alg=dijkstra_alg)
+    k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
+        
+    return df_k_shortest_paths
+
+def create_k_shortest_paths_df_demand_inverse(mx_dist, mx_demand, k_cutoff, dijkstra_alg=dijkstra_upgrade): 
+    df_k_shortest_paths = pd.DataFrame(columns=["Source", "Target", "Travel_time", "Demand", "Demand_per_minute", "Routes"])
+
+    nx_adj_mx = copy.deepcopy(mx_dist)
+    nx_adj_mx_demand = copy.deepcopy(mx_demand)
+
+    # Eliminate the large weights
+    for i in range(len(nx_adj_mx)):   
+        for j in range(len(nx_adj_mx)):
+            if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
+                nx_adj_mx[i,j] = 0
+                nx_adj_mx_demand[i,j] = 0 # update the demand where there are no connections
+            else:
+                if nx_adj_mx_demand[i,j] == 0:
+                    nx_adj_mx_demand[i,j] = 1
+                
+                nx_adj_mx_demand[i,j] = 1/nx_adj_mx_demand[i,j]
+    del i, j
+    
+    # Create the graph
+    G = nx.from_numpy_matrix(np.asarray(nx_adj_mx_demand))    
+
+    k_shortest_paths_all, k_shortest_paths_lengths = get_all_k_shortest_paths(G, k_cutoff, dijkstra_alg=dijkstra_alg)
+    k_shortest_paths_demand = gf.determine_demand_per_route(k_shortest_paths_all, mx_demand)
+    demand_per_minute = np.asarray(k_shortest_paths_demand) / np.asarray(k_shortest_paths_lengths)
+    
+    for index_i in range(len(k_shortest_paths_all)):
+        df_k_shortest_paths.loc[index_i] = [k_shortest_paths_all[index_i][0],
+                                             k_shortest_paths_all[index_i][-1],
+                                             k_shortest_paths_lengths[index_i],
+                                             k_shortest_paths_demand[index_i],
+                                             demand_per_minute[index_i],
+                                             gf.convert_path_list2str(k_shortest_paths_all[index_i])]
+        
+        df_k_shortest_paths["Travel_time"] = np.float64(df_k_shortest_paths["Travel_time"].values)
+        df_k_shortest_paths["Demand"] = np.float64(df_k_shortest_paths["Demand"].values)    
+        
+    df_k_shortest_paths = df_k_shortest_paths.sort_values(["Source", "Target", "Demand_per_minute"])
+        
+    return df_k_shortest_paths
+
 # %% Add extra info to KSP and shorted KSP
 def add_extra_info_to_KSP(df_k_shortest_paths, UTNDP_problem_1):
     
@@ -1145,20 +1280,38 @@ if __name__ == "__main__":
     #%% Shortest paths based on demand multiplied with negative weights
     
     if True:
-        g_tn_nx = gf.create_nx_graph_from_adj_matrix(mx_dist)
         nx_adj_mx = copy.deepcopy(mx_dist)
+        nx_adj_mx_demand = copy.deepcopy(mx_demand)
+    
+        # Eliminate the large weights
         for i in range(len(nx_adj_mx)):   
             for j in range(len(nx_adj_mx)):
                 if nx_adj_mx[i,j] == np.max(nx_adj_mx): 
                     nx_adj_mx[i,j] = 0
+                    nx_adj_mx_demand[i,j] = 0 # update the demand where there are no connections
+                else:
+                    if nx_adj_mx_demand[i,j] == 0:
+                        nx_adj_mx_demand[i,j] = 1
+                    
+                    nx_adj_mx_demand[i,j] = 1/nx_adj_mx_demand[i,j]
         del i, j
         
-        mx_combined = - nx_adj_mx #* mx_demand #nx_adj_mx 
+        # Create the graph
+        G = nx.from_numpy_matrix(np.asarray(nx_adj_mx_demand))  
         
-        G = nx.from_numpy_matrix(np.asarray(mx_combined))
+        dist, prev, path_to_return = dijkstra(G, 0, 2, print_progress=True)
+              
+        # Create nx graph
+        k_cutoff = 50
+
         
-        #dist, prev, path_to_return = dijkstra(G, 0, 2, print_progress=True)
-        
+        # Create the KSP DataFrame and Save it 
+        #df_k_shortest_paths_weight_minus = create_k_shortest_paths_df_largest_weight_minus(mx_dist, mx_demand, k_cutoff, dijkstra_alg=dijkstra_upgrade)        
+    
+        #df_k_shortest_paths_demand_minus = create_k_shortest_paths_df_largest_demand_minus(mx_dist, mx_demand, k_cutoff, dijkstra_alg=dijkstra_upgrade)
+    
+        df_k_shortest_paths_demand_inverse = create_k_shortest_paths_df_demand_inverse(mx_dist, mx_demand, k_cutoff, dijkstra_alg=dijkstra_upgrade)
+    
     """Dijkstra's shortest path algorithm"""
     if False:
         graph = G 

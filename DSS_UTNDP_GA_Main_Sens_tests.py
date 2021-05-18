@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][2]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -247,8 +247,8 @@ UTNDP_problem_1.min_objs = min_objs
 UTNDP_problem_1.add_text = "" # define the additional text for the file name
 # UTNDP_problem_1.R_routes = R_routes
 
-#if True:
-def main(UTNDP_problem_1):
+if True:
+#def main(UTNDP_problem_1):
     
     """ Keep track of the stats """
     stats_overall = {
@@ -379,6 +379,7 @@ def main(UTNDP_problem_1):
         
         # Create data for analysis dataframe
         df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, generation_num=0) 
+        df_temp = pd.DataFrame(columns=(["Mut_nr", "Mut_successful", "Mut_repaired"]))
         
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
@@ -406,11 +407,11 @@ def main(UTNDP_problem_1):
             if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
                 print("Generation " + str(int(i_generation)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
-            # Crossover amd Mutation
+            # Crossover
             offspring_variables = gf.crossover_pop_routes_individuals(pop_1, UTNDP_problem_1)
             
-            mutated_variables = gf.mutate_route_population(offspring_variables, UTNDP_problem_1)
-            
+            # Mutation
+            mutated_variables, df_mut_details = gf.mutate_route_population_detailed(offspring_variables, UTNDP_problem_1)
             
             # Combine offspring with population
             combine_offspring_with_pop_3(pop_1, mutated_variables)
@@ -451,6 +452,14 @@ def main(UTNDP_problem_1):
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
             pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
             survivor_indices = gf.get_survivors_norm(pop_1, pop_size)
+            
+            # Add additional details for mutations
+            new_pop_details = [x - pop_size for x in survivor_indices if x >= pop_size]
+            new_pop_columns = np.zeros((pop_size))
+            new_pop_columns[new_pop_details] = 1
+            df_mut_details["Included_new_gen"] = new_pop_columns
+            df_temp = df_temp.append(df_mut_details)
+            
             gf.keep_individuals(pop_1, survivor_indices)
         
             # Adds the population to the dataframe

@@ -461,12 +461,10 @@ def generate_feasible_solution_smart(pop, main_problem):
             offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
                 # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
             
-            while not test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
-                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], 
-                                                                             main_problem.problem_inputs.n, 
-                                                                             main_problem.mapping_adjacent)
+            while not test_all_four_constraints(offspring_variables[i], main_problem):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
                 
-                if test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(offspring_variables[i], main_problem):
                     continue
                 else:
                     offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
@@ -1094,8 +1092,10 @@ def test_cycles_and_backtracks(routes_R):
     return True
 
 
-def test_all_four_constraints(routes_R, parameters_constraints):
+def test_all_four_constraints(routes_R, main_problem):
     """Function to test for all four constraints"""
+    parameters_constraints = main_problem.problem_constraints.__dict__
+    
     if not test_all_nodes_present_set(routes_R, parameters_constraints['con_N_nodes']):
         #print("Not all nodes present")
         return False
@@ -1608,9 +1608,12 @@ def keep_individuals(pop, survivor_indices):
 # %% Repair functions
 """Repair functions"""
 
-def repair_add_missing_from_terminal(routes_R, n_nodes, mapping_adjacent):
+def repair_add_missing_from_terminal(routes_R, main_problem):
     """ A function that searches for all the missing nodes, and tries to connect 
     them with one route's terminal node """
+    n_nodes = main_problem.problem_inputs.n
+    mapping_adjacent = main_problem.mapping_adjacent                                                                         
+    
     all_nodes = [y for x in routes_R for y in x] # flatten all the elements in route
     
     # Initial test for all nodes present:
@@ -2038,12 +2041,10 @@ def crossover_pop_routes_cxp_1(pop, main_problem):
         offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
             # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
         
-        while not test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
-            offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], 
-                                                                         main_problem.problem_inputs.n, 
-                                                                         main_problem.mapping_adjacent)
+        while not test_all_four_constraints(offspring_variables[i], main_problem):
+            offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
             
-            if test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+            if test_all_four_constraints(offspring_variables[i], main_problem):
                 continue
             else:
                 offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
@@ -2065,12 +2066,10 @@ def crossover_pop_routes(pop, main_problem):
             offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
                 # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
             
-            while not test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
-                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], 
-                                                                             main_problem.problem_inputs.n, 
-                                                                             main_problem.mapping_adjacent)
+            while not test_all_four_constraints(offspring_variables[i], main_problem):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
                 
-                if test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(offspring_variables[i], main_problem):
                     continue
                 else:
                     offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
@@ -2095,12 +2094,10 @@ def crossover_pop_routes_individuals(pop, main_problem):
             offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
                 # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
             
-            while not test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
-                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], 
-                                                                             main_problem.problem_inputs.n, 
-                                                                             main_problem.mapping_adjacent)
+            while not test_all_four_constraints(offspring_variables[i], main_problem):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
                 
-                if test_all_four_constraints(offspring_variables[i], main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(offspring_variables[i], main_problem):
                     continue
                 else:
                     offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
@@ -2133,12 +2130,10 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
             offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
                 # crossover_uniform_as_is(parent_A_route, parent_B_route, main_problem.R_routes.number_of_routes)
             
-            while not test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
-                offspring_variables_routes[i] = repair_add_missing_from_terminal(offspring_variables_routes[i], 
-                                                                             main_problem.problem_inputs.n, 
-                                                                             main_problem.mapping_adjacent)
+            while not test_all_four_constraints(offspring_variables_routes[i], main_problem):
+                offspring_variables_routes[i] = repair_add_missing_from_terminal(offspring_variables_routes[i], main_problem)
                 
-                if test_all_four_constraints(offspring_variables_routes[i], main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(offspring_variables_routes[i], main_problem):
                     continue
                 else:
                     offspring_variables_routes[i], offspring_variables_freq_args[i] = crossover_routes_unseen_prob_UTRFSP(parent_A_route, parent_B_route, parent_A_freq_args, parent_B_freq_args)
@@ -2157,9 +2152,10 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
 
 #%% Mutation functions   
 
-def mutate_routes_two_intertwine(routes_R, parameters_constraints, mapping_adjacent):
+def mutate_routes_two_intertwine(routes_R, main_problem):
     """Mutate a route set by randomly choosing two routes that have a common 
     transfer point, and randomly exchanges the segments with each other"""
+                                                       
     random_list = list(range(len(routes_R)))
     random.shuffle(random_list)
     
@@ -2201,13 +2197,11 @@ def mutate_routes_two_intertwine(routes_R, parameters_constraints, mapping_adjac
                     candidate_routes_R[i] = new_route_i
                     candidate_routes_R[j] = new_route_j
                     
-                    if test_all_four_constraints(candidate_routes_R, parameters_constraints):
+                    if test_all_four_constraints(candidate_routes_R, main_problem):
                         return candidate_routes_R
                     else:
-                        candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R,
-                                                         parameters_constraints['con_N_nodes'],
-                                                         mapping_adjacent)
-                        if test_all_four_constraints(candidate_routes_R, parameters_constraints):
+                        candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
+                        if test_all_four_constraints(candidate_routes_R, main_problem):
                             return candidate_routes_R
                         else:
                             candidate_routes_R = copy.deepcopy(routes_R) # reset the candidate routes if unsuccessful
@@ -2215,8 +2209,11 @@ def mutate_routes_two_intertwine(routes_R, parameters_constraints, mapping_adjac
     return routes_R # if no successful mutation was found
 
 
-def add_vertex_to_terminal(routes_R, r, mapping_adjacent):
-    # makes a small change to the route set
+def add_vertex_to_terminal(routes_R, main_problem):
+    # Adds a vertex to a terminal vertex
+    r = main_problem.problem_constraints.con_r
+    mapping_adjacent = main_problem.mapping_adjacent
+    
     R = copy.deepcopy(routes_R)
     p = random.uniform(0,1)
     if p < 0.5:
@@ -2225,8 +2222,10 @@ def add_vertex_to_terminal(routes_R, r, mapping_adjacent):
         change_add_node_to_last_node(R, r, mapping_adjacent)
     return R  
 
-def remove_vertex_from_terminal(routes_R, r, mapping_adjacent):
-    # makes a small change to the route set
+def remove_vertex_from_terminal(routes_R, main_problem):
+    # Removes a vertex from a terminal vertex
+    r = main_problem.problem_constraints.con_r
+    
     R = copy.deepcopy(routes_R)
     p = random.uniform(0,1)
     if p < 0.5:
@@ -2245,18 +2244,14 @@ def mutate_overall_routes(routes_R, main_problem, mutation_probability):
     if p_rand < mutation_probability:
     
         if random.random() < main_problem.problem_GA_parameters.mutation_ratio: # 1st Mutation: Two routes intertwine
-            candidate_routes_R = mutate_routes_two_intertwine(routes_R, 
-                                                       main_problem.problem_constraints.__dict__,
-                                                       main_problem.mapping_adjacent)
+            candidate_routes_R = mutate_routes_two_intertwine(routes_R, main_problem)
             
-            if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+            if test_all_four_constraints(candidate_routes_R, main_problem):
                 return candidate_routes_R
             else:
-                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R,
-                                                                      main_problem.problem_constraints.con_N_nodes,
-                                                                      main_problem.mapping_adjacent)
+                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
                 
-                if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(candidate_routes_R, main_problem):
                     return candidate_routes_R
                 else:
                     return routes_R
@@ -2266,14 +2261,12 @@ def mutate_overall_routes(routes_R, main_problem, mutation_probability):
                                                     main_problem.problem_constraints.con_r, 
                                                     main_problem.mapping_adjacent)
             
-            if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+            if test_all_four_constraints(candidate_routes_R, main_problem):
                 return candidate_routes_R
             else:
-                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R,
-                                                                      main_problem.problem_constraints.con_N_nodes,
-                                                                      main_problem.mapping_adjacent)
+                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
                 
-                if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(candidate_routes_R, main_problem):
                     return candidate_routes_R
                 else:
                     return routes_R
@@ -2281,63 +2274,52 @@ def mutate_overall_routes(routes_R, main_problem, mutation_probability):
     else:
         return routes_R
     
-def mutate_overall_routes_all(routes_R, main_problem, mutation_probability):
+def mutate_overall_routes_all(routes_R, main_problem):
     """This is a function that helps with the overall random choosing of any of 
     the predefined mutations, and can be appended easily"""
+    mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
     mut_ratio = main_problem.problem_GA_parameters.mutation_ratio
-    mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation probability list
+    mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list  
     
     p_rand = random.random()
     
-    if random.random() < mutation_probability:
+    if random.random() < mut_prob:
     
         if p_rand < sum(mut_ratio[:1]): # 1st Mutation: Two routes intertwine
-            candidate_routes_R = mutate_routes_two_intertwine(routes_R, 
-                                                       main_problem.problem_constraints.__dict__,
-                                                       main_problem.mapping_adjacent)
+            candidate_routes_R = mutate_routes_two_intertwine(routes_R, main_problem) 
             
-            if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+            if test_all_four_constraints(candidate_routes_R, main_problem):
                 return candidate_routes_R
             else:
-                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R,
-                                                                      main_problem.problem_constraints.con_N_nodes,
-                                                                      main_problem.mapping_adjacent)
+                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
                 
-                if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(candidate_routes_R, main_problem):
                     return candidate_routes_R
                 else:
                     return routes_R
         
         elif p_rand < sum(mut_ratio[:2]): # 2nd Mutation: Add node at terminal
-            candidate_routes_R = add_vertex_to_terminal(routes_R, 
-                                                    main_problem.problem_constraints.con_r, 
-                                                    main_problem.mapping_adjacent)
+            candidate_routes_R = add_vertex_to_terminal(routes_R, main_problem)
             
-            if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+            if test_all_four_constraints(candidate_routes_R, main_problem):
                 return candidate_routes_R
             else:
-                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R,
-                                                                      main_problem.problem_constraints.con_N_nodes,
-                                                                      main_problem.mapping_adjacent)
+                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
                 
-                if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(candidate_routes_R, main_problem):
                     return candidate_routes_R
                 else:
                     return routes_R
                 
         elif p_rand < sum(mut_ratio[:3]): # 3rd Mutation: Remove node at terminal
-            candidate_routes_R = remove_vertex_from_terminal(routes_R, 
-                                                    main_problem.problem_constraints.con_r, 
-                                                    main_problem.mapping_adjacent)
+            candidate_routes_R = remove_vertex_from_terminal(routes_R, main_problem)
             
-            if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+            if test_all_four_constraints(candidate_routes_R, main_problem):
                 return candidate_routes_R
             else:
-                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R,
-                                                                      main_problem.problem_constraints.con_N_nodes,
-                                                                      main_problem.mapping_adjacent)
+                candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
                 
-                if test_all_four_constraints(candidate_routes_R, main_problem.problem_constraints.__dict__):
+                if test_all_four_constraints(candidate_routes_R, main_problem):
                     return candidate_routes_R
                 else:
                     return routes_R
@@ -2347,14 +2329,74 @@ def mutate_overall_routes_all(routes_R, main_problem, mutation_probability):
             return candidate_routes_R
     else:
         return routes_R
+    
+def mutate_overall_routes_all_smart(routes_R, main_problem):
+    """This is a function that helps with the overall random choosing of any of 
+    the predefined mutations, and can be appended easily"""
+    mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
+    mut_ratio = main_problem.problem_GA_parameters.mutation_ratio
+    mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list
+    mut_functions = [mutate_routes_two_intertwine, 
+                     add_vertex_to_terminal,
+                     remove_vertex_from_terminal,
+                     mutate_merge_routes_at_common_terminal]
+    mut_nr = 0 # sets the mutation number to return, 0 is default with no mutation
+    mut_successful = 0
+    mut_repaired = 0
+    output_list = {"route":routes_R, "mut_nr":mut_nr,
+                   "mut_successful":mut_successful, "mut_repaired":mut_repaired}
+    
+    p_rand = random.random() # generate random number
+    
+    if random.random() < mut_prob:
+        for mut_i in range(len(mut_functions)):
+            
+            # test if cumulative probability true
+            if p_rand < sum(mut_ratio[:mut_i+1]):
+                # mutate route set
+                output_list["mut_nr"] = mut_i+1
+                candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
+                
+                # test feasibility
+                if test_all_four_constraints(candidate_routes_R, main_problem):
+                    output_list["mut_successful"] = 1
+                    output_list["route"] = candidate_routes_R
+                    return output_list
+                else:
+                    # attempt repair
+                    candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
+                    
+                    # test feasibility
+                    if test_all_four_constraints(candidate_routes_R, main_problem):
+                        output_list["mut_repaired"] = 1
+                        output_list["route"] = candidate_routes_R
+                        return output_list
+                    else:
+                        return output_list
+            
+
+        return output_list # if for loop completes and no mutation was performed
+    
+    else:
+        return output_list 
         
 def mutate_route_population(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
     pop_mutated_variables = copy.deepcopy(pop_variables_routes)
     for i in range(len(pop_mutated_variables)):
-         pop_mutated_variables[i] = mutate_overall_routes_all(pop_mutated_variables[i], main_problem, 
-                          main_problem.problem_GA_parameters.mutation_probability)
+        mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
+        pop_mutated_variables[i] = mut_output["route"]
     return pop_mutated_variables
+
+def mutate_route_population_detailed(pop_variables_routes, main_problem):
+    """A function to mutate over the entire population"""
+    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    df_mut_details = pd.DataFrame(columns=(["Mut_nr", "Mut_successful", "Mut_repaired"]))
+    for i in range(len(pop_mutated_variables)):
+        mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
+        df_mut_details.loc[i] = [np.float32(mut_output["mut_nr"]), mut_output["mut_successful"], mut_output["mut_repaired"]]
+        pop_mutated_variables[i] = mut_output["route"]
+    return pop_mutated_variables, df_mut_details
 
 def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
@@ -2428,7 +2470,7 @@ def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
                 if len(set(P_new)) == len(P_new):
                     routes_R.append(P_new)
                     routes_R = repair_add_path_to_route_set_ksp(routes_R, UTNDP_problem_1, ksp)
-                    if test_all_four_constraints(routes_R, UTNDP_problem_1.problem_constraints.__dict__):
+                    if test_all_four_constraints(routes_R, UTNDP_problem_1):
                         potential_routes.append(routes_R)
                 
             P_new = []

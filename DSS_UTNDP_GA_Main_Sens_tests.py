@@ -103,6 +103,21 @@ if Decisions["Choice_import_dictionaries"]:
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
 
+    mut_names = ["Intertwine_two", "Add_vertex", "Delete_vertex", "Merge_common_terminal"]    
+
+    mut_functions = [gf.mutate_routes_two_intertwine, 
+                     gf.add_vertex_to_terminal,
+                     gf.remove_vertex_from_terminal,
+                     gf.mutate_merge_routes_at_common_terminal]
+    
+    mutations = {"Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                    "Add_vertex" : gf.add_vertex_to_terminal,
+                    "Delete_vertex" : gf.remove_vertex_from_terminal,
+                    "Merge_common_terminal" : gf.mutate_merge_routes_at_common_terminal}
+    
+    mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
+    
+    mutations_dict_2 = {i+1:{"name":mut_names[i], "func":mut_functions[i]} for i in range(len(mut_functions))}
    
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
@@ -115,6 +130,7 @@ if Decisions["Choice_import_dictionaries"]:
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
     "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
+    "mutation_threshold" : 0.15, # Minimum threshold that mutation probabilities can reach
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
@@ -245,6 +261,8 @@ UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # create
 UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
 UTNDP_problem_1.add_text = "" # define the additional text for the file name
+UTNDP_problem_1.mutation_functions = mut_functions
+UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 # UTNDP_problem_1.R_routes = R_routes
 
 if True:
@@ -369,6 +387,9 @@ if True:
         print("######################### RUN {0} #########################".format(run_nr))
         print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         
+        # Frequently used variables
+        pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
+
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)   
         pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
@@ -379,7 +400,14 @@ if True:
         
         # Create data for analysis dataframe
         df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, generation_num=0) 
-        df_temp = pd.DataFrame(columns=(["Mut_nr", "Mut_successful", "Mut_repaired"]))
+        df_overall_analysis = pd.DataFrame()
+
+        # Create dataframe for mutations
+        df_mut = pd.DataFrame(data=np.zeros((pop_size,4)),
+                               columns=(["Mut_nr", "Mut_successful", "Mut_repaired", "Included_new_gen"]))
+        df_mut = df_mut.assign(Included_new_gen=np.float32(1))
+        
+        df_mut_summary = pd.DataFrame()
         
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
@@ -399,37 +427,36 @@ if True:
                                                         round(stats_overall['HV Benchmark'],4)))
         
         """ ######## Run each generation ################################################################ """
-        for i_generation in range(1, UTNDP_problem_1.problem_GA_parameters.generations + 1):    
+        for i_gen in range(1, UTNDP_problem_1.problem_GA_parameters.generations + 1):    
             # Some stats
             stats['begin_time_gen'] = datetime.datetime.now() # enter the begin time
-            stats['generation'] = i_generation
+            stats['generation'] = i_gen
             
-            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
-                print("Generation " + str(int(i_generation)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
+            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+                print("Generation " + str(int(i_gen)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
             # Crossover
             offspring_variables = gf.crossover_pop_routes_individuals(pop_1, UTNDP_problem_1)
             
             # Mutation
-            mutated_variables, df_mut_details = gf.mutate_route_population_detailed(offspring_variables, UTNDP_problem_1)
+            mutated_variables, df_mut_temp = gf.mutate_route_population_detailed(offspring_variables, UTNDP_problem_1)
             
             # Combine offspring with population
             combine_offspring_with_pop_3(pop_1, mutated_variables)
             # TODO: Adding the mutated variables twice and causing weird problems with the other attributes
             
             # Append data for analysis
-            pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
-            df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, i_generation, df_data_for_analysis) 
+            df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, i_gen, df_data_for_analysis) 
 
             # Determine non-dominated set
             df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
 
             # Calculate the HV Quality Measure
             HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
-            df_data_generations.loc[i_generation] = [i_generation, HV]
+            df_data_generations.loc[i_gen] = [i_gen, HV]
             
             # Intermediate print-outs for observance 
-            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
                     df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
                     df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
@@ -438,13 +465,13 @@ if True:
                 except PermissionError:
                     pass
                     
-            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
                     gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, 
                                                               validation_data, df_data_generations, 
                                                               name_input_data, path_results_per_run,
                                                               stats_overall['HV Benchmark']) 
-                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_generation)
+                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_gen)
                 except PermissionError:
                     pass
                 
@@ -457,18 +484,36 @@ if True:
             new_pop_details = [x - pop_size for x in survivor_indices if x >= pop_size]
             new_pop_columns = np.zeros((pop_size))
             new_pop_columns[new_pop_details] = 1
-            df_mut_details["Included_new_gen"] = new_pop_columns
-            df_temp = df_temp.append(df_mut_details)
+            df_mut_temp["Included_new_gen"] = new_pop_columns
+            df_mut = df_mut.append(df_mut_temp)
+                        
+            # Update mutation summary and overall analysis
+            df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
+            df_mut.reset_index(drop=True, inplace=True)
+            df_overall_analysis = pd.concat([df_data_for_analysis, df_mut], axis=1)
             
+            # Update the mutation ratios
+            def update_mutation_ratio(df_mut_summary, UTNDP_problem_1):
+                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+                ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
+                weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
+                mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
+                updated_ratio = mutation_threshold + mutable_ratios
+                UTNDP_problem_1.mutation_ratio = updated_ratio
+                
+            update_mutation_ratio(df_mut_summary, UTNDP_problem_1)
+            
+            # Remove old generation
             gf.keep_individuals(pop_1, survivor_indices)
         
             # Adds the population to the dataframe
-            df_pop_generations = ga.add_UTRP_pop_generations_data(pop_1, UTNDP_problem_1, i_generation, df_pop_generations)
-            pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),i_generation)])]) # add the population to the generations
+            df_pop_generations = ga.add_UTRP_pop_generations_data(pop_1, UTNDP_problem_1, i_gen, df_pop_generations)
+            pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),i_gen)])]) # add the population to the generations
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
             
-            if i_generation % 20 == 0 or i_generation == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 print("Dur: {0} [HV:{1} | BM:{2}]".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                                 round(HV, 4),
                                                                 round(stats_overall['HV Benchmark'],4)))
@@ -529,7 +574,7 @@ if True:
             
             
             
-    del HV, i_generation, mutated_variables, offspring_variables, pop_size, survivor_indices
+    del HV, i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
     
     # %% Save results after all runs
     if Decisions["Choice_print_results"]:

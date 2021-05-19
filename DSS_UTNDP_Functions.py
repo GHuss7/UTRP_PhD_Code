@@ -2334,12 +2334,14 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
     """This is a function that helps with the overall random choosing of any of 
     the predefined mutations, and can be appended easily"""
     mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
-    mut_ratio = main_problem.problem_GA_parameters.mutation_ratio
-    mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list
+    mut_ratio = main_problem.mutation_ratio
+    #mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list
     mut_functions = [mutate_routes_two_intertwine, 
                      add_vertex_to_terminal,
                      remove_vertex_from_terminal,
                      mutate_merge_routes_at_common_terminal]
+    mut_functions = main_problem.mutation_functions
+    
     mut_nr = 0 # sets the mutation number to return, 0 is default with no mutation
     mut_successful = 0
     mut_repaired = 0

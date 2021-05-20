@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -102,35 +102,30 @@ if Decisions["Choice_import_dictionaries"]:
 
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
-
-    mut_names = ["Intertwine_two", "Add_vertex", "Delete_vertex", "Merge_common_terminal"]    
-
-    mut_functions = [gf.mutate_routes_two_intertwine, 
-                     gf.add_vertex_to_terminal,
-                     gf.remove_vertex_from_terminal,
-                     gf.mutate_merge_routes_at_common_terminal]
     
     mutations = {"Intertwine_two" : gf.mutate_routes_two_intertwine, 
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    "Merge_common_terminal" : gf.mutate_merge_routes_at_common_terminal}
+                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal}
     
     mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
-    
-    mutations_dict_2 = {i+1:{"name":mut_names[i], "func":mut_functions[i]} for i in range(len(mut_functions))}
+    mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
+    mut_names = [v['name'] for (k,v) in mutations_dict.items()]
+    s_t = 0
+    b_t = 0
    
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
     "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
-    "mutation_threshold" : 0.15, # Minimum threshold that mutation probabilities can reach
+    "mutation_threshold" : 0.05, # Minimum threshold that mutation probabilities can reach
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
@@ -262,6 +257,7 @@ UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
 UTNDP_problem_1.add_text = "" # define the additional text for the file name
 UTNDP_problem_1.mutation_functions = mut_functions
+UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 # UTNDP_problem_1.R_routes = R_routes
 
@@ -408,6 +404,8 @@ if True:
         df_mut = df_mut.assign(Included_new_gen=np.float32(1))
         
         df_mut_summary = pd.DataFrame()
+        df_mut_ratios = pd.DataFrame(columns=(["Generation"]+UTNDP_problem_1.mutation_names))
+        df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio)
         
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
@@ -493,7 +491,7 @@ if True:
             df_overall_analysis = pd.concat([df_data_for_analysis, df_mut], axis=1)
             
             # Update the mutation ratios
-            def update_mutation_ratio(df_mut_summary, UTNDP_problem_1):
+            def update_mutation_ratio_simple(df_mut_summary, UTNDP_problem_1):
                 nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
                 mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
                 ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
@@ -502,7 +500,39 @@ if True:
                 updated_ratio = mutation_threshold + mutable_ratios
                 UTNDP_problem_1.mutation_ratio = updated_ratio
                 
-            update_mutation_ratio(df_mut_summary, UTNDP_problem_1)
+            def update_mutation_ratio_exp_smooth(df_mut_summary, UTNDP_problem_1, sc1=0.3):
+                old_ratio = UTNDP_problem_1.mutation_ratio
+                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+                ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
+                weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
+                mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
+                updated_ratio = mutation_threshold + mutable_ratios
+                UTNDP_problem_1.mutation_ratio = sc1*np.array(updated_ratio) + (1-sc1)*np.array(old_ratio)
+                
+            def update_mutation_ratio_exp_double_smooth(df_mut_summary, UTNDP_problem_1, i_gen, s_t_min_1, b_t_min_1, alpha=0.5, beta=0.3):
+                old_ratio = np.array(UTNDP_problem_1.mutation_ratio)
+                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+                ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
+                weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
+                mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
+                updated_ratio = np.array(mutation_threshold + mutable_ratios)
+                
+                if i_gen == 1:
+                    s_t_min_1 = old_ratio
+                    b_t_min_1 = updated_ratio - old_ratio
+                    
+                s_t = alpha*updated_ratio + (1-alpha)*(s_t_min_1 + b_t_min_1)
+                b_t = beta*(s_t - s_t_min_1) + (1-beta)*b_t_min_1
+                
+                UTNDP_problem_1.mutation_ratio = s_t
+                
+                return s_t, b_t
+                
+            #update_mutation_ratio_exp_smooth(df_mut_summary, UTNDP_problem_1)
+            s_t, b_t = update_mutation_ratio_exp_double_smooth(df_mut_summary, UTNDP_problem_1, i_gen, s_t, b_t, alpha=0.3, beta=0.5)
+            df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
             
             # Remove old generation
             gf.keep_individuals(pop_1, survivor_indices)
@@ -545,8 +575,8 @@ if True:
             
             # Print and save result summary figures:
             labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations
-            gv.save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data, 
-                                         df_data_generations, name_input_data, 
+            gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                                         df_data_generations, df_mut_ratios, name_input_data, 
                                          path_results_per_run, labels,
                                          stats_overall['HV Benchmark'])
             

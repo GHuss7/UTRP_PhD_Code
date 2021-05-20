@@ -282,18 +282,20 @@ class PopulationRoutes(Routes):
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
             
             # Determine the objective function values
-            st.append(datetime.now()) # TIMING FUNCTION
+            start_time = datetime.now() # TIMING FUNCTION
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
-            ft.append(datetime.now()) # TIMING FUNCTION
+            end_time = datetime.now() # TIMING FUNCTION
+            st.append(start_time) # TIMING FUNCTION
+            ft.append(end_time) # TIMING FUNCTION
     
             # Determine and print projections
-            if i == average_at-1 or i == 9 or i == self.population_size-1: # TIMING FUNCTION
+            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
                 diffs = [x-y for x,y in zip(ft,st)]
                 diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
                 avg_time = np.average(np.asarray(diffs_sec))
                 tot_time = np.sum(np.asarray(diffs_sec))
                 tot_iter = ga.determine_total_iterations(main_problem, 1)
-                ga.time_projection((tot_time)/(i+1), tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+                ga.time_projection(avg_time, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
 
             # get the objective space values and objects
             # F = pop.get("F").astype(np.float, copy=False)

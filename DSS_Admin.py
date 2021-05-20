@@ -88,7 +88,7 @@ def time_projection(seconds_per_iteration, total_iterations, t_now=False, return
     
     if print_iter_info:
         print(f"Total iterations: {total_iterations} at {seconds_per_iteration:.2f} sec/it")
-    
+       
     if return_objs:
         return date_time_start, date_time_due
 

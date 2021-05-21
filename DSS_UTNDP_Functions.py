@@ -501,6 +501,108 @@ def generate_initial_route_sets(main_problem, printing=True):
     if printing: print("Initial route set generated with size: "+str(len(routes_R_initial_set)))
     return routes_R_initial_set, df_routes_R_initial_set
 
+# Generate longer feasible solutions and covering demand with direct routes
+def calc_cum_demand(r_i, mx_demand):
+    dem_tot = 0 # initiate demand count
+    # for each connection, calculate demand between OD pairs direct route
+    for i in r_i:
+        for j in r_i:
+            if i < j:
+                dem_tot = mx_demand[i,j] + mx_demand[j,i]
+    
+    return dem_tot
+
+def remove_cum_demand(r_i, mx_demand):
+    # for each connection, remove demand between OD pairs direct route
+    for i in r_i:
+        for j in r_i:
+            if i < j:
+                mx_demand[i,j] = 0
+                mx_demand[j,i] = 0
+    
+    return mx_demand
+
+def get_vertex_with_max_unmet_demand(mx_demand):
+    vetrex_list = []
+    d_best = 0
+    for i in range(len(mx_demand)):
+        d = sum(mx_demand[i,:]) + sum(mx_demand[:,i])
+        
+        if d == d_best:
+            vetrex_list.append(i)
+        
+        if d > d_best:
+            d_best = d
+            vetrex_list = [i]
+            
+    return random.choice(vetrex_list)
+        
+def generate_feasible_route_set_greedy_demand(main_problem):
+
+    # Get constraints
+    con_r = main_problem.problem_constraints.con_r # get number of routes
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    con_min_v = main_problem.problem_constraints.con_minNodes
+    n_vertices = main_problem.problem_inputs.n
+    mapping_adjacent = main_problem.mapping_adjacent 
+    R_x = [] 
+    counter = 0
+    
+    while not test_all_four_constraints(R_x, main_problem) and counter < 10000:                                                                      
+    
+        R_x = [] # create route set x
+        mx_d_temp = copy.deepcopy(main_problem.problem_data.mx_demand)
+        
+        while len(R_x) < con_r:
+            r_i = [] # create route i
+            route_vertices = set([y for x in R_x for y in x]) # flatten elements in route
+            missing_vs = list(set(range(n_vertices)).difference(route_vertices))
+            
+            try:
+                v = random.choice(missing_vs)
+            except:
+                v = get_vertex_with_max_unmet_demand(mx_d_temp)
+          
+            r_i.append(v)
+            flag_r_swop = 0 # flag to swop route around if v is terminal/ infeasible
+            
+            while len(r_i) < con_max_v:
+                adjs = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))
+                if len(adjs) == 0:
+                    if not flag_r_swop:
+                        flag_r_swop = 1
+                        r_i.reverse()
+                        break
+                        
+                random.shuffle(adjs)
+                d_best = 0 # create variable to keep best demand satisfied thusfar
+                
+                # test for best additional vertex to include based on demand
+                for adj in adjs:
+                    r_temp = copy.deepcopy(r_i)
+                    r_temp.append(adj)
+                    d = calc_cum_demand(r_temp, mx_d_temp)
+                    
+                    if d > d_best:
+                        d_best = d
+                        r_best = copy.deepcopy(r_temp)
+                    
+                # if no demand can be met additionally
+                if d_best == 0:
+                    r_best = copy.deepcopy(r_temp) # random because adjs are shuffled
+                
+                r_i = copy.deepcopy(r_best)
+                mx_d_temp = remove_cum_demand(r_i, mx_d_temp)
+            
+            if len(r_i) >= con_min_v:  
+                R_x.append(r_i)
+        
+        counter += 1
+        
+    return R_x
+
+
+
 def init_temp_trial_searches(UTNDP_problem, number_of_runs=1, P_0=0.999, P_N=0.001, N_search_epochs=1000):
     '''Test for starting temperature and cooling schedule'''
     """ number_of_runs: sets more trial runs for better estimates (averages)
@@ -1110,8 +1212,10 @@ def test_all_four_constraints(routes_R, main_problem):
         return False
     return True
 
-def test_all_four_constraints_debug(routes_R, parameters_constraints):
-    """Function to test for all four constraints"""
+def test_all_four_constraints_debug(routes_R, main_problem):
+    """Function to test for all four constraints and prints violation"""
+    parameters_constraints = main_problem.problem_constraints.__dict__
+
     if not test_all_nodes_present_set(routes_R, parameters_constraints['con_N_nodes']):
         print("Not all nodes present")
         return False
@@ -1838,12 +1942,12 @@ def repair_add_missing_from_terminal_multiple(routes_R, UTNDP_problem):
 
     return routes_R
 
-def repair_add_path_to_route_set_ksp(route_to_repair, UTNDP_problem_1, k_shortest_paths_all):
+def repair_add_path_to_route_set_ksp(route_to_repair, main_problem, k_shortest_paths_all):
     """A function that attempts to repair a route set that had one path removed
     by identifying the missing nodes and by attempting to maximise the coverage
     of the missing nodes by looking through the K-shortest paths list"""
     
-    n_nodes = len(UTNDP_problem_1.mapping_adjacent)    
+    n_nodes = len(main_problem.mapping_adjacent)    
     all_nodes = [y for x in route_to_repair for y in x] # flatten all the elements in route
     
     # Initial test for all nodes present:

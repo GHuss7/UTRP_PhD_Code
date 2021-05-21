@@ -430,7 +430,7 @@ def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, va
     axs[0].legend(loc="upper right")
     if validation_line:
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
-                        c='black', marker=".", label='Benchmark')
+                        c='black', label='Benchmark')
     
     axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set[f_1_col_name], initial_set[f_2_col_name], s=10, c='g', marker="o", label='Initial set')
@@ -564,39 +564,41 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     fig.set_figwidth(20)
     
     axs[0, 0].set_title('Mean objectives over all generations')
-    axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', marker=".", label=labels[2])
+    axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', label=labels[2])
     axs[0, 0].set(xlabel='Generations', ylabel=labels[2])
     axs[0, 0].legend(loc="lower left") 
     ax_twin = axs[0, 0].twinx()
-    ax_twin.plot(df_data_generations["Generation"], df_data_generations["mean_f_2"], c='b', marker=".", label=labels[3])
+    ax_twin.plot(df_data_generations["Generation"], df_data_generations["mean_f_2"], c='b', label=labels[3])
     ax_twin.set(ylabel=labels[3])
-    ax_twin.legend(loc="upper right") 
+    ax_twin.legend(loc=0) 
     
     
     for mut_nr in range(1,len(df_mut_ratios.columns)):
-        axs[1, 0].plot(df_mut_ratios["Generation"], df_mut_ratios[df_mut_ratios.columns[mut_nr]], marker=".", label=df_mut_ratios.columns[mut_nr])
+        axs[1, 0].plot(df_mut_ratios["Generation"], df_mut_ratios[df_mut_ratios.columns[mut_nr]], label=df_mut_ratios.columns[mut_nr])
     axs[1, 0].set_title('Mutation ratios over all generations')
     axs[1, 0].set(xlabel='Generations', ylabel='Mutation ratio')
-    axs[1, 0].legend(loc="upper left") 
+    axs[1, 0].legend(loc=0) 
     
-    axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker=".", label='HV obtained')
+    axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', label='HV obtained')
     axs[0, 1].set_title('HV over all generations')
     axs[0, 1].set(xlabel='Generations', ylabel='%')
-    axs[0, 1].legend(loc="lower right")
+    axs[0, 1].legend(loc=0)
     if validation_line:
         axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
-                        c='black', marker=".", label='Benchmark')
+                        c='black', label='Benchmark')
 
     axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
     axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
     axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
     axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
     axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
-    axs[1, 1].legend(loc="upper right")
-    
-    plt.ioff()
-    plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
-    plt.close()
+    axs[1, 1].legend(loc=0)
+    try:
+        plt.ioff()
+        plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+        plt.close()
+    except:
+        pass
         
 
 def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels):

@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][2]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -118,7 +118,7 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_GA={
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
+    "generations" : 50, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -386,8 +386,9 @@ if True:
         # Frequently used variables
         pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
 
-        pop_1 = gc.PopulationRoutes(UTNDP_problem_1)   
-        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
+        pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
+        #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
         
         # Create generational dataframe
@@ -463,12 +464,22 @@ if True:
                 except PermissionError:
                     pass
                     
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % 2 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
-                    gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, 
-                                                              validation_data, df_data_generations, 
-                                                              name_input_data, path_results_per_run,
-                                                              stats_overall['HV Benchmark']) 
+                    # gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, 
+                    #                                           validation_data, df_data_generations, 
+                    #                                           name_input_data, path_results_per_run,
+                    #                                           stats_overall['HV Benchmark']) 
+                    
+                    # Compute means for generations
+                    df_gen_temp = copy.deepcopy(df_data_generations)
+                    df_gen_temp = df_gen_temp.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
+                                       mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['f_2'].mean().iloc[:,1])
+                    labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations
+                    gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                                         df_gen_temp, df_mut_ratios, name_input_data, 
+                                         path_results_per_run, labels,
+                                         stats_overall['HV Benchmark'])
                     #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_gen)
                 except PermissionError:
                     pass
@@ -500,7 +511,7 @@ if True:
                 updated_ratio = mutation_threshold + mutable_ratios
                 UTNDP_problem_1.mutation_ratio = updated_ratio
                 
-            def update_mutation_ratio_exp_smooth(df_mut_summary, UTNDP_problem_1, sc1=0.3):
+            def update_mutation_ratio_exp_smooth(df_mut_summary, UTNDP_problem_1, alpha=0.3):
                 old_ratio = UTNDP_problem_1.mutation_ratio
                 nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
                 mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
@@ -508,7 +519,7 @@ if True:
                 weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
                 mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
                 updated_ratio = mutation_threshold + mutable_ratios
-                UTNDP_problem_1.mutation_ratio = sc1*np.array(updated_ratio) + (1-sc1)*np.array(old_ratio)
+                UTNDP_problem_1.mutation_ratio = alpha*np.array(updated_ratio) + (1-alpha)*np.array(old_ratio)
                 
             def update_mutation_ratio_exp_double_smooth(df_mut_summary, UTNDP_problem_1, i_gen, s_t_min_1, b_t_min_1, alpha=0.5, beta=0.3):
                 old_ratio = np.array(UTNDP_problem_1.mutation_ratio)

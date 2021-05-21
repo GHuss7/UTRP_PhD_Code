@@ -172,6 +172,9 @@ class Routes():
         
         return False
          
+    def return_feasible_route_set_greedy_demand(UTNDP_problem_input):
+        """Generate feasible route based on appending random shortest paths"""
+        return gf.generate_feasible_route_set_greedy_demand(UTNDP_problem_input)
     
     def plot_routes(self, main_problem):
         """A function that plots the routes of a problem based on the problem defined"""
@@ -313,23 +316,41 @@ class PopulationRoutes(Routes):
             for j, i in enumerate(front):
                 self.rank[i] = k
                 self.crowding_dist[i] = crowding_of_front[j]
-                    
-    def generate_initial_population_multi(self, main_problem, fn_obj):
-        
-        def generate_route_and_objs(main_problem, fn_obj):
-            pass # create one function to do what is below and place in MultiProcessingPool
+                
+    def generate_initial_population_greedy_demand(self, main_problem, fn_obj):
+        t_now = datetime.now() # TIMING FUNCTION
+        st = [] # List for starting times
+        ft = [] # List for finishing times
+        average_at = 5 # TIMING FUNCTION
         
         for i in range(self.population_size):
             #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
-            self.variables[i] = Routes.return_feasible_route(main_problem)
+            
+            # Create a feasible route set
+            self.variables[i] = Routes.return_feasible_route_set_greedy_demand(main_problem)
             self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
+            
+            # Determine the objective function values
+            start_time = datetime.now() # TIMING FUNCTION
             self.objectives[i,] = fn_obj(self.variables[i], main_problem)
- 
+            end_time = datetime.now() # TIMING FUNCTION
+            st.append(start_time) # TIMING FUNCTION
+            ft.append(end_time) # TIMING FUNCTION
+    
+            # Determine and print projections
+            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
+                diffs = [x-y for x,y in zip(ft,st)]
+                diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
+                avg_time = np.average(np.asarray(diffs_sec))
+                tot_time = np.sum(np.asarray(diffs_sec))
+                tot_iter = ga.determine_total_iterations(main_problem, 1)
+                ga.time_projection(avg_time, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+
             # get the objective space values and objects
             # F = pop.get("F").astype(np.float, copy=False)
         F = self.objectives
         
-        # do the non-dominated sorting until splitting front
+            # do the non-dominated sorting until splitting front
         fronts = NonDominated_Sorting().do(F)
 
         for k, front in enumerate(fronts):
@@ -341,6 +362,59 @@ class PopulationRoutes(Routes):
             for j, i in enumerate(front):
                 self.rank[i] = k
                 self.crowding_dist[i] = crowding_of_front[j]
+      
+    def generate_initial_population_hybrid(self, main_problem, fn_obj):
+        t_now = datetime.now() # TIMING FUNCTION
+        st = [] # List for starting times
+        ft = [] # List for finishing times
+        average_at = 5 # TIMING FUNCTION
+        
+        sol_gen_funcs = [Routes.return_feasible_route_robust_k_shortest,
+                        Routes.return_feasible_route_set_greedy_demand]
+        
+        div = self.population_size // len(sol_gen_funcs)
+             
+        for i in range(self.population_size):
+            #self.variable_args[i,] = gf2.Frequencies(main_problem.R_routes.number_of_routes).return_random_theta_args()
+            
+            # Create a feasible route set
+            sol_gen_func = sol_gen_funcs[i//div]
+            self.variables[i] = sol_gen_func(main_problem)
+            self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
+            
+            # Determine the objective function values
+            start_time = datetime.now() # TIMING FUNCTION
+            self.objectives[i,] = fn_obj(self.variables[i], main_problem)
+            end_time = datetime.now() # TIMING FUNCTION
+            st.append(start_time) # TIMING FUNCTION
+            ft.append(end_time) # TIMING FUNCTION
+    
+            # Determine and print projections
+            if i == average_at-1 or i == self.population_size-1: # TIMING FUNCTION
+                diffs = [x-y for x,y in zip(ft,st)]
+                diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
+                avg_time = np.average(np.asarray(diffs_sec))
+                tot_time = np.sum(np.asarray(diffs_sec))
+                tot_iter = ga.determine_total_iterations(main_problem, 1)
+                ga.time_projection(avg_time, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+
+            # get the objective space values and objects
+            # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+        
+            # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
+
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = gf.calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
+    
                     
     def generate_good_initial_population(self, main_problem, fn_obj):
         """Generate initial population based the best n_trial solutions"""

@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][3]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 
@@ -204,7 +204,7 @@ G = nx.from_numpy_matrix(np.asarray(nx_adj_mx))
 #df_k_shortest_paths_prelim.to_csv("./Input_Data/"+name_input_data+"/K_shortest_paths_prelim.csv")
 
 #df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_shortest_paths.csv")
-if True:
+if False:
     k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
     k_short_paths.create_paths_bool(len(UTNDP_problem_1.mapping_adjacent))
     
@@ -310,26 +310,119 @@ if False:
 
 
 
+if False:
+    new_gen_route = gf.routes_generation_unseen_prob(k_shortest_paths_all, k_shortest_paths_all, UTNDP_problem_1.problem_constraints.con_r)
+    R_set_4 = gc.Routes(new_gen_route)
+    #R_set_4.plot_routes(UTNDP_problem_1)
+    #R_set_4.to_str()
+    
+    new_gen_route = gf.convert_routes_str2list('9-7-5-3-11-10-12*0-1-2-5-14-8*3-4*9-13*6-14*8-14-5-3-11-10-9-12*')
+    R_set_4 = gc.Routes(new_gen_route)
+    R_set_4.plot_routes(UTNDP_problem_1)
+    
+    mutated_route = gf.mutate_merge_routes_at_common_terminal(new_gen_route, UTNDP_problem_1)
+    R_mut = gc.Routes(mutated_route)
+    R_mut.plot_routes(UTNDP_problem_1)
 
-new_gen_route = gf.routes_generation_unseen_prob(k_shortest_paths_all, k_shortest_paths_all, UTNDP_problem_1.problem_constraints.con_r)
-R_set_4 = gc.Routes(new_gen_route)
-#R_set_4.plot_routes(UTNDP_problem_1)
-#R_set_4.to_str()
+# %% Generate longer feasible solutions and covering demand with direct routes
 
-new_gen_route = gf.convert_routes_str2list('9-7-5-3-11-10-12*0-1-2-5-14-8*3-4*9-13*6-14*8-14-5-3-11-10-9-12*')
-R_set_4 = gc.Routes(new_gen_route)
-R_set_4.plot_routes(UTNDP_problem_1)
+def calc_cum_demand(r_i, mx_demand):
+    dem_tot = 0 # initiate demand count
+    # for each connection, calculate demand between OD pairs direct route
+    for i in r_i:
+        for j in r_i:
+            if i < j:
+                dem_tot = mx_demand[i,j] + mx_demand[j,i]
+    
+    return dem_tot
 
-mutated_route = gf.mutate_merge_routes_at_common_terminal(new_gen_route, UTNDP_problem_1)
-R_mut = gc.Routes(mutated_route)
-R_mut.plot_routes(UTNDP_problem_1)
+def remove_cum_demand(r_i, mx_demand):
+    # for each connection, remove demand between OD pairs direct route
+    for i in r_i:
+        for j in r_i:
+            if i < j:
+                mx_demand[i,j] = 0
+                mx_demand[j,i] = 0
+    
+    return mx_demand
 
+def get_vertex_with_max_unmet_demand(mx_demand):
+    vetrex_list = []
+    d_best = 0
+    for i in range(len(mx_demand)):
+        d = sum(mx_demand[i,:]) + sum(mx_demand[:,i])
+        
+        if d == d_best:
+            vetrex_list.append(i)
+        
+        if d > d_best:
+            d_best = d
+            vetrex_list = [i]
+            
+    return random.choice(vetrex_list)
+        
+def create_feasible_route_set_greedy_demand(UTNDP_problem_1):
 
-st = [datetime.now() for _ in range(4)]
-ft = [datetime.now() for _ in range(4)]
+    # Get constraints
+    con_r = UTNDP_problem_1.problem_constraints.con_r # get number of routes
+    con_max_v = UTNDP_problem_1.problem_constraints.con_maxNodes
+    con_min_v = UTNDP_problem_1.problem_constraints.con_minNodes
+    n_vertices = UTNDP_problem_1.problem_inputs.n
+    mapping_adjacent = UTNDP_problem_1.mapping_adjacent 
+    R_x = [] 
+    counter = 0
+    
+    while not gf.test_all_four_constraints(R_x, UTNDP_problem_1) and counter < 10000:                                                                      
+    
+        R_x = [] # create route set x
+        mx_d_temp = copy.deepcopy(mx_demand)
+        
+        while len(R_x) < con_r:
+            r_i = [] # create route i
+            route_vertices = set([y for x in R_x for y in x]) # flatten elements in route
+            missing_vs = list(set(range(n_vertices)).difference(route_vertices))
+            
+            try:
+                v = random.choice(missing_vs)
+            except:
+                v = get_vertex_with_max_unmet_demand(mx_d_temp)
+          
+            r_i.append(v)
+            flag_r_swop = 0 # flag to swop route around if v is terminal/ infeasible
+            
+            while len(r_i) < con_max_v:
+                adjs = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))
+                if len(adjs) == 0:
+                    if not flag_r_swop:
+                        flag_r_swop = 1
+                        r_i.reverse()
+                        break
+                        
+                random.shuffle(adjs)
+                d_best = 0 # create variable to keep best demand satisfied thusfar
+                
+                # test for best additional vertex to include based on demand
+                for adj in adjs:
+                    r_temp = copy.deepcopy(r_i)
+                    r_temp.append(adj)
+                    d = calc_cum_demand(r_temp, mx_d_temp)
+                    
+                    if d > d_best:
+                        d_best = d
+                        r_best = copy.deepcopy(r_temp)
+                    
+                # if no demand can be met additionally
+                if d_best == 0:
+                    r_best = copy.deepcopy(r_temp) # random because adjs are shuffled
+                
+                r_i = copy.deepcopy(r_best)
+                mx_d_temp = remove_cum_demand(r_i, mx_d_temp)
+            
+            if len(r_i) >= con_min_v:  
+                R_x.append(r_i)
+        
+        counter += 1
+        
+    return R_x
 
-diffs = [x-y for x,y in zip(ft,st)]
-
-diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
-
-np.average(np.asarray(diffs_sec))
+R_x = create_feasible_route_set_greedy_demand(UTNDP_problem_1)

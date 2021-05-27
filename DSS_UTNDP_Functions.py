@@ -2449,8 +2449,8 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
     mut_nr = 0 # sets the mutation number to return, 0 is default with no mutation
     mut_successful = 0
     mut_repaired = 0
-    output_list = {"route":routes_R, "mut_nr":mut_nr,
-                   "mut_successful":mut_successful, "mut_repaired":mut_repaired}
+    output_list = {"Route":routes_R, "Mut_nr":mut_nr,
+                   "Mut_successful":mut_successful, "Mut_repaired":mut_repaired}
     
     p_rand = random.random() # generate random number
     
@@ -2460,7 +2460,7 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
             # test if cumulative probability true
             if p_rand < sum(mut_ratio[:mut_i+1]):
                 # mutate route set
-                output_list["mut_nr"] = mut_i+1
+                output_list["Mut_nr"] = mut_i+1
                 candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
                 
                 if candidate_routes_R == routes_R:
@@ -2468,8 +2468,8 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
                 
                 # test feasibility
                 if test_all_four_constraints(candidate_routes_R, main_problem):
-                    output_list["mut_successful"] = 1
-                    output_list["route"] = candidate_routes_R
+                    output_list["Mut_successful"] = 1
+                    output_list["Route"] = candidate_routes_R
                     return output_list
                 else:
                     # attempt repair
@@ -2477,8 +2477,8 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
                     
                     # test feasibility
                     if test_all_four_constraints(candidate_routes_R, main_problem):
-                        output_list["mut_repaired"] = 1
-                        output_list["route"] = candidate_routes_R
+                        output_list["Mut_repaired"] = 1
+                        output_list["Route"] = candidate_routes_R
                         return output_list
                     else:
                         return output_list
@@ -2494,7 +2494,7 @@ def mutate_route_population(pop_variables_routes, main_problem):
     pop_mutated_variables = copy.deepcopy(pop_variables_routes)
     for i in range(len(pop_mutated_variables)):
         mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
-        pop_mutated_variables[i] = mut_output["route"]
+        pop_mutated_variables[i] = mut_output["Route"]
     return pop_mutated_variables
 
 def mutate_route_population_detailed(pop_variables_routes, main_problem):
@@ -2503,9 +2503,22 @@ def mutate_route_population_detailed(pop_variables_routes, main_problem):
     df_mut_details = pd.DataFrame(columns=(["Mut_nr", "Mut_successful", "Mut_repaired"]))
     for i in range(len(pop_mutated_variables)):
         mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
-        df_mut_details.loc[i] = [np.float32(mut_output["mut_nr"]), mut_output["mut_successful"], mut_output["mut_repaired"]]
-        pop_mutated_variables[i] = mut_output["route"]
+        df_mut_details.loc[i] = [np.float32(mut_output["Mut_nr"]), mut_output["Mut_successful"], mut_output["Mut_repaired"]]
+        pop_mutated_variables[i] = mut_output["Route"]
+        
+    
     return pop_mutated_variables, df_mut_details
+
+def mutate_route_population_detailed_ld(pop_variables_routes, main_problem):
+    """A function to mutate over the entire population, 
+    returns a list of dictionaries"""
+    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    ld_mut_details = []
+    for i in range(len(pop_mutated_variables)):
+        mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
+        ld_mut_details.append(mut_output)
+                    
+    return ld_mut_details
 
 def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""

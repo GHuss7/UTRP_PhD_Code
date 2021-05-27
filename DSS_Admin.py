@@ -764,11 +764,23 @@ def recast_data_UTRP(objs_norm, UTRP_problem):
 
 def get_mutations_summary(df_mut_temp, nr_mutations, gen_nr):
     df_mut_summary = pd.DataFrame(columns=(["Generation", "Mut_nr","Total", "Mut_successful", "Mut_repaired", "Included_new_gen"]))
+    ld_mut_summary =[]
     for mut_nr in range(nr_mutations+1):
-        df_filtered = df_mut_temp[df_mut_temp["Mut_nr"]==mut_nr]
-        tot_mut = len(df_filtered)
-        summary = df_filtered.to_numpy().sum(axis=0)
-        df_mut_summary.loc[mut_nr] = [gen_nr, mut_nr, tot_mut] + list(summary[1:])
+        df_mut_only = df_mut_temp[df_mut_temp["Mut_nr"]==mut_nr]
+        df_mut_success = df_mut_only[df_mut_only["Mut_successful"]==1]
+
+        tot_mut = len(df_mut_only)
+        summary = df_mut_only.to_numpy().sum(axis=0)
+        df_mut_summary.loc[mut_nr] = [gen_nr, mut_nr, tot_mut, summary[1], summary[2], df_mut_success["Included_new_gen"].sum()] 
+        
+        mut_dict = {"Generation":gen_nr,
+                    "Mut_nr":mut_nr,
+                    "Total":tot_mut, 
+                    "Mut_successful":summary[1], 
+                    "Mut_repaired":summary[2], 
+                    "Included_new_gen":df_mut_success["Included_new_gen"].sum()}
+        
+        ld_mut_summary.append(mut_dict)
     
     def sum_row_Inc_over_succ(row):
         if row.Mut_successful + row.Mut_repaired == 0:
@@ -776,7 +788,60 @@ def get_mutations_summary(df_mut_temp, nr_mutations, gen_nr):
         else:
             return row.Included_new_gen/(row.Mut_successful + row.Mut_repaired)
     
-    row_func = lambda row: sum_row_Inc_over_succ(row)
+    row_func_1 = lambda row: sum_row_Inc_over_succ(row)
             
-    df_mut_summary["Inc_over_succ"] = df_mut_summary.apply(row_func, axis=1)
+    df_mut_summary["Inc_over_succ"] = df_mut_summary.apply(row_func_1, axis=1)
+    
+    def sum_row_Inc_over_Tot(row):
+        if row.Total == 0:
+            return 0
+        else:
+            return row.Included_new_gen/(row.Total)
+    
+    row_func_2 = lambda row: sum_row_Inc_over_Tot(row)
+            
+    df_mut_summary["Inc_over_Tot"] = df_mut_summary.apply(row_func_2, axis=1)
+    
     return df_mut_summary
+
+
+# %% Mutation ratio update functions
+
+def update_mutation_ratio_simple(df_mut_summary, UTNDP_problem_1):
+    nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+    mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+    ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
+    weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
+    mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
+    updated_ratio = mutation_threshold + mutable_ratios
+    UTNDP_problem_1.mutation_ratio = updated_ratio
+                
+def update_mutation_ratio_exp_smooth(df_mut_summary, UTNDP_problem_1, alpha=0.3):
+    old_ratio = UTNDP_problem_1.mutation_ratio
+    nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+    mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+    ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
+    weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
+    mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
+    updated_ratio = mutation_threshold + mutable_ratios
+    UTNDP_problem_1.mutation_ratio = alpha*np.array(updated_ratio) + (1-alpha)*np.array(old_ratio)
+    
+def update_mutation_ratio_exp_double_smooth(df_mut_summary, UTNDP_problem_1, i_gen, s_t_min_1, b_t_min_1, alpha=0.5, beta=0.3):
+    old_ratio = np.array(UTNDP_problem_1.mutation_ratio)
+    nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+    mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+    ratio_update_weights = df_mut_summary["Inc_over_succ"].iloc[-nr_of_mutations:].values
+    weight_products = ratio_update_weights * UTNDP_problem_1.mutation_ratio
+    mutable_ratios = (weight_products / sum(weight_products))*(1-nr_of_mutations*mutation_threshold)
+    updated_ratio = np.array(mutation_threshold + mutable_ratios)
+    
+    if i_gen == 1:
+        s_t_min_1 = old_ratio
+        b_t_min_1 = updated_ratio - old_ratio
+        
+    s_t = alpha*updated_ratio + (1-alpha)*(s_t_min_1 + b_t_min_1)
+    b_t = beta*(s_t - s_t_min_1) + (1-beta)*b_t_min_1
+    
+    UTNDP_problem_1.mutation_ratio = s_t
+    
+    return s_t, b_t

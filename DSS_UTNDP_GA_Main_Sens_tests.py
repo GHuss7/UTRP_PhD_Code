@@ -107,7 +107,7 @@ if Decisions["Choice_import_dictionaries"]:
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
                     "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal}
-    
+        
     mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
     mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
     mut_names = [v['name'] for (k,v) in mutations_dict.items()]
@@ -118,8 +118,8 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_GA={
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 50, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -387,13 +387,15 @@ if True:
         pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
 
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
-        pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
         #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
         
         # Create generational dataframe
         pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
         df_pop_generations = ga.add_UTRP_pop_generations_data(pop_1, UTNDP_problem_1, generation_num=0)
+        ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, generation_num=0)
+
         
         # Create data for analysis dataframe
         df_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr(pop_1, UTNDP_problem_1, generation_num=0) 
@@ -418,6 +420,8 @@ if True:
         
         stats['end_time'] = datetime.datetime.now() # enter the begin time
         
+        # Load the initial set
+        df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)
         initial_set = df_pop_generations.iloc[0:UTNDP_problem_1.problem_GA_parameters.population_size,:] # load initial set
 
         print("Generation {0} duration: {1} [HV:{2} | BM:{3}]".format(str(0),
@@ -550,6 +554,9 @@ if True:
         
             # Adds the population to the dataframe
             df_pop_generations = ga.add_UTRP_pop_generations_data(pop_1, UTNDP_problem_1, i_gen, df_pop_generations)
+            ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, i_gen, ld_pop_generations)
+
+            
             pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),i_gen)])]) # add the population to the generations
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run

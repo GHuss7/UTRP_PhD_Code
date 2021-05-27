@@ -7,7 +7,7 @@ Created on Wed Jun 12 09:44:36 2019
 # %% Import libraries
 import re
 import numpy as np
-import pandas as pd
+import pandas as pd 
 import igraph as ig
 import matplotlib.pyplot as plt
 import math
@@ -2462,6 +2462,9 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
                 # mutate route set
                 output_list["mut_nr"] = mut_i+1
                 candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
+                
+                if candidate_routes_R == routes_R:
+                    return output_list
                 
                 # test feasibility
                 if test_all_four_constraints(candidate_routes_R, main_problem):

@@ -12,7 +12,7 @@ import pickle
 import numpy as np
 import igraph as ig
 import math
-import pandas as pd
+import pandas as pd 
 from collections import deque, namedtuple
 from timeit import default_timer as timer
 import datetime
@@ -473,6 +473,50 @@ def add_UTRP_analysis_data_with_generation_nr(pop_1, UTRP_problem_1, generation_
                     
     return data_for_analysis
 
+def add_UTRP_analysis_data_with_generation_nr_ld(pop_1, UTRP_problem_1, generation_num=0, data_for_analysis=False):
+    """
+    
+
+    Parameters
+    ----------
+    pop_1 : PopulationRoutesFreq object
+        Contains all the variables and objective function values.
+    UTRFSP_problem_1 : UTRFSP_problem object
+        Object containing the main UTRFSP details.
+    data_for_analysis : False or pandas.DataFrame, optional
+        The dataframe to contain the data analysis. If False, this is the fist 
+        time the Dataframe is created and then only add the first pop_size 
+        population of solutions. The default is False.
+
+    Returns
+    -------
+    data_for_analysis : list of dictionaries
+        The appended DataFrame.
+
+    """
+    len_pop = len(pop_1.objectives)
+    pop_size = UTRP_problem_1.problem_GA_parameters.population_size                
+    
+    if isinstance(data_for_analysis, list):
+        zipped = zip(pop_1.variables_str[pop_size:len_pop],
+                     pop_1.objectives[pop_size:len_pop,0], 
+                     pop_1.objectives[pop_size:len_pop,1], 
+                     [generation_num]*pop_size, 
+                     pop_1.rank[pop_size:len_pop])
+        
+        data_for_analysis.extend([{"R_x":r, "f_1":f1, "f_2":f2, "Generation":gen, "Rank":rank[0]} for r, f1, f2, gen, rank in zipped])
+    
+    else:
+        zipped = zip(pop_1.variables_str[:pop_size],
+                     pop_1.objectives[:pop_size,0], 
+                     pop_1.objectives[:pop_size,1], 
+                     [generation_num]*pop_size, 
+                     pop_1.rank[:pop_size])
+        
+        data_for_analysis = [{"R_x":r, "f_1":f1, "f_2":f2, "Generation":gen, "Rank":rank[0]} for r, f1, f2, gen, rank in zipped]
+                 
+    return data_for_analysis
+
 def add_UTRFSP_analysis_data_with_generation_nr(pop_1, UTRFSP_problem_1, generation_num=0, data_for_analysis=False):
     """
     
@@ -563,6 +607,38 @@ def add_UTRP_pop_generations_data(pop_1, UTRP_problem_1, generation_num, data_fo
             data_row.extend(list(pop_1.rank[index_i]))
             data_for_analysis.loc[len(data_for_analysis)] = data_row
             
+    return data_for_analysis
+
+def add_UTRP_pop_generations_data_ld(pop_1, UTRP_problem_1, generation_num, data_for_analysis=False):
+    """
+    This allows for fasted DataFrame construction
+
+    Parameters
+    ----------
+    pop_1 : PopulationRoutesFreq object
+        Contains all the variables and objective function values.
+    UTRFSP_problem_1 : UTRFSP_problem object
+        Object containing the main UTRFSP details.
+    data_for_analysis : False or pandas.DataFrame, optional
+        The dataframe to contain the data analysis. If False, this is the fist 
+        time the Dataframe is created and then only add the first pop_size 
+        population of solutions. The default is False.
+
+    Returns
+    -------
+    data_for_analysis : list of dictionaries
+        The appended DataFrame.
+
+    """
+    pop_size = UTRP_problem_1.problem_GA_parameters.population_size
+    zipped = zip(pop_1.variables_str[:pop_size],pop_1.objectives[:pop_size,0], pop_1.objectives[:pop_size,1], [generation_num]*pop_size, pop_1.rank[:pop_size])
+
+    if isinstance(data_for_analysis, list):
+        data_for_analysis.extend([{"R_x":r, "f_1":f1, "f_2":f2, "Generation":gen, "Rank":rank[0]} for r, f1, f2, gen, rank in zipped])
+    
+    else:
+        data_for_analysis = [{"R_x":r, "f_1":f1, "f_2":f2, "Generation":gen, "Rank":rank[0]} for r, f1, f2, gen, rank in zipped]
+    
     return data_for_analysis
     
 def add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, generation_num, data_for_analysis=False):

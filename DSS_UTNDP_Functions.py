@@ -508,7 +508,7 @@ def calc_cum_demand(r_i, mx_demand):
     for i in r_i:
         for j in r_i:
             if i < j:
-                dem_tot = mx_demand[i,j] + mx_demand[j,i]
+                dem_tot = dem_tot + mx_demand[i,j] + mx_demand[j,i]
     
     return dem_tot
 
@@ -2326,6 +2326,7 @@ def add_vertex_to_terminal(routes_R, main_problem):
         change_add_node_to_last_node(R, r, mapping_adjacent)
     return R  
 
+
 def remove_vertex_from_terminal(routes_R, main_problem):
     # Removes a vertex from a terminal vertex
     r = main_problem.problem_constraints.con_r
@@ -2337,6 +2338,105 @@ def remove_vertex_from_terminal(routes_R, main_problem):
     else:
         change_delete_node_from_back(R, r)
     return R  
+
+
+def get_common_terminal_vertices_pairs(routes_R):
+    """A function to get all the pairs of the terminal vertices in a route set
+    """
+    # Get terminal nodes
+    tf = [x[0] for x in routes_R] #get all terminal nodes in the first position
+    tb = [x[-1] for x in routes_R] #get all terminal nodes in the last position
+    
+    fb=[] # list for keeping the front to back matches
+    ff=[] # list for keeping the front to front matches
+    bb=[] # list for keeping the back to back matches
+    
+    for i in range(len(tf)):
+        for j in range(len(tf)):
+            
+            if tf[i] == tb[j]:
+                fb.append((i,j))
+            
+            if i < j:
+                if tf[i] == tf[j]:
+                    ff.append((i,j))
+                
+                if tb[i] == tb[j]:
+                    bb.append((i,j))
+                    
+    return {'fb':fb, 'ff':ff, 'bb':bb}
+ 
+    
+def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
+    """A function that merges two routes if they share a common vertex based on
+    Matthew P John's 2016 PhD Thesis"""
+    ksp = UTNDP_problem_1.k_short_paths.paths
+    ctv_pairs = get_common_terminal_vertices_pairs(route_to_mutate)    
+    
+    potential_routes = []
+    
+    for config in ['ff', 'bb', 'fb']:
+        
+        for pair in ctv_pairs[config]:
+            routes_R = copy.deepcopy(route_to_mutate)
+            
+            if config == 'ff':
+                P_new_front = routes_R[pair[0]]
+                P_new_front.reverse()
+                P_new_back = routes_R[pair[1]]
+                P_new = P_new_front + P_new_back[1:]
+                
+            if config == 'bb':
+                P_new_front = routes_R[pair[0]]
+                P_new_back = routes_R[pair[1]]
+                P_new_back.reverse()
+                P_new = P_new_front + P_new_back[1:]
+                
+            if config == 'fb':
+                P_new_front = routes_R[pair[1]]
+                P_new_back = routes_R[pair[0]]
+                P_new = P_new_front + P_new_back[1:]
+                
+            if len(P_new) != 0:
+                routes_R = [i for j, i in enumerate(routes_R) if j not in pair]
+                
+                if len(set(P_new)) == len(P_new):
+                    routes_R.append(P_new)
+                    routes_R = repair_add_path_to_route_set_ksp(routes_R, UTNDP_problem_1, ksp)
+                    if test_all_four_constraints(routes_R, UTNDP_problem_1):
+                        potential_routes.append(routes_R)
+                
+            P_new = []
+    
+    if len(potential_routes):           
+        return random.choice(potential_routes)
+    else:
+        return route_to_mutate
+    
+    
+def mut_replace_lowest_demand(route_to_mutate, main_problem):
+    
+    routes_R = copy.deepcopy(route_to_mutate)
+    
+    mx_demand = main_problem.problem_data.mx_demand
+    ksp = main_problem.k_short_paths.paths
+
+    d = np.zeros((len(routes_R)))
+    
+    for i in range(len(routes_R)):
+        d[i] = calc_cum_demand(routes_R[i], mx_demand)
+        
+    indices = np.where(d == np.min(d)) # indices_of_lowest_demand_routes
+    path_to_del = random.choice(list(indices[0]))
+    del routes_R[path_to_del] # remove the path
+    
+    routes_R = repair_add_path_to_route_set_ksp(routes_R, main_problem, ksp)
+    
+    return routes_R
+    
+
+def no_mutation(routes_R, main_problem):   
+    return routes_R 
 
 
 def mutate_overall_routes(routes_R, main_problem, mutation_probability):
@@ -2463,6 +2563,11 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
                 output_list["Mut_nr"] = mut_i+1
                 candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
                 
+                if mut_functions[mut_i].__name__ == "no_mutation":
+                    output_list["Mut_successful"] = 1
+                    output_list["Route"] = candidate_routes_R
+                    return output_list
+                
                 if candidate_routes_R == routes_R:
                     return output_list
                 
@@ -2528,79 +2633,6 @@ def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
                           main_problem.problem_GA_parameters.mutation_probability_routes)
     return pop_mutated_variables
 
-
-def get_common_terminal_vertices_pairs(routes_R):
-    """A function to get all the pairs of the terminal vertices in a route set
-    """
-    # Get terminal nodes
-    tf = [x[0] for x in routes_R] #get all terminal nodes in the first position
-    tb = [x[-1] for x in routes_R] #get all terminal nodes in the last position
-    
-    fb=[] # list for keeping the front to back matches
-    ff=[] # list for keeping the front to front matches
-    bb=[] # list for keeping the back to back matches
-    
-    for i in range(len(tf)):
-        for j in range(len(tf)):
-            
-            if tf[i] == tb[j]:
-                fb.append((i,j))
-            
-            if i < j:
-                if tf[i] == tf[j]:
-                    ff.append((i,j))
-                
-                if tb[i] == tb[j]:
-                    bb.append((i,j))
-                    
-    return {'fb':fb, 'ff':ff, 'bb':bb}
- 
-    
-def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
-    """A function that merges two routes if they share a common vertex based on
-    Matthew P John's 2016 PhD Thesis"""
-    ksp = UTNDP_problem_1.k_short_paths.paths
-    ctv_pairs = get_common_terminal_vertices_pairs(route_to_mutate)    
-    
-    potential_routes = []
-    
-    for config in ['ff', 'bb', 'fb']:
-        
-        for pair in ctv_pairs[config]:
-            routes_R = copy.deepcopy(route_to_mutate)
-            
-            if config == 'ff':
-                P_new_front = routes_R[pair[0]]
-                P_new_front.reverse()
-                P_new_back = routes_R[pair[1]]
-                P_new = P_new_front + P_new_back[1:]
-                
-            if config == 'bb':
-                P_new_front = routes_R[pair[0]]
-                P_new_back = routes_R[pair[1]]
-                P_new_back.reverse()
-                P_new = P_new_front + P_new_back[1:]
-                
-            if config == 'fb':
-                P_new_front = routes_R[pair[1]]
-                P_new_back = routes_R[pair[0]]
-                P_new = P_new_front + P_new_back[1:]
-                
-            if len(P_new) != 0:
-                routes_R = [i for j, i in enumerate(routes_R) if j not in pair]
-                
-                if len(set(P_new)) == len(P_new):
-                    routes_R.append(P_new)
-                    routes_R = repair_add_path_to_route_set_ksp(routes_R, UTNDP_problem_1, ksp)
-                    if test_all_four_constraints(routes_R, UTNDP_problem_1):
-                        potential_routes.append(routes_R)
-                
-            P_new = []
-    
-    if len(potential_routes):           
-        return random.choice(potential_routes)
-    else:
-        return route_to_mutate
 
 # %% Objective Functions
 """ Define the Objective UTNDP functions """

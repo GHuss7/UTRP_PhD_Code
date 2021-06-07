@@ -15,6 +15,7 @@ import copy
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib as mplt
+import seaborn as sns
 
 mplt.rcParams['font.family'] = 'serif'
 cmfont = mplt.font_manager.FontProperties(fname=mplt.get_data_path() + '/fonts/ttf/cmunrm.ttf')
@@ -397,21 +398,64 @@ def plot_nx_graph_with_labels(G):
 #    G2.size(weight='weight')
 
 #%% Function: Visualisation of generations in UTRP GA
-def plot_generations_objectives(pop_generations):
+def plot_generations_objectives(pop_generations, every_n_gen=False, path=False):
     # function to visualise the different populations per generation
     # gets difficult to visualise and plot when generations reach more than 10
-    
-    df_to_plot = pd.DataFrame()
-    df_to_plot = df_to_plot.assign(f_1 = pop_generations[:,0],
+    if every_n_gen:
+        df_to_plot = pd.DataFrame()
+        df_to_plot = df_to_plot.assign(f_1 = pop_generations[:,0],
+                      f_2 = pop_generations[:,1],
+                      Generation = pop_generations[:,3]) 
+        df_to_plot = df_to_plot.iloc[::every_n_gen, :]
+        
+    else:
+        df_to_plot = pd.DataFrame()
+        df_to_plot = df_to_plot.assign(f_1 = pop_generations[:,0],
                       f_2 = pop_generations[:,1],
                       Generation = pop_generations[:,3])
     
-    mplt.style.use('seaborn-whitegrid')
+    # mplt.style.use('seaborn-whitegrid')
     
-    groups = df_to_plot.groupby("Generation")
-    for name, group in groups:
-        mplt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
-    mplt.legend()
+    try:
+        groups = df_to_plot.groupby("Generation")
+        for name, group in groups:
+            mplt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
+        mplt.legend()
+    
+        if path: 
+            plt.ioff()
+            plt.savefig(path /"Fronts_over_gens.pdf", bbox_inches='tight')
+            plt.close()
+    except:
+        pass
+    
+def plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=False, path=False):
+    # function to visualise the different populations per generation
+    # gets difficult to visualise and plot when generations reach more than 10
+    if every_n_gen:
+        df_to_plot = pd.DataFrame()
+        df_to_plot = df_pop_generations.drop(['R_x', 'Rank'], axis=1)
+        df_to_plot = df_pop_generations[df_pop_generations['Generation']%every_n_gen==0]
+        
+    else:
+        df_to_plot = pd.DataFrame()
+        df_to_plot = df_pop_generations.drop(['R_x', 'Rank'], axis=1)
+    
+    # Seaborn settings:    
+    # mplt.style.use('seaborn-whitegrid')
+    sns.set(rc={'figure.figsize':(11.7,8.27)})
+    
+    try:
+        sns.lmplot(x='f_1', y='f_2', data=df_to_plot, hue='Generation', fit_reg=False)
+    
+        if path: 
+            # plt.show()
+            plt.ioff()
+            plt.savefig(path /"Fronts_over_gens.pdf", bbox_inches='tight')
+            plt.close()
+    except:
+        pass   
+    
 
 #%% Print summary figures
 def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, validation_line=False):

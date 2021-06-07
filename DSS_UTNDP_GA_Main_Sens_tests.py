@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -103,16 +103,17 @@ if Decisions["Choice_import_dictionaries"]:
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
     
-    mutations = {"Intertwine_two" : gf.mutate_routes_two_intertwine, 
+    mutations = {#"No_mutation" : gf.no_mutation,
+                    "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal}
+                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                    "Repl_lowest_dem" : gf.mut_replace_lowest_demand}
+    
         
     mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
     mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
     mut_names = [v['name'] for (k,v) in mutations_dict.items()]
-    s_t = 0
-    b_t = 0
    
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
@@ -172,7 +173,7 @@ else:
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
-    "mutation_probability" : 1, # John: 1/|Route set| -> set later
+    "mutation_probability" : 0.95, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
     "mutation_ratio" : 0.1, # Ratio used for the probabilites of mutations applied
     "tournament_size" : 2,
@@ -184,7 +185,7 @@ else:
     }
     
 # Sensitivity analysis lists    
-    sensitivity_list = [#[parameters_constraints, "con_r", 6, 7, 8], # TODO: add 4 , find out infeasibility
+    sensitivity_list = [#[parameters_constraints, "con_r", 4, 6, 7, 8],
                         #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
                         ["population_size", 10, 20, 50, 100, 150, 200, 300, 400],
                         ["generations", 10, 20, 50, 100, 150, 200, 300, 400],
@@ -391,9 +392,12 @@ if True:
         # Frequently used variables
         pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
 
+        # Generate intitial population
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
-        pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
-        #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        #pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        #pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
+
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
         
         # Create generational dataframe
@@ -487,6 +491,9 @@ if True:
                                          df_gen_temp, df_mut_ratios, name_input_data, 
                                          path_results_per_run, labels,
                                          stats_overall['HV Benchmark'])
+                    
+                    gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
+
                     #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_gen)
                 except PermissionError:
                     pass
@@ -569,6 +576,8 @@ if True:
             df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
             df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
             df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+            df_mut_ratios.to_csv(path_results_per_run / "Mut_ratios.csv")
+            df_mut_summary.to_csv(path_results_per_run / "Mut_summary.csv")
             
             # Print and save result summary figures:
             labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations
@@ -589,17 +598,8 @@ if True:
             print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
             
             # Visualise the generations
-            if False: # becomes useless when more than 10 generations
-                gv.plot_generations_objectives(df_pop_generations[["f_1", "f_2"]])
-                
-                # Opens and saves the plot
-                manager = plt.get_current_fig_manager()
-                manager.window.showMaximized()
-                plt.show()
-                plt.savefig(path_results_per_run / "Results_combined.pdf", bbox_inches='tight')
-                manager.window.close()
-            
-            
+            gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
+
             
     del HV, i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
     

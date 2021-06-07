@@ -425,7 +425,7 @@ def generate_solution(paths_shortest_all, con_r, N , iterations):
             return routes_R
     return False            # returns false if a feasible solution is not generated
 
-# %% Generate a feasible solution succesfully
+# %% Generate a feasible solution succesfully ################################################
 def generate_feasible_solution(paths_shortest_all, con_r, N , iterations):
     # This code is used to generate a set of routes that are connected with each other
     # from the possible set of candidate routes presented
@@ -503,6 +503,7 @@ def generate_initial_route_sets(main_problem, printing=True):
 
 # Generate longer feasible solutions and covering demand with direct routes
 def calc_cum_demand(r_i, mx_demand):
+    '''Calc cumulative demand for a single path'''
     dem_tot = 0 # initiate demand count
     # for each connection, calculate demand between OD pairs direct route
     for i in r_i:
@@ -512,15 +513,42 @@ def calc_cum_demand(r_i, mx_demand):
     
     return dem_tot
 
+def calc_cum_demand_route_set(r_i, mx_demand):
+    '''Calc cumulative demand for a route set'''
+    dem_tot = 0 # initiate demand count
+    # for each connection, calculate demand between OD pairs direct route
+    for path_i in range(len(r_i)):
+        for i in r_i[path_i]:
+            for j in r_i[path_i]:
+                if i < j:
+                    dem_tot = dem_tot + mx_demand[i,j] + mx_demand[j,i]
+    
+    return dem_tot
+
 def remove_cum_demand(r_i, mx_demand):
+    '''Remove cumulative demand for a single path'''
     # for each connection, remove demand between OD pairs direct route
+    mx_demand_copy = copy.deepcopy(mx_demand)
     for i in r_i:
         for j in r_i:
             if i < j:
-                mx_demand[i,j] = 0
-                mx_demand[j,i] = 0
+                mx_demand_copy[i,j] = 0
+                mx_demand_copy[j,i] = 0
     
-    return mx_demand
+    return mx_demand_copy
+
+def remove_cum_demand_route_set(r_i, mx_demand):
+    '''Remove cumulative demand for a route set'''
+    # for each connection, remove demand between OD pairs direct route
+    mx_demand_copy = copy.deepcopy(mx_demand)
+    for path_i in range(len(r_i)):
+        for i in r_i[path_i]:
+            for j in r_i[path_i]:
+                if i < j:
+                    mx_demand_copy[i,j] = 0
+                    mx_demand_copy[j,i] = 0
+    
+    return mx_demand_copy
 
 def get_vertex_with_max_unmet_demand(mx_demand):
     vetrex_list = []
@@ -1980,7 +2008,7 @@ def add_path_satisfying_max_unmet_demand(route_to_repair, main_problem, routes_t
     if not routes_to_search:
         routes_to_search = main_problem.k_short_paths.paths
     mx_demand = main_problem.problem_data.mx_demand
-    mx_demand_unmet = remove_cum_demand(route_to_repair, mx_demand)
+    mx_demand_unmet = remove_cum_demand_route_set(route_to_repair, mx_demand)
 
     d_max = 0
     pot_route_indices = [] # a list of the indices of potential routes that may suffice

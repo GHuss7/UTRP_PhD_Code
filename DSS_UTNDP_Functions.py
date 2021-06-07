@@ -1946,7 +1946,7 @@ def repair_add_path_to_route_set_ksp(route_to_repair, main_problem, k_shortest_p
     """A function that attempts to repair a route set that had one path removed
     by identifying the missing nodes and by attempting to maximise the coverage
     of the missing nodes by looking through the K-shortest paths list"""
-    
+    ksp = k_shortest_paths_all
     n_nodes = len(main_problem.mapping_adjacent)    
     all_nodes = [y for x in route_to_repair for y in x] # flatten all the elements in route
     
@@ -1955,22 +1955,50 @@ def repair_add_path_to_route_set_ksp(route_to_repair, main_problem, k_shortest_p
         missing_nodes = list(set(range(n_nodes)).difference(set(all_nodes))) # find all the missing nodes
     
         indices_of_compatible_routes = []
-        for path_index in range(len(k_shortest_paths_all)): #TODO: Can be optimised
-            if set(missing_nodes).issubset(set(k_shortest_paths_all[path_index])):
+        for path_index in range(len(ksp)): #TODO: Can be optimised
+            if set(missing_nodes).issubset(set(ksp[path_index])):
                 indices_of_compatible_routes.append(path_index)
         
-        path_to_add = k_shortest_paths_all[random.choice(indices_of_compatible_routes)] #TODO: Can be done smarter
+        routes_to_search = [ksp[i] for i in indices_of_compatible_routes]
+        repaired_route = add_path_satisfying_max_unmet_demand(route_to_repair, main_problem, routes_to_search)
+        
+        return repaired_route
+    
+    else:
+        path_to_add = random.choice(ksp)
         repaired_route = copy.deepcopy(route_to_repair)
         repaired_route.extend([path_to_add])
         
         return repaired_route
     
-    else:
-        path_to_add = random.choice(k_shortest_paths_all)
-        repaired_route = copy.deepcopy(route_to_repair)
-        repaired_route.extend([path_to_add])
+def add_path_satisfying_max_unmet_demand(route_to_repair, main_problem, routes_to_search=False): 
+    '''Function for adding a path to a route set r_i that has one less route than 
+    the total number of routes requirement, based on maximising unmet demand.
+    Routes to search is by default k-shortest paths, but another set of routes 
+    may be imported and used to search for the best demand.'''
+    
+    if not routes_to_search:
+        routes_to_search = main_problem.k_short_paths.paths
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_demand_unmet = remove_cum_demand(route_to_repair, mx_demand)
+
+    d_max = 0
+    pot_route_indices = [] # a list of the indices of potential routes that may suffice
+    
+    for i in range(len(routes_to_search)):
+        d_met = calc_cum_demand(routes_to_search[i], mx_demand_unmet)
         
-        return repaired_route
+        if d_met == d_max:
+            pot_route_indices.extend([i])
+        if d_met > d_max:
+            pot_route_indices = [i]
+            d_max = d_met
+
+    path_to_add = routes_to_search[random.choice(pot_route_indices)]
+    repaired_route = copy.deepcopy(route_to_repair)
+    repaired_route.extend([path_to_add])
+    
+    return repaired_route
 
 # %% Crossover functions
 

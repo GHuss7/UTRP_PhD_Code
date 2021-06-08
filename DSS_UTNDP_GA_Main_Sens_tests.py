@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -108,7 +108,10 @@ if Decisions["Choice_import_dictionaries"]:
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
                     "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    "Repl_lowest_dem" : gf.mut_replace_lowest_demand}
+                    "Repl_lowest_dem" : gf.mut_replace_lowest_demand,
+                    "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                    "Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                    }
     
         
     mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}

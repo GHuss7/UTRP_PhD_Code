@@ -2471,7 +2471,8 @@ def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
     
     
 def mut_replace_lowest_demand(route_to_mutate, main_problem):
-    
+    '''Mutation function for replacing the route with the lowest demand
+    with a route from the k shortest paths that aims to maximise demand'''
     routes_R = copy.deepcopy(route_to_mutate)
     
     mx_demand = main_problem.problem_data.mx_demand
@@ -2489,7 +2490,118 @@ def mut_replace_lowest_demand(route_to_mutate, main_problem):
     routes_R = repair_add_path_to_route_set_ksp(routes_R, main_problem, ksp)
     
     return routes_R
+
+
+def mut_remove_lowest_demand_terminal(route_to_mutate, main_problem):
+    '''Mutation function that removes an overlapping terminal vertex that 
+    either has the lowest demand route cost associated'''
+
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_dist = main_problem.problem_data.mx_dist
+
+    # calc tot initial direct demand
+    d_init = calc_cum_demand_route_set(route_to_mutate, mx_demand) 
+    candidates = [] # list to keep the candidates
+
+    for i in range(len(route_to_mutate)):
+        
+        # front terminal vertex eval
+        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy[i] = route_copy[i][1:]
+        # test feasibility
+        if test_all_four_constraints(route_copy, main_problem):
+            d = calc_cum_demand_route_set(route_copy, mx_demand)
+            d_cont = d_init - d # calc direct demand contribution
+            c = mx_dist[route_to_mutate[i][0], route_copy[i][0]] # get edge cost
+            candidates.append({'route_nr': i, 'front':True, 
+                               'dem_contribution':d_cont, 'cost':c}) 
+        
+        # end terminal vertex eval
+        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy[i] = route_copy[i][:-1]
+        # test feasibility
+        if test_all_four_constraints(route_copy, main_problem):
+            d = calc_cum_demand_route_set(route_copy, mx_demand)
+            d_cont = d_init - d # calc direct demand contribution
+            c = mx_dist[route_to_mutate[i][-1], route_copy[i][-1]] # get edge cost
+            candidates.append({'route_nr': i, 'front':False, 
+                               'dem_contribution':d_cont, 'cost':c})
     
+    # if no candidates, return initial route
+    if len(candidates) == 0: 
+        return route_to_mutate
+        
+    # find terminals with lowest demand or cost
+    criteria = 'dem_contribution'
+    demands = [x[criteria] for x in candidates]    
+    candidates_min = [x for x in candidates if x[criteria] == min(demands)]
+    
+    candidate = random.choice(candidates_min)
+    
+    # extract candidate details and return mutated route
+    mut_route = copy.deepcopy(route_to_mutate)
+    if candidate['front']:
+        mut_route[i] = mut_route[candidate['route_nr']][1:]
+    else:
+        mut_route[i] = mut_route[candidate['route_nr']][:-1]
+    
+    return mut_route
+
+def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
+    '''Mutation function that removes an overlapping terminal vertex that 
+    either has the largest route cost associated'''
+
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_dist = main_problem.problem_data.mx_dist
+
+    # calc tot initial direct demand
+    d_init = calc_cum_demand_route_set(route_to_mutate, mx_demand) 
+    candidates = [] # list to keep the candidates
+
+    for i in range(len(route_to_mutate)):
+        
+        # front terminal vertex eval
+        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy[i] = route_copy[i][1:]
+        # test feasibility
+        if test_all_four_constraints(route_copy, main_problem):
+            d = calc_cum_demand_route_set(route_copy, mx_demand)
+            d_cont = d_init - d # calc direct demand contribution
+            c = mx_dist[route_to_mutate[i][0], route_copy[i][0]] # get edge cost
+            candidates.append({'route_nr': i, 'front':True, 
+                               'dem_contribution':d_cont, 'cost':c}) 
+        
+        # end terminal vertex eval
+        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy[i] = route_copy[i][:-1]
+        # test feasibility
+        if test_all_four_constraints(route_copy, main_problem):
+            d = calc_cum_demand_route_set(route_copy, mx_demand)
+            d_cont = d_init - d # calc direct demand contribution
+            c = mx_dist[route_to_mutate[i][-1], route_copy[i][-1]] # get edge cost
+            candidates.append({'route_nr': i, 'front':False, 
+                               'dem_contribution':d_cont, 'cost':c})
+    
+    # if no candidates, return initial route
+    if len(candidates) == 0: 
+        return route_to_mutate
+        
+    # find terminals with lowest demand or cost
+    criteria = 'cost'
+    demands = [x[criteria] for x in candidates]    
+    candidates_min = [x for x in candidates if x[criteria] == min(demands)]
+    
+    candidate = random.choice(candidates_min)
+    
+    # extract candidate details and return mutated route
+    mut_route = copy.deepcopy(route_to_mutate)
+    if candidate['front']:
+        mut_route[i] = mut_route[candidate['route_nr']][1:]
+    else:
+        mut_route[i] = mut_route[candidate['route_nr']][:-1]
+    
+    return mut_route
+
 
 def no_mutation(routes_R, main_problem):   
     return routes_R 

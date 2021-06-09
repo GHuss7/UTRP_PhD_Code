@@ -402,7 +402,8 @@ if True:
         # Generate intitial population
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
         #pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
-        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
+        #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
         #pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
 
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        

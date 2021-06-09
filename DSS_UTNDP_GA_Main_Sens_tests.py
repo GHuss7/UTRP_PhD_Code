@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][2]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -78,7 +78,7 @@ else:
     "Choice_conduct_sensitivity_analysis" : False,
     "Choice_import_dictionaries" : True,
     "Choice_print_full_data_for_analysis" : True,
-    "Choice_relative_results_referencing" : True,
+    "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests"
     }
 
@@ -121,9 +121,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "population_size" : 80, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 20, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -351,6 +351,10 @@ if True:
         path_parent_folder = Path(os.path.dirname(os.getcwd()))
     else:
         path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+        if not os.path.isdir(path_parent_folder):
+            path_parent_folder = Path("C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+        if not os.path.isdir(path_parent_folder):
+            path_parent_folder = Path(os.path.dirname(os.getcwd()))
     
     path_results = path_parent_folder / ("Results/Results_"+
                                          name_input_data+
@@ -529,7 +533,12 @@ if True:
                 nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
                 mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
                 success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
-                success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)
+                
+                # reset the success ratios if all have falied
+                if sum(success_ratio) == 0:
+                    success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
+                
+                success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
                 updated_ratio = mutation_threshold + success_proportion
                 UTNDP_problem_1.mutation_ratio = updated_ratio
                 

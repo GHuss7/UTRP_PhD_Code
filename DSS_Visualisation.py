@@ -18,8 +18,11 @@ import matplotlib as mplt
 import seaborn as sns
 
 mplt.rcParams['font.family'] = 'serif'
-cmfont = mplt.font_manager.FontProperties(fname=mplt.get_data_path() + '/fonts/ttf/cmunrm.ttf')
-mplt.rcParams['font.serif'] = cmfont.get_name()
+try:
+    cmfont = mplt.font_manager.FontProperties(fname=mplt.get_data_path() + '/fonts/ttf/cmunrm.ttf')
+    mplt.rcParams['font.serif'] = cmfont.get_name()
+except:
+    print('File not found: ' + mplt.get_data_path() + '/fonts/ttf/cmunrm.ttf')
 mplt.rcParams['mathtext.fontset']= 'cm'
 mplt.rcParams['font.size']= 11
 mplt.rcParams['axes.unicode_minus']= False
@@ -29,6 +32,7 @@ mplt.rcParams['axes.unicode_minus']= False
 
 # %% Import personal functions
 import DSS_UTNDP_Functions as gf
+import DSS_Admin as ga
 
 # %% Format a graph's attributes
 
@@ -617,8 +621,9 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     ax_twin.legend(loc=0) 
     
     
-    for mut_nr in range(1,len(df_mut_ratios.columns)):
-        axs[1, 0].plot(df_mut_ratios["Generation"], df_mut_ratios[df_mut_ratios.columns[mut_nr]], label=df_mut_ratios.columns[mut_nr])
+    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+    for mut_nr in range(1,len(df_mut_smooth.columns)):
+        axs[1, 0].plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
     axs[1, 0].set_title('Mutation ratios over all generations')
     axs[1, 0].set(xlabel='Generations', ylabel='Mutation ratio')
     axs[1, 0].legend(loc=0) 
@@ -672,3 +677,20 @@ def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_dat
         plt.ioff()
         plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
         plt.close()
+
+def plot_mutation_ratios(df_mut_ratios, alpha=0.1, beta=0.1):
+    
+    fig = plt.figure()
+    #fig.set_figheight(15)
+    #fig.set_figwidth(20)
+    ax = fig.add_subplot(111)
+    
+    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha, beta)
+    for mut_nr in range(1,len(df_mut_smooth.columns)):
+        ax.plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
+    ax.set_title('Mutation ratios over all generations')
+    ax.set(xlabel='Generations', ylabel='Mutation ratio')
+    ax.legend(loc=0) 
+    fig.show()
+    
+#plot_mutation_ratios(df_mut_ratios, alpha=0.1, beta=0.1)

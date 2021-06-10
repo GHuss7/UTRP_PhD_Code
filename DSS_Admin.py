@@ -857,7 +857,7 @@ def exp_smooth_df(df, alpha, beta):
     for i in range(len(mut_r)):
         if i == 0:
             s_t[i] = mut_r[i]
-            b_t[i] = mut_r[i] - mut_r[i+1]
+            b_t[i] = mut_r[i+1] - mut_r[i]
         
         else:
             s_t[i] = alpha*mut_r[i] + (1-alpha)*(s_t[i-1] + b_t[i-1])

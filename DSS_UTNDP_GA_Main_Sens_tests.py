@@ -108,7 +108,7 @@ if Decisions["Choice_import_dictionaries"]:
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
                     "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    "Repl_lowest_dem" : gf.mut_replace_lowest_demand,
+                    "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
                     "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     "Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     }
@@ -133,7 +133,9 @@ if Decisions["Choice_import_dictionaries"]:
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
-    "number_of_variables" : parameters_constraints["con_r"],
+    "gen_compare_HV" : 10, # Compare generations for improvement in HV
+    "HV_improvement_th": 0.0001, # Treshold that terminates the search
+     "number_of_variables" : parameters_constraints["con_r"],
     "number_of_objectives" : 2, # this could still be automated in the future
     "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
     }
@@ -264,7 +266,7 @@ UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 # UTNDP_problem_1.R_routes = R_routes
-
+UTNDP_problem_1.problem_GA_parameters["gen_compare_HV"]
 if True:
 #def main(UTNDP_problem_1):
     
@@ -562,6 +564,16 @@ if True:
                 print("Dur: {0} [HV:{1} | BM:{2}]".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                                 round(HV, 4),
                                                                 round(stats_overall['HV Benchmark'],4)))
+                
+            # Test whether HV is still improving
+            gen_compare = UTNDP_problem_1.problem_GA_parameters.gen_compare_HV
+            HV_improvement_th = UTNDP_problem_1.problem_GA_parameters.HV_improvement_th
+            if len(df_data_generations) > gen_compare:
+                HV_diff = df_data_generations['HV'].iloc[-1] - df_data_generations['HV'].iloc[-gen_compare-1]
+                if HV_diff < HV_improvement_th:
+                    stats['Termination'] = 'Non-improving_HV'
+                    print('Run terminated by non-improving HV')
+                    break
                 
         #%% Stats updates
         stats['end_time'] = datetime.datetime.now() # save the end time of the run

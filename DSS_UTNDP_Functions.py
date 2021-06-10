@@ -16,6 +16,8 @@ from itertools import compress
 import networkx as nx
 import copy
 import datetime
+import multiset
+
 # import pygmo as pg
 
 from pymoo.util.misc import find_duplicates, has_feasible
@@ -2802,13 +2804,89 @@ def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
     return pop_mutated_variables
 
 
-# %% Objective Functions
+# %% Objective functions
 """ Define the Objective UTNDP functions """
 def fn_obj_2(routes, UTNDP_problem_input):
     return (ev.evalObjs(routes, 
             UTNDP_problem_input.problem_data.mx_dist, 
             UTNDP_problem_input.problem_data.mx_demand, 
             UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
+
+# %% Similarity functions
+def return_all_route_set_edges(R_x):
+    R_x_edges = [(P_x[i], P_x[i+1]) for P_x in R_x for i in range(len(P_x)-1)]
+    return R_x_edges
+
+def return_all_path_edges(P_x):
+    P_x_edges = [(P_x[i], P_x[i+1]) for i in range(len(P_x)-1)]
+    return P_x_edges
+
+def calc_similarity_from_ms(R_1_ms, R_2_ms):
+    sim = 2*(len(R_1_ms.intersection(R_2_ms)))/(len(R_1_ms) + len(R_2_ms))
+    return sim
+
+def calc_route_set_similarity(R_1, R_2):
+    '''Takes as input two route sets, each being a list of lists,
+    for example:
+        R_1 = [[1,2,3,4], [5,2,6]]
+        R_2 = [[1,2,3,4], [5,2,3,6]]
+    and returns the percentage similarity in terms of edges'''
+    
+    # Get all the edges
+    R_1_edges = return_all_route_set_edges(R_1)
+    R_2_edges = return_all_route_set_edges(R_2)
+
+    # Working with the multisets
+    R_1_ms = multiset.Multiset(R_1_edges)
+    R_2_ms = multiset.Multiset(R_2_edges)
+    
+    similarity = calc_similarity_from_ms(R_1_ms, R_2_ms)
+    return similarity
+
+def calc_path_similarity(R_1, R_2):
+    '''Takes as input two paths, each being a list of vertices,
+    for example:
+        R_1 = [5,2,6]
+        R_2 = [5,2,3,6]
+    and returns the percentage similarity in terms of edges'''
+    
+    # Get all the edges
+    R_1_edges = return_all_path_edges(R_1)
+    R_2_edges = return_all_path_edges(R_2)
+
+    # Working with the multisets
+    R_1_ms = multiset.Multiset(R_1_edges)
+    R_2_ms = multiset.Multiset(R_2_edges)
+    
+    similarity = calc_similarity_from_ms(R_1_ms, R_2_ms)
+    return similarity
+
+def calc_route_set_similarity_matrix(R_list):
+    '''Takes as input a list of numerous routes and calculates the similarity
+    between all of the routes'''
+    n = len(R_list) # length of routes list
+    mx_sim = np.ones((n,n))
+    for i in range(n):
+        for j in range(n):
+            mx_sim[i,j] = calc_path_similarity(R_list[i], R_list[j])
+            
+    return mx_sim
+
+def calc_route_set_similarity_matrix_fast(R_list):
+    '''Takes as input a list of numerous routes and calculates the similarity
+    between all of the routes'''
+    n = len(R_list) # length of routes list
+    
+    R_ms = [multiset.Multiset(return_all_route_set_edges(r)) for r in R_list]
+    
+    mx_sim = np.ones((n,n))
+    for i in range(n):
+        for j in range(n):
+            if i > j: 
+                sim = calc_similarity_from_ms(R_ms[i], R_ms[j])
+                mx_sim[i,j] = sim
+                mx_sim[j,i] = sim
+    return mx_sim
 
 # %% Non-dominated set creation functions
 def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', obj_2_name='F_4'):
@@ -2817,6 +2895,10 @@ def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', ob
     df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
     return df_non_dominated_set
 
+R_1 = mutated_variables[1]
+R_2 = mutated_variables[4]
+calc_route_set_similarity(R_1, R_2)
 
-
-
+R_list = pop_1.variables
+mx_sim = calc_route_set_similarity_matrix(R_list)
+mx_sim_2 = calc_route_set_similarity_matrix_fast(R_list)

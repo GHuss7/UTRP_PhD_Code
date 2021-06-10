@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][4]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -121,9 +121,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "population_size" : 100, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 5, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -133,7 +133,7 @@ if Decisions["Choice_import_dictionaries"]:
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
-    "gen_compare_HV" : 10, # Compare generations for improvement in HV
+    "gen_compare_HV" : 20, # Compare generations for improvement in HV
     "HV_improvement_th": 0.0001, # Treshold that terminates the search
      "number_of_variables" : parameters_constraints["con_r"],
     "number_of_objectives" : 2, # this could still be automated in the future
@@ -571,7 +571,7 @@ if True:
                 HV_diff = df_data_generations['HV'].iloc[-1] - df_data_generations['HV'].iloc[-gen_compare-1]
                 if HV_diff < HV_improvement_th:
                     stats['Termination'] = 'Non-improving_HV'
-                    print('Run terminated by non-improving HV')
+                    print(f'Run terminated by non-improving HV after Gen {i_gen} [Gen comp:{gen_compare} | HV diff: {HV_diff}')
                     break
                 
         #%% Stats updates

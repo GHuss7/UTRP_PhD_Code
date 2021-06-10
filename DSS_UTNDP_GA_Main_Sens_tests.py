@@ -121,9 +121,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 80, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 20, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -173,9 +173,9 @@ else:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 10, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 400, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 20, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 0.95, # John: 1/|Route set| -> set later
@@ -266,7 +266,7 @@ UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 # UTNDP_problem_1.R_routes = R_routes
-UTNDP_problem_1.problem_GA_parameters["gen_compare_HV"]
+
 if True:
 #def main(UTNDP_problem_1):
     
@@ -404,8 +404,8 @@ if True:
         # Generate intitial population
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
         #pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
-        pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
-        #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        #pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
         #pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
 
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
@@ -546,7 +546,6 @@ if True:
                 UTNDP_problem_1.mutation_ratio = updated_ratio
                 
             update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
-            # s_t, b_t = update_mutation_ratio_exp_double_smooth(df_mut_summary, UTNDP_problem_1, i_gen, s_t, b_t, alpha=0.3, beta=0.5)
             df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
             
             # Remove old generation

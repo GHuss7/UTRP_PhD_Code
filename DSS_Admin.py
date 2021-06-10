@@ -846,7 +846,7 @@ def update_mutation_ratio_exp_double_smooth(df_mut_summary, UTNDP_problem_1, i_g
     
     return s_t, b_t
 
-def exp_smooth_df(df, alpha, beta):
+def exp_smooth_df(df, alpha, beta, n=100):
     '''A function for exp smoothing a dataframe (excluding first column'''
     # ref: https://en.wikipedia.org/wiki/Exponential_smoothing
 
@@ -857,7 +857,7 @@ def exp_smooth_df(df, alpha, beta):
     for i in range(len(mut_r)):
         if i == 0:
             s_t[i] = mut_r[i]
-            b_t[i] = mut_r[i+1] - mut_r[i]
+            b_t[i] = (mut_r[i+1] - mut_r[i])/n
         
         else:
             s_t[i] = alpha*mut_r[i] + (1-alpha)*(s_t[i-1] + b_t[i-1])

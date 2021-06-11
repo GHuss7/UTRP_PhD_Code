@@ -2865,19 +2865,24 @@ def calc_route_set_similarity_matrix(R_list):
     '''Takes as input a list of numerous routes and calculates the similarity
     between all of the routes'''
     n = len(R_list) # length of routes list
+    
+    R_ms = [multiset.Multiset(return_all_route_set_edges(r)) for r in R_list]
+    
     mx_sim = np.ones((n,n))
     for i in range(n):
         for j in range(n):
-            mx_sim[i,j] = calc_path_similarity(R_list[i], R_list[j])
-            
+            if i > j: 
+                sim = calc_similarity_from_ms(R_ms[i], R_ms[j])
+                mx_sim[i,j] = sim
+                mx_sim[j,i] = sim
     return mx_sim
 
-def calc_route_set_similarity_matrix_fast(R_list):
-    '''Takes as input a list of numerous routes and calculates the similarity
-    between all of the routes'''
-    n = len(R_list) # length of routes list
+def calc_path_similarity_matrix(P_list):
+    '''Takes as input a list of numerous paths and calculates the similarity
+    between all of the paths'''
+    n = len(P_list) # length of routes list
     
-    R_ms = [multiset.Multiset(return_all_route_set_edges(r)) for r in R_list]
+    R_ms = [multiset.Multiset(return_all_path_edges(p)) for p in P_list]
     
     mx_sim = np.ones((n,n))
     for i in range(n):
@@ -2895,10 +2900,3 @@ def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', ob
     df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
     return df_non_dominated_set
 
-R_1 = mutated_variables[1]
-R_2 = mutated_variables[4]
-calc_route_set_similarity(R_1, R_2)
-
-R_list = pop_1.variables
-mx_sim = calc_route_set_similarity_matrix(R_list)
-mx_sim_2 = calc_route_set_similarity_matrix_fast(R_list)

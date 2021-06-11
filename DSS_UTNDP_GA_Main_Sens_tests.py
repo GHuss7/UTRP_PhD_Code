@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][4]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -121,9 +121,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 100, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 5, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 3, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -650,7 +650,7 @@ if True:
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         
-        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
+        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean(), df_durations["HV Obtained"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")
         del df_durations
         
@@ -664,6 +664,7 @@ if True:
             del key, val
       
         ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
+        gv.save_all_mutation_stats_and_plots(path_results)# gets and prints the mutation stats
         # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
 
         del archive_file, path_results_per_run, w           

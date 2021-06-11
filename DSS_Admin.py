@@ -129,13 +129,13 @@ def group_pareto_fronts_from_model_runs_2(path_to_main_folder, parameters_input,
 def get_stats_from_model_runs(path_to_main_folder):
     # main folder should only contain folders of the runs
     result_entries = os.listdir(path_to_main_folder) # gets the names of all the results entries
-    df_all_obtained_stats = pd.DataFrame(columns=["Run_number","Duration"])
+    df_all_obtained_stats = pd.DataFrame(columns=["Run_number","Duration", "HV Obtained"])
     for i in range(len(result_entries)):
         if re.match("^Run_[0-9]+$", result_entries[i]):
             results_file_path = path_to_main_folder / result_entries[i] # sets the path
             with open(results_file_path / "stats.pickle",'rb') as read_file:
                 stats_dict =  pickle.load(read_file) # load the stats dictionary
-            df_all_obtained_stats.loc[len(df_all_obtained_stats)] = [result_entries[i], stats_dict['duration']]
+            df_all_obtained_stats.loc[len(df_all_obtained_stats)] = [result_entries[i], stats_dict['duration'], stats_dict['HV obtained']]
 
     return df_all_obtained_stats
 
@@ -149,6 +149,58 @@ def get_stats_from_model_runs2(path_to_main_folder, nr_of_runs):
         df_all_obtained_stats.loc[len(df_all_obtained_stats)] = ["Run_"+str(i+1), stats_dict['duration']]
 
     return df_all_obtained_stats
+
+def get_mutation_stats_from_model_runs(path_to_main_folder):
+    # main folder should only contain folders of the runs
+    result_entries = os.listdir(path_to_main_folder) # gets the names of all the results entries
+    run_counter = 0
+    min_len = 0
+
+    for i in range(len(result_entries)):
+        if re.match("^Run_[0-9]+$", result_entries[i]):
+            results_file_path = path_to_main_folder / result_entries[i] # sets the path 
+            
+            len_df = len(pd.read_csv(results_file_path / 'Mut_ratios.csv'))
+
+            if min_len == 0:
+               min_len = len_df
+            else:
+                if len_df < min_len:
+                    min_len = len_df
+
+
+    for i in range(len(result_entries)):
+        if re.match("^Run_[0-9]+$", result_entries[i]):
+            results_file_path = path_to_main_folder / result_entries[i] # sets the path 
+            
+            df_mut_ratios = pd.read_csv(results_file_path / 'Mut_ratios.csv')
+            df_mut_ratios_smoothed = exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1, n=100)            
+            
+            if run_counter == 0:
+                mut_ratios = np.array(df_mut_ratios.values)[:min_len,:]
+                mut_ratios_smoothed = np.array(df_mut_ratios_smoothed.values)[:min_len,:]
+                run_counter += 1
+                
+            else:
+                mut_ratios = mut_ratios + np.array(df_mut_ratios.values)[:min_len,:]
+                mut_ratios_smoothed = mut_ratios_smoothed + np.array(df_mut_ratios_smoothed.values)[:min_len,:]
+                run_counter += 1
+    
+    # average each array
+    mut_ratios = mut_ratios/ run_counter
+    mut_ratios_smoothed = mut_ratios_smoothed/ run_counter
+
+    
+    df_all_mut_ratios = pd.DataFrame(columns=df_mut_ratios.columns, data=mut_ratios)
+    df_all_mut_ratios_smoothed = pd.DataFrame(columns=df_mut_ratios.columns, data=mut_ratios_smoothed)
+    df_all_mut_ratios_end_smoothed = exp_smooth_df(df_all_mut_ratios, alpha=0.1, beta=0.1, n=100) 
+            
+    df_list = [df_all_mut_ratios, df_all_mut_ratios_end_smoothed, df_all_mut_ratios_smoothed]
+    df_names = ["Avg_mut_ratios", "Smoothed_avg_mut_ratios", "Avg_smoothed_mut_ratios"]
+    
+    return df_list, df_names
+    
+     
 
 def get_sens_tests_stats_from_model_runs(path_to_main_folder, nr_of_runs):
     # NB: folders should be named "Run_1" for example

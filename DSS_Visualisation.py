@@ -693,4 +693,37 @@ def plot_mutation_ratios(df_mut_ratios, alpha=0.1, beta=0.1):
     ax.legend(loc=0) 
     fig.show()
     
+def save_mutation_ratios_plot(df_mut_ratios, path, file_name):
+    '''A function to save the mutation summaries'''
+    fig = plt.figure()
+    #fig.set_figheight(15)
+    #fig.set_figwidth(20)
+    ax = fig.add_subplot(111)
+    
+    for mut_nr in range(2,len(df_mut_ratios.columns)): # 2 is to avoid first two columns
+        ax.plot(df_mut_ratios["Generation"], df_mut_ratios[df_mut_ratios.columns[mut_nr]], label=df_mut_ratios.columns[mut_nr])
+    ax.set_title('Mutation ratios over all generations')
+    ax.set(xlabel='Generations', ylabel='Mutation ratio')
+    ax.legend(loc=0) 
+    
+    try:
+        plt.ioff()
+        plt.savefig(path / (file_name+".pdf"), bbox_inches='tight')
+        plt.close()
+    except:
+        pass
+    
+    
+def save_all_mutation_stats_and_plots(path_to_main_folder):
+    '''A function that saves all the csv files and plots'''
+    df_list, df_names = ga.get_mutation_stats_from_model_runs(path_to_main_folder)
+    mut_folder = path_to_main_folder/'Mutations'
+    if not os.path.isdir(mut_folder):
+        os.mkdir(mut_folder)
+    
+    for df, name in zip(df_list, df_names):
+        df.to_csv(mut_folder / (name+'.csv'))    
+        save_mutation_ratios_plot(df, mut_folder, name)
+    
+    
 #plot_mutation_ratios(df_mut_ratios, alpha=0.1, beta=0.1)

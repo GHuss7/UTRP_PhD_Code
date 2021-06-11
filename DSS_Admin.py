@@ -174,29 +174,23 @@ def get_mutation_stats_from_model_runs(path_to_main_folder):
             results_file_path = path_to_main_folder / result_entries[i] # sets the path 
             
             df_mut_ratios = pd.read_csv(results_file_path / 'Mut_ratios.csv')
-            df_mut_ratios_smoothed = exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1, n=100)            
             
             if run_counter == 0:
                 mut_ratios = np.array(df_mut_ratios.values)[:min_len,:]
-                mut_ratios_smoothed = np.array(df_mut_ratios_smoothed.values)[:min_len,:]
                 run_counter += 1
                 
             else:
                 mut_ratios = mut_ratios + np.array(df_mut_ratios.values)[:min_len,:]
-                mut_ratios_smoothed = mut_ratios_smoothed + np.array(df_mut_ratios_smoothed.values)[:min_len,:]
                 run_counter += 1
     
     # average each array
     mut_ratios = mut_ratios/ run_counter
-    mut_ratios_smoothed = mut_ratios_smoothed/ run_counter
 
-    
     df_all_mut_ratios = pd.DataFrame(columns=df_mut_ratios.columns, data=mut_ratios)
-    df_all_mut_ratios_smoothed = pd.DataFrame(columns=df_mut_ratios.columns, data=mut_ratios_smoothed)
     df_all_mut_ratios_end_smoothed = exp_smooth_df(df_all_mut_ratios, alpha=0.1, beta=0.1, n=100) 
             
-    df_list = [df_all_mut_ratios, df_all_mut_ratios_end_smoothed, df_all_mut_ratios_smoothed]
-    df_names = ["Avg_mut_ratios", "Smoothed_avg_mut_ratios", "Avg_smoothed_mut_ratios"]
+    df_list = [df_all_mut_ratios, df_all_mut_ratios_end_smoothed]
+    df_names = ["Avg_mut_ratios", "Smoothed_avg_mut_ratios"]
     
     return df_list, df_names
     

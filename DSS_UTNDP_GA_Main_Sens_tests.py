@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -111,6 +111,7 @@ if Decisions["Choice_import_dictionaries"]:
                     "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
                     "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     "Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                    "Repl_high_sim_route":gf.mut_replace_high_sim_routes,
                     }
     
         
@@ -123,7 +124,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 3, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -261,7 +262,7 @@ UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
-UTNDP_problem_1.add_text = "" # define the additional text for the file name
+UTNDP_problem_1.add_text = f"G{parameters_GA['generations']}_P{parameters_GA['population_size']}_R{parameters_GA['number_of_runs']}" # define the additional text for the file name
 UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]

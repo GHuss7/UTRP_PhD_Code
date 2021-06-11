@@ -20,6 +20,7 @@ import multiset
 
 # import pygmo as pg
 
+
 from pymoo.util.misc import find_duplicates, has_feasible
 from pymoo.util.dominator import Dominator
 from pymoo.operators.selection.tournament_selection import compare, TournamentSelection
@@ -2025,6 +2026,44 @@ def add_path_satisfying_max_unmet_demand(route_to_repair, main_problem, routes_t
             d_max = d_met
 
     path_to_add = routes_to_search[random.choice(pot_route_indices)]
+    print(f"{path_to_add}")
+    repaired_route = copy.deepcopy(route_to_repair)
+    repaired_route.extend([path_to_add])
+    
+    return repaired_route
+
+def add_path_max_unmet_demand_limited_len(route_to_repair, main_problem, removed_path, routes_to_search=False): 
+    '''Function for adding a path to a route set r_i that has one less route than 
+    the total number of routes requirement, based on maximising unmet demand
+    while also inserting a route that has a length on one more than the removed 
+    route so that it won't prefer moves benefiting passenger cost more.
+    Routes to search is by default k-shortest paths, but another set of routes 
+    may be imported and used to search for the best demand.'''
+    # NB: Need to make this function probabilistic. Putting the same route into set
+    
+    
+    len_removed = len(removed_path)
+    
+    if not routes_to_search:
+        routes_to_search = main_problem.k_short_paths.paths
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_demand_unmet = remove_cum_demand_route_set(route_to_repair, mx_demand)
+
+    d_max = 0
+    pot_route_indices = [] # a list of the indices of potential routes that may suffice
+    
+    for i in range(len(routes_to_search)):
+        if len(routes_to_search[i]) <= len_removed + 1:
+            d_met = calc_cum_demand(routes_to_search[i], mx_demand_unmet)
+            
+            if d_met == d_max:
+                pot_route_indices.extend([i])
+            if d_met > d_max:
+                pot_route_indices = [i]
+                d_max = d_met
+
+    path_to_add = routes_to_search[random.choice(pot_route_indices)]
+    print(f"{path_to_add}")
     repaired_route = copy.deepcopy(route_to_repair)
     repaired_route.extend([path_to_add])
     
@@ -2429,9 +2468,13 @@ def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
     """A function that merges two routes if they share a common vertex based on
     Matthew P John's 2016 PhD Thesis"""
     ksp = UTNDP_problem_1.k_short_paths.paths
-    ctv_pairs = get_common_terminal_vertices_pairs(route_to_mutate)    
+    ctv_pairs = get_common_terminal_vertices_pairs(route_to_mutate)  # common terminal vertex  
     
     potential_routes = []
+    
+    # OPTIMISE: NB - shuffle [ff, bb, fb] and then shuffle order in each 
+    # then once a feasible solution is found, return and stop
+    # as this will save time. As already randomised and dont need to get all potential solutions 
     
     for config in ['ff', 'bb', 'fb']:
         
@@ -2489,7 +2532,8 @@ def mut_replace_lowest_demand(route_to_mutate, main_problem):
     path_to_del = random.choice(list(indices[0]))
     del routes_R[path_to_del] # remove the path
     
-    routes_R = repair_add_path_to_route_set_ksp(routes_R, main_problem, ksp)
+    routes_R = add_path_max_unmet_demand_limited_len(routes_R, main_problem, route_to_mutate[path_to_del], routes_to_search=False)
+    # routes_R = repair_add_path_to_route_set_ksp(routes_R, main_problem, ksp)
     
     return routes_R
 
@@ -2604,6 +2648,38 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
     
     return mut_route
 
+def mut_replace_high_sim_routes(routes_R, main_problem):
+    '''Mutation function where the routes with the maximum overlap is identified
+    and then replaced by a better route'''
+    R_copy = copy.deepcopy(routes_R)
+    max_sim_list, max_sim = calc_path_similarity_matrix_for_mut(R_copy)
+    pair = random.choice(max_sim_list)
+    P_1 = routes_R[pair[0]]
+    P_2 = routes_R[pair[1]]
+        
+    # Identify shortest subset that should be replaced
+    #NOTE: Only most similar would be replaced, and not pure subsets 
+    #TODO: Change to finding subset (wont be so similar, but subset portion)
+    if len(P_1) < len(P_2):
+        repl_P_1 = True
+    else:
+        repl_P_1 = False
+    
+    if max_sim > 0.5:
+        print(f"{P_1} \n{P_2} \n MAX:{max_sim} LIST:{max_sim_list}")
+
+        if repl_P_1:
+            del R_copy[pair[0]]
+            R_copy = add_path_max_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
+
+        else:
+            del R_copy[pair[1]]
+            R_copy = add_path_max_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[1]], routes_to_search=False)
+        
+        return R_copy
+    
+    else:
+        return routes_R
 
 def no_mutation(routes_R, main_problem):   
     return routes_R 
@@ -2871,7 +2947,7 @@ def calc_route_set_similarity_matrix(R_list):
     mx_sim = np.ones((n,n))
     for i in range(n):
         for j in range(n):
-            if i > j: 
+            if i < j: 
                 sim = calc_similarity_from_ms(R_ms[i], R_ms[j])
                 mx_sim[i,j] = sim
                 mx_sim[j,i] = sim
@@ -2887,11 +2963,35 @@ def calc_path_similarity_matrix(P_list):
     mx_sim = np.ones((n,n))
     for i in range(n):
         for j in range(n):
-            if i > j: 
+            if i < j: 
                 sim = calc_similarity_from_ms(R_ms[i], R_ms[j])
                 mx_sim[i,j] = sim
                 mx_sim[j,i] = sim
     return mx_sim
+
+def calc_path_similarity_matrix_for_mut(P_list):
+    '''Takes as input a list of numerous paths and calculates the similarity
+    between all of the paths, returning the max similarity and the respective route indices'''
+    n = len(P_list) # length of routes list
+    
+    R_ms = [multiset.Multiset(return_all_path_edges(p)) for p in P_list]
+    
+    max_sim = 0
+    max_sim_list = []
+    
+    for i in range(n):
+        for j in range(n):
+            if i < j: 
+                sim = calc_similarity_from_ms(R_ms[i], R_ms[j])
+                
+                if sim == max_sim:
+                    max_sim_list.append((i,j))
+                    
+                if sim > max_sim:
+                    max_sim = sim
+                    max_sim_list = [(i,j)]
+                    
+    return max_sim_list, max_sim
 
 # %% Non-dominated set creation functions
 def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', obj_2_name='F_4'):
@@ -2899,4 +2999,3 @@ def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', ob
     df_non_dominated_set = df_non_dominated_set[is_pareto_efficient(df_non_dominated_set[[obj_1_name,obj_2_name]].values, True)]
     df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
     return df_non_dominated_set
-

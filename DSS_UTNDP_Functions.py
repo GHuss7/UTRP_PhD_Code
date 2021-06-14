@@ -2069,6 +2069,56 @@ def add_path_max_unmet_demand_limited_len(route_to_repair, main_problem, removed
     
     return repaired_route
 
+def add_path_prob_unmet_demand_limited_len(route_to_repair, main_problem, removed_path, routes_to_search=False): 
+    '''Function for adding a path to a route set r_i that has one less route than 
+    the total number of routes requirement, based on probability of meeting max unmet demand
+    while also inserting a route that has a length on one more than the removed 
+    route so that it won't prefer moves benefiting passenger cost more.
+    Routes to search is by default k-shortest paths, but another set of routes 
+    may be imported and used to search for the best demand.'''
+    # NB: Need to make this function probabilistic. Putting the same route into set
+    
+    
+    #main_problem = UTNDP_problem_1
+    #removed_path = ld_mut_temp[0]['Route'][0]
+    #route_to_repair = ld_mut_temp[0]['Route'][1:]
+    
+    len_removed = len(removed_path)
+    
+    if not routes_to_search:
+        routes_to_search = main_problem.k_short_paths.paths
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_demand_unmet = remove_cum_demand_route_set(route_to_repair, mx_demand)
+
+    d_max = 0
+    d_routes = np.zeros((len(routes_to_search),1))
+    pot_route_indices = [] # a list of the indices of potential routes that may suffice
+    
+    for i in range(len(routes_to_search)):
+        if len(routes_to_search[i]) <= len_removed + 1:
+            d_met = calc_cum_demand(routes_to_search[i], mx_demand_unmet)
+            d_routes[i,0] = d_met
+            
+            if d_met == d_max:
+                pot_route_indices.extend([i])
+            if d_met > d_max:
+                pot_route_indices = [i]
+                d_max = d_met
+    
+    if sum(d_routes) == 0:
+        prob_d_routes = np.ones((len(d_routes), 1))*(1/len(d_routes))
+    else:
+        prob_d_routes = d_routes / sum(d_routes)
+    
+    path_to_add = random.choices(routes_to_search, weights=prob_d_routes, k=1)[0]
+    # path_to_add = routes_to_search[random.choice(pot_route_indices)]
+    
+    print(f"{path_to_add}")
+    repaired_route = copy.deepcopy(route_to_repair)
+    repaired_route.extend([path_to_add])
+    
+    return repaired_route
+
 # %% Crossover functions
 
 def crossover_routes_random(parent_i, parent_j):
@@ -2532,7 +2582,7 @@ def mut_replace_lowest_demand(route_to_mutate, main_problem):
     path_to_del = random.choice(list(indices[0]))
     del routes_R[path_to_del] # remove the path
     
-    routes_R = add_path_max_unmet_demand_limited_len(routes_R, main_problem, route_to_mutate[path_to_del], routes_to_search=False)
+    routes_R = add_path_prob_unmet_demand_limited_len(routes_R, main_problem, route_to_mutate[path_to_del], routes_to_search=False)
     # routes_R = repair_add_path_to_route_set_ksp(routes_R, main_problem, ksp)
     
     return routes_R
@@ -2670,11 +2720,11 @@ def mut_replace_high_sim_routes(routes_R, main_problem):
 
         if repl_P_1:
             del R_copy[pair[0]]
-            R_copy = add_path_max_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
+            R_copy = add_path_prob_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
 
         else:
             del R_copy[pair[1]]
-            R_copy = add_path_max_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[1]], routes_to_search=False)
+            R_copy = add_path_prob_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[1]], routes_to_search=False)
         
         return R_copy
     

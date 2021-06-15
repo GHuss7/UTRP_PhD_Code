@@ -37,8 +37,8 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import simpledialog
-from numpy import array,loadtxt,isfinite,set_printoptions,zeros,ones,int,empty,inf,asarray,minimum,newaxis
-import numpy as np
+from cupy import array,loadtxt,isfinite,set_printoptions,zeros,ones,int,empty,inf,asarray,minimum,newaxis
+import cupy as np
 
 def main():
 

@@ -2414,7 +2414,7 @@ def mutate_routes_two_intertwine(routes_R, main_problem):
     
     for i in random_list:
         for j in random_list:    
-            if i != j:
+            if i < j:
                 transfer_node = set(routes_R[i]).intersection(set(routes_R[j]))
                 if bool(transfer_node): # test whether there are intersections
                     mutation_node = random.sample(transfer_node, 1)[0]

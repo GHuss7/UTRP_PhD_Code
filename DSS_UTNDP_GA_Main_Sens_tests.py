@@ -64,7 +64,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][1]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -122,8 +122,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
+    "population_size" : 20, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 2, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -415,7 +415,13 @@ if True:
         pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
         ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, generation_num=0)
 
-        
+        # Save initial population
+        ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
+                           
+       # Load initial population
+       ga.load_obj_pickle("Pop_init", path_results_per_run)
+                                   
+
         # Create data for analysis dataframe
         ld_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr_ld(pop_1, UTNDP_problem_1, generation_num=0)
         df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)

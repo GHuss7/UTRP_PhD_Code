@@ -918,10 +918,10 @@ def exp_smooth_df(df, alpha, beta, n=100):
 
 def load_obj_pickle(name, directory):
     '''Function to easily load object from pickle file'''
-    with open(directory / name+".pickle",'rb') as read_file:
+    with open(directory / (name+".pickle"),'rb') as read_file:
         obj =  pickle.load(read_file) # load the object
         return obj
 
 def save_obj_pickle(obj, name, directory):
     '''Function to easily save object to pickle file'''
-    pickle.dump(obj, open(directory / name+".pickle", "ab"))
+    pickle.dump(obj, open(directory / (name+".pickle"), "ab"))

@@ -119,7 +119,7 @@ UTNDP_problem_1.add_text = "" # define the additional text for the file name
 # UTNDP_problem_1.R_routes = R_routes
 
 if Decisions["Choice_init_temp_with_trial_runs"]:
-    UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate =  gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
+    UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
 def main(UTNDP_problem_1):

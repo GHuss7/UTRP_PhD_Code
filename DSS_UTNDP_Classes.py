@@ -472,6 +472,26 @@ class PopulationRoutes(Routes):
                 plt.plot(group["f_1"], group["f_2"], marker="o", linestyle="", label=name)
             plt.legend()
 
+    def insert_solution_into_pop(self, solutions, main_problem, fn_obj=False, obj_values=False):
+        # Create a feasible route set
+        if obj_values:
+            assert len(solutions) == len(obj_values())
+        
+        for i in range(len(solutions)):
+            self.variables[i] = solutions[i]
+            self.variables_str[i] = gf.convert_routes_list2str(self.variables[i])
+            
+            # Determine the objective function values
+            if obj_values:
+                self.objectives[i,] = (obj_values[i,0], obj_values[i,1])
+            
+            else:
+                if callable(fn_obj):
+                    self.objectives[i,] = fn_obj(self.variables[i], main_problem)
+                else:
+                    print("Provide a function to evaluate variables.")
+
+        
 
 #%% Class: Frequencies2
  

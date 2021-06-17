@@ -64,11 +64,14 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][0]   # set the name of the input data
+                   "Mumford3_UTRP",
+                   "Mandl_UTRP_dis"][-1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
+dis_obj = True
+
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
@@ -122,8 +125,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 20, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 2, # STANDARD: 200 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -266,7 +269,19 @@ UTNDP_problem_1.add_text = f"G{parameters_GA['generations']}_P{parameters_GA['po
 UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
-# UTNDP_problem_1.R_routes = R_routes
+
+# Add route compare component
+if os.path.exists("./Input_Data/"+name_input_data+"/Route_compare.txt"):
+    route_file = open("./Input_Data/"+name_input_data+"/Route_compare.txt","r")
+    route_compare = route_file.read()
+    UTNDP_problem_1.route_compare = gf.convert_routes_str2list(route_compare)
+else:
+    route_compare = gc.Routes.return_feasible_route_robust(UTNDP_problem_1)
+    route_file = open("./Input_Data/"+name_input_data+"/Route_compare.txt","w")
+    route_file.write(gf.convert_routes_list2str(route_compare))
+    route_file.close()
+    UTNDP_problem_1.route_compare = route_compare
+del route_file, route_compare
 
 if True:
 #def main(UTNDP_problem_1):
@@ -286,14 +301,11 @@ if True:
                 UTNDP_problem_input.problem_data.mx_demand, 
                 UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
-    def fn_obj_2_row(routes):
-        return (ev.evalObjs(routes, 
-                UTNDP_problem_1.problem_data.mx_dist, 
-                UTNDP_problem_1.problem_data.mx_demand, 
-                UTNDP_problem_1.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
+    if dis_obj:
+        fn_obj_2 = gf.fn_obj_3 # returns (ATT, RD)
     
     # Add/Delete individuals to/from population
-    def combine_offspring_with_pop_3(pop, offspring_variables):
+    def combine_offspring_with_pop_3(pop, offspring_variables, UTNDP_problem_input):
         """Function to combine the offspring with the population for the UTNDP routes
         NB: avoid casting lists to numpy arrays, keep it lists"""
         
@@ -314,8 +326,7 @@ if True:
         for index_i in range(len(offspring_variables)):
             offspring_variables_str[index_i] = gf.convert_routes_list2str(offspring_variables[index_i])
             
-            offspring_objectives[index_i,] = fn_obj_2_row(offspring_variables[index_i])
-        # offspring_objectives = np.apply_along_axis(fn_obj_2_row, 1, offspring_variables)   #gave VisibleDeprecationWarning error, rather loop
+            offspring_objectives[index_i,] = fn_obj_2(offspring_variables[index_i], UTNDP_problem_input)
     
         # Add evaluated offspring to population
         # pop.variables = np.vstack([pop.variables, offspring_variables])
@@ -346,8 +357,12 @@ if True:
     
     #%% GA Implementation UTNDP ############################################
     '''Load validation data'''
-    validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
-    stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+    if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv"):
+        validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
+        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+    else:
+        validation_data = False
+        stats_overall['HV Benchmark'] = 0
 
     '''Main folder path'''
     if Decisions["Choice_relative_results_referencing"]:
@@ -406,8 +421,14 @@ if True:
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
         #pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
         #pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
-        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2) 
+        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2)
         #pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
+        
+        # If disruption obj function employed, seed the solution
+        if dis_obj:
+            pop_1.insert_solution_into_pop([UTNDP_problem_1.route_compare], 
+                                           UTNDP_problem_1, fn_obj=fn_obj_2, obj_values=False)
+        
 
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
         
@@ -418,8 +439,8 @@ if True:
         # Save initial population
         ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
                            
-       # Load initial population
-       ga.load_obj_pickle("Pop_init", path_results_per_run)
+        # Load initial population
+        ga.load_obj_pickle("Pop_init", path_results_per_run)
                                    
 
         # Create data for analysis dataframe
@@ -470,8 +491,7 @@ if True:
             mutated_variables = [v['Route'] for v in ld_mut_temp]
             
             # Combine offspring with population
-            combine_offspring_with_pop_3(pop_1, mutated_variables)
-            # TODO: Adding the mutated variables twice and causing weird problems with the other attributes
+            combine_offspring_with_pop_3(pop_1, mutated_variables, UTNDP_problem_1)
             
             # Append data for analysis
             ld_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr_ld(pop_1, UTNDP_problem_1, i_gen, ld_data_for_analysis)

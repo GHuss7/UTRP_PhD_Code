@@ -2938,6 +2938,18 @@ def fn_obj_2(routes, UTNDP_problem_input):
             UTNDP_problem_input.problem_data.mx_demand, 
             UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
 
+def fn_obj_3(routes, UTNDP_problem_input):
+    '''An onbjective function for calculating Average Travel Time and Route set
+    similarity to an initial solution'''
+    R_compare = UTNDP_problem_input.route_compare
+    
+    ATT = ev.evalATT(routes, 
+            UTNDP_problem_input.problem_data.mx_dist, 
+            UTNDP_problem_input.problem_data.mx_demand, 
+            UTNDP_problem_input.problem_inputs.__dict__)
+    RD = calc_route_set_disruption(R_compare, routes)
+    return (ATT, RD) # returns (f1_ATT, f3_RD)
+
 # %% Similarity functions
 def return_all_route_set_edges(R_x):
     R_x_edges = [(P_x[i], P_x[i+1]) for P_x in R_x for i in range(len(P_x)-1)]
@@ -2968,6 +2980,16 @@ def calc_route_set_similarity(R_1, R_2):
     
     similarity = calc_similarity_from_ms(R_1_ms, R_2_ms)
     return similarity
+
+def calc_route_set_disruption(R_1, R_2):
+    '''Takes as input two route sets, each being a list of lists,
+    for example:
+        R_1 = [[1,2,3,4], [5,2,6]]
+        R_2 = [[1,2,3,4], [5,2,3,6]]
+    and returns the percentage disruption in terms of edges'''
+    
+    disruption = 1 - calc_route_set_similarity(R_1, R_2)
+    return disruption
 
 def calc_path_similarity(R_1, R_2):
     '''Takes as input two paths, each being a list of vertices,

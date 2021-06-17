@@ -340,6 +340,18 @@ def evalObjs(routeset,travelTimes,DemandMat,parameters_input):
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
     return ATT, RL
+
+def evalATT(routeset,travelTimes,DemandMat,parameters_input):
+    total_demand = parameters_input['total_demand']
+    n = parameters_input['n'] # number of nodes
+    wt = parameters_input['wt'] # waiting time
+    tp = parameters_input['tp'] # transfer penalty
+    
+    routeadj,inv_map,t,shortest,longest = expandTravelMatrix(routeset, travelTimes,n,tp,wt)
+    D = floyd_warshall_fastest(routeadj,t)
+    SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
+    ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
+    return ATT
         
 def isconnected(routes,n):   
     ''''Routine to check whether candidate route set is connected'''

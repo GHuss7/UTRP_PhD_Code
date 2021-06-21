@@ -127,7 +127,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-def main(UTNDP_problem_1):
+if True:
+#def main(UTNDP_problem_1):
     
     """ Keep track of the stats """
     stats_overall = {
@@ -505,7 +506,7 @@ def main(UTNDP_problem_1):
         plt.savefig(path_results / "Results_combined.pdf", bbox_inches='tight')
         manager.window.close()
 
-    return df_archive
+#    return df_archive
 
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''

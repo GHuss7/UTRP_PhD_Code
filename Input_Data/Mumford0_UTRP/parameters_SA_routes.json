@@ -7,7 +7,7 @@
 "max_attempts": 50, 
 "max_reheating_times": 5, 
 "max_poor_epochs": 400, 
-"Temp": 5, 
+"Temp": 0.1, 
 "M_iterations_for_temp": 1000, 
 "Cooling_rate": 0.97, 
 "Reheating_rate": 1.05, 

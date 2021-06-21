@@ -113,8 +113,8 @@ if Decisions["Choice_import_dictionaries"]:
                     "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
                     "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
                     "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
-                    "Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
-                    "Repl_high_sim_route":gf.mut_replace_high_sim_routes,
+                    #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                    #"Repl_high_sim_route":gf.mut_replace_high_sim_routes,
                     }
     
         

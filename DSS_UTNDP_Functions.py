@@ -541,7 +541,7 @@ def generate_initial_route_sets(main_problem, printing=True):
         print("Started initial route set generation"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")") 
     routes_R_initial_set = list()
     for i in range(main_problem.problem_SA_parameters.number_of_initial_solutions):
-        routes_R_initial_set.append(generate_initial_feasible_route_set(main_problem.problem_data.mx_dist, main_problem.problem_constraints.__dict__))
+        routes_R_initial_set.append(gc.Routes.return_feasible_route_robust(main_problem))
     if printing:
         print("Initial route set generated"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")   
     

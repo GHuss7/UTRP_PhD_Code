@@ -405,6 +405,63 @@ def routes_generation_unseen_prob(parent_i, parent_j, solution_len):
     
     return child_i
 
+def routes_generation_unseen_probabilistic(parent_i, parent_j, solution_len):
+    """Crossover function for routes based on Mumford 2013's Crossover function
+    for routes based on alternating between parents and including a route from
+    each parent that maximises the unseen vertices added to the child route probabilisticly
+    Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
+    parents = []  
+    parents.append(copy.deepcopy(parent_i))
+    parents.append(copy.deepcopy(parent_j))
+    parent_index = random.randint(0,1) # counter to help alternate between parents  
+    
+    child_i = [] # define child
+    parent_len = len(parent_i)
+    
+    # Randomly select the first seed solution for the child
+    random_index = random.randint(0,parent_len-1)
+    child_i.append(parents[parent_index][random_index]) # adds seed solution to parent
+    del(parents[parent_index][random_index]) # removes the route from parent so that it is not evaluated again
+    
+    # Alternates parent solutions
+    parent_index = looped_incrementor(parent_index, 1)
+    
+    
+    # Calculate the unseen proportions to select next route for inclusion into child
+    while len(child_i) < solution_len:
+        # Determines all nodes present in the child
+        all_nodes_present = set([y for x in child_i for y in x]) # flatten all the elements in child
+    
+        parent_curr = parents[parent_index] # sets the current parent
+        
+        proportions = []
+        for i_candidate in range(len(parent_curr)):
+            R_i = set(parent_curr[i_candidate])
+            if bool(R_i.intersection(all_nodes_present)): # test whether there is a common transfer point
+                proportions.append(len(R_i - all_nodes_present) / len(R_i)) # calculate the proportion of unseen vertices
+            else:
+                proportions.append(0) # set proportion to zero so that it won't be chosen
+        
+        # Get route that maximises the proportion of unseen nodes included
+        if sum(proportions) == 0:
+            max_indices = [i for i, j in enumerate(proportions)] # position of all proportion/s
+            max_index = random.sample(max_indices, 1)[0] # selects only one index randomly between a possible tie, else the only one
+
+        else:
+            max_indices = [i for i, j in enumerate(proportions)] # position of max proportion/s
+            proportions = proportions/sum(proportions)     
+            max_index = random.choices(max_indices, weights=proportions, k=1)[0]
+            
+        
+        # Add the route to the child
+        child_i.append(parent_curr[max_index]) # add max proportion unseen nodes route to the child
+        del(parents[parent_index][max_index]) # removes the route from parent so that it is not evaluated again
+        
+        # Alternates parent solutions
+        parent_index = looped_incrementor(parent_index, 1)
+    
+    return child_i
+
 def normalise_route_set(R_x):
     all_nodes = [y for x in R_x for y in x]
     if 0 not in all_nodes:
@@ -2194,6 +2251,64 @@ def crossover_routes_unseen_prob(parent_i, parent_j):
     
     return child_i
 
+def crossover_routes_unseen_probabilistic(parent_i, parent_j):
+    """Crossover function for routes based on Mumford 2013's Crossover function
+    for routes based on alternating between parents and including a route from
+    each parent that maximises the unseen vertices added to the child route probabilisticly
+    Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
+    parents = []  
+    parents.append(copy.deepcopy(parent_i))
+    parents.append(copy.deepcopy(parent_j))
+    parent_index = random.randint(0,1) # counter to help alternate between parents  
+    
+    child_i = [] # define child
+    parent_len = len(parent_i)
+    
+    # Randomly select the first seed solution for the child
+    random_index = random.randint(0,parent_len-1)
+    child_i.append(parents[parent_index][random_index]) # adds seed solution to parent
+    del(parents[parent_index][random_index]) # removes the route from parent so that it is not evaluated again
+    
+    # Alternates parent solutions
+    parent_index = looped_incrementor(parent_index, 1)
+    
+    
+    # Calculate the unseen proportions to select next route for inclusion into child
+    while len(child_i) < parent_len:
+        # Determines all nodes present in the child
+        all_nodes_present = set([y for x in child_i for y in x]) # flatten all the elements in child
+    
+        parent_curr = parents[parent_index] # sets the current parent
+        
+        proportions = []
+        for i_candidate in range(len(parent_curr)):
+            R_i = set(parent_curr[i_candidate])
+            if bool(R_i.intersection(all_nodes_present)): # test whether there is a common transfer point
+                proportions.append(len(R_i - all_nodes_present) / len(R_i)) # calculate the proportion of unseen vertices
+            else:
+                proportions.append(0) # set proportion to zero so that it won't be chosen
+        
+        # Get route that maximises the proportion of unseen nodes included
+        if sum(proportions) == 0:
+            max_indices = [i for i, j in enumerate(proportions)] # position of all proportion/s
+            max_index = random.sample(max_indices, 1)[0] # selects only one index randomly between a possible tie, else the only one
+
+        else:
+            max_indices = [i for i, j in enumerate(proportions)] # position of max proportion/s
+            proportions = np.array(proportions)/sum(proportions)     
+            max_index = random.choices(max_indices, weights=proportions, k=1)[0]
+            
+        # Add the route to the child
+        child_i.append(parent_curr[max_index]) # add max proportion unseen nodes route to the child
+        del(parents[parent_index][max_index]) # removes the route from parent so that it is not evaluated again
+        
+        # Alternates parent solutions
+        parent_index = looped_incrementor(parent_index, 1)
+    
+    return child_i
+
+
+
 def crossover_routes_unseen_prob_UTRFSP(parent_i_route, parent_j_route, parent_i_freq_args, parent_j_freq_args):
     """Crossover function for routes based on Mumford 2013's Crossover function
     for routes based on alternating between parents and including a route from
@@ -2353,6 +2468,42 @@ def crossover_pop_routes_individuals(pop, main_problem):
                 else:
                     offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
     
+        else:
+            if random.random() < 0.5:
+                offspring_variables[i] = pop.variables[selection[i,0]]
+            else:
+                offspring_variables[i] = pop.variables[selection[i,1]]
+    
+    return offspring_variables
+
+def crossover_pop_routes_individuals_debug(pop, main_problem):
+    """Crossover function applied to each route in population"""
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
+    
+    offspring_variables = [None] * main_problem.problem_GA_parameters.population_size
+     
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability:
+            parent_A = pop.variables[selection[i,0]]
+            parent_B = pop.variables[selection[i,1]]
+        
+            offspring_variables[i] = crossover_routes_unseen_probabilistic(parent_A, parent_B)
+                # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+            _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
+            if max_sim == 1: print("DUPLICATE: Crossover normal")
+                
+            while not test_all_four_constraints(offspring_variables[i], main_problem):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
+                _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
+                if max_sim == 1: print("DUPLICATE: Crossover repaired")
+                
+                if test_all_four_constraints(offspring_variables[i], main_problem):
+                    continue
+                else:
+                    offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+                    _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
+                    if max_sim == 1: print("DUPLICATE: Crossover retry")
         else:
             if random.random() < 0.5:
                 offspring_variables[i] = pop.variables[selection[i,0]]
@@ -2836,10 +2987,6 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
     mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
     mut_ratio = main_problem.mutation_ratio
     #mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list
-    mut_functions = [mutate_routes_two_intertwine, 
-                     add_vertex_to_terminal,
-                     remove_vertex_from_terminal,
-                     mutate_merge_routes_at_common_terminal]
     mut_functions = main_problem.mutation_functions
     
     mut_nr = 0 # sets the mutation number to return, 0 is default with no mutation
@@ -2858,6 +3005,7 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
                 # mutate route set
                 output_list["Mut_nr"] = mut_i+1
                 candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
+                
                 
                 if mut_functions[mut_i].__name__ == "no_mutation":
                     output_list["Mut_successful"] = 1
@@ -2889,7 +3037,69 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
     
     else:
         return output_list 
-        
+       
+def mutate_overall_routes_all_smart_debug(routes_R, main_problem):
+    """This is a function that helps with the overall random choosing of any of 
+    the predefined mutations, and can be appended easily"""
+    mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
+    mut_ratio = main_problem.mutation_ratio
+    #mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list
+    mut_functions = main_problem.mutation_functions
+    
+    mut_nr = 0 # sets the mutation number to return, 0 is default with no mutation
+    mut_successful = 0
+    mut_repaired = 0
+    output_list = {"Route":routes_R, "Mut_nr":mut_nr,
+                   "Mut_successful":mut_successful, "Mut_repaired":mut_repaired}
+    
+    p_rand = random.random() # generate random number
+    
+    if random.random() < mut_prob:
+        for mut_i in range(len(mut_functions)):
+            
+            # test if cumulative probability true
+            if p_rand < sum(mut_ratio[:mut_i+1]):
+                # mutate route set
+                output_list["Mut_nr"] = mut_i+1
+                candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
+                
+                
+                if mut_functions[mut_i].__name__ == "no_mutation":
+                    output_list["Mut_successful"] = 1
+                    output_list["Route"] = candidate_routes_R
+                    return output_list
+                
+                if candidate_routes_R == routes_R:
+                    return output_list
+                
+                # test feasibility
+                if test_all_four_constraints(candidate_routes_R, main_problem):
+                    output_list["Mut_successful"] = 1
+                    output_list["Route"] = candidate_routes_R
+                    _, max_sim = calc_path_similarity_matrix_for_mut(candidate_routes_R)
+                    if max_sim == 1: print(f"DUPLICATE: Mutation {main_problem.mutation_names[mut_i]}")
+                    return output_list
+                else:
+                    # attempt repair
+                    candidate_routes_R = repair_add_missing_from_terminal(candidate_routes_R, main_problem)
+                
+                    # test feasibility
+                    if test_all_four_constraints(candidate_routes_R, main_problem):
+                        output_list["Mut_repaired"] = 1
+                        output_list["Route"] = candidate_routes_R
+                        _, max_sim = calc_path_similarity_matrix_for_mut(candidate_routes_R)
+                        if max_sim == 1: print(f"DUPLICATE: Mutation Repair {main_problem.mutation_names[mut_i]}")
+                        return output_list
+                    else:
+                        return output_list
+            
+
+        return output_list # if for loop completes and no mutation was performed
+    
+    else:
+        return output_list 
+    
+    
 def mutate_route_population(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
     pop_mutated_variables = copy.deepcopy(pop_variables_routes)
@@ -2916,7 +3126,7 @@ def mutate_route_population_detailed_ld(pop_variables_routes, main_problem):
     pop_mutated_variables = copy.deepcopy(pop_variables_routes)
     ld_mut_details = []
     for i in range(len(pop_mutated_variables)):
-        mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
+        mut_output = mutate_overall_routes_all_smart_debug(pop_mutated_variables[i], main_problem)
         ld_mut_details.append(mut_output)
                     
     return ld_mut_details

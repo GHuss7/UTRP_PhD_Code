@@ -65,12 +65,12 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP",
-                   "Mandl_UTRP_dis"][-1]   # set the name of the input data
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
-dis_obj = True
+dis_obj = False
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -127,7 +127,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "GA",
     "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -484,7 +484,7 @@ if True:
                 print("Generation " + str(int(i_gen)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
             # Crossover
-            offspring_variables = gf.crossover_pop_routes_individuals(pop_1, UTNDP_problem_1)
+            offspring_variables = gf.crossover_pop_routes_individuals_debug(pop_1, UTNDP_problem_1)
             
             # Mutation
             ld_mut_temp = gf.mutate_route_population_detailed_ld(offspring_variables, UTNDP_problem_1)

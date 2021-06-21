@@ -479,7 +479,7 @@ def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, va
     if validation_line:
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', label='Benchmark')
-    if validation_data:
+    if isinstance(validation_data, pd.DataFrame):
         axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set[f_1_col_name], initial_set[f_2_col_name], s=10, c='g', marker="o", label='Initial set')
     axs[1].scatter(df_non_dominated_set[f_1_col_name], df_non_dominated_set[f_2_col_name], s=10, c='r', marker="o", label='Non-dom set obtained')
@@ -507,7 +507,7 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
     if validation_line:
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', marker=".", label='Benchmark')
-    if validation_data:
+    if isinstance(validation_data, pd.DataFrame):
         axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
     axs[1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
@@ -543,7 +543,7 @@ def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', marker=".", label='Benchmark')
     
-    if validation_data:
+    if isinstance(validation_data, pd.DataFrame):
         axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs[1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
     axs[1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
@@ -593,7 +593,7 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
         axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', marker=".", label='Benchmark')
     
-    if validation_data:
+    if isinstance(validation_data, pd.DataFrame):
         axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
     axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
     axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
@@ -638,7 +638,7 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
         axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', label='Benchmark')
 
-    if validation_data:
+    if isinstance(validation_data, pd.DataFrame):
         axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
     axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
     axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
@@ -659,7 +659,7 @@ def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_dat
     fig.set_figheight(15)
     fig.set_figwidth(20)
     
-    if validation_data:
+    if isinstance(validation_data, pd.DataFrame):
         axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
     axs.scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
     axs.scatter(df_overall_pareto_set[labels[0]], df_overall_pareto_set[labels[1]], s=10, c='r', marker="o", label='Pareto front obtained from all runs')

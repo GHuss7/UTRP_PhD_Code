@@ -35,7 +35,12 @@ import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
 # %% Load the respective files
-name_input_data = ["Mandl_UTRP","Mumford0_UTRP"][0]      # set the name of the input data
+name_input_data = ["Mandl_UTRP", #0
+                   "Mumford0_UTRP", #1
+                   "Mumford1_UTRP", #2
+                   "Mumford2_UTRP", #3
+                   "Mumford3_UTRP",
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set variables

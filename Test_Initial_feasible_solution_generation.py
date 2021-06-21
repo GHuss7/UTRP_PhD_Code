@@ -42,7 +42,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
-                   "Mumford3_UTRP",][3]   # set the name of the input data
+                   "Mumford3_UTRP",][0]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 # del name_input_data
 

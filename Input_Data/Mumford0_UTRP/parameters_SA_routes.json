@@ -13,4 +13,6 @@
 "Reheating_rate": 1.05, 
 "number_of_initial_solutions": 1, 
 "Feasibility_repair_attempts": 3, 
-"number_of_runs": 20}
+"number_of_runs": 20,
+"iter_compare_HV" : 4000,
+"HV_improvement_th": 0.0001}

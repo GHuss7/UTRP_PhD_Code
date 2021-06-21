@@ -20,6 +20,8 @@ from datetime import timedelta
 from pathlib import Path
 import copy
 
+
+
 # %% Timer parts to use when executing code
 # Paste these two pieces of code above and below the block of code you want to time
 if False:               # the False hinders the code from printing 
@@ -423,7 +425,7 @@ def get_sens_tests_stats_from_UTFSP_GA_runs(path_to_main_folder):
     df_HV_description.to_csv(path_to_main_folder / "Results_description_HV.csv")
     df_overall_results.to_csv(path_to_main_folder / "Overall_results.csv")
 
-# %% Add rows to dataframes fast
+# %% Add rows to dataframes fast (list of dictionaries)
 '''Add a row to a dataframe with a dictionary fast'''
 def add_row_to_df(dataframe,dict_entry):
     dataframe.append(dict_entry)
@@ -657,7 +659,7 @@ def add_UTRP_pop_generations_data(pop_1, UTRP_problem_1, generation_num, data_fo
 
 def add_UTRP_pop_generations_data_ld(pop_1, UTRP_problem_1, generation_num, data_for_analysis=False):
     """
-    This allows for fasted DataFrame construction
+    This allows for faster DataFrame construction
 
     Parameters
     ----------
@@ -733,6 +735,62 @@ def add_UTRFSP_pop_generations_data(pop_1, UTRFSP_problem_1, generation_num, dat
             data_for_analysis.loc[len(data_for_analysis)] = data_row
             
     return data_for_analysis
+
+def add_UTRP_SA_data_ld(f_new_0, f_new_1, HV, SA_Temp, epoch, iteration_t, accepts, poor_epoch, routes_R_str, attempts, ld_data=False):
+    """
+    This allows for faster DataFrame construction
+
+    Parameters
+    ----------
+    f_new_0 : First objective function value
+    f_new_0 : Second objective function value
+    HV : Hypervolume value
+    SA_Temp : Simulated Annealing Temperature
+    epoch : Current epoch of search
+    iteration_t : the t'th iteration value
+    accepts : the number of accepts
+    poor_epoch : the number of poor epochs
+    routes_R : Routes list
+        The list object containing all the routes.
+    attempts : the number of attempts made
+    ld_data : a list of dictionaries
+        Object containing the main SA search analysis data.
+        If False, this is the fist time the list is created 
+        and then only add the first iteration. The default is False.
+                        
+    Returns
+    -------
+    ld_data : list of dictionaries
+        The appended DataFrame.
+
+    """
+    
+    if isinstance(ld_data, list):
+        ld_data.extend(
+        [{"f1_ATT":f_new_0,
+        "f2_TRT": f_new_1,
+        "HV": HV,
+        "Temperature": SA_Temp,
+        "C_epoch_number": epoch,
+        "L_iteration_per_epoch": iteration_t,
+        "A_num_accepted_moves_per_epoch": accepts,
+        "eps_num_epochs_without_accepting_solution": poor_epoch,
+        "Route": routes_R_str,
+        "Attempts": attempts}])
+        
+    else:
+        ld_data = [{"f1_ATT": f_new_0,
+        "f2_TRT": f_new_1,
+        "HV": HV,
+        "Temperature": SA_Temp,
+        "C_epoch_number": epoch,
+        "L_iteration_per_epoch": 0,
+        "A_num_accepted_moves_per_epoch": 0,
+        "eps_num_epochs_without_accepting_solution": 0,
+        "Route": routes_R_str,
+        "Attempts": 0}]  
+        
+    return ld_data
     
 # %% List into a list of lists 
 """List comprehension is an efficient approach as it doesn’t make use of extra space. 

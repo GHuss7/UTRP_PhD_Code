@@ -40,7 +40,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP",
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_dis"][2]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set variables
@@ -80,7 +80,7 @@ else:
     'ref_point_max_f1_ATT' : 32, # max f1_ATT for the Hypervolume calculations
     'ref_point_min_f1_ATT' : 13, # min f1_ATT for the Hypervolume calculations
     'ref_point_max_f2_TRT' : 700, # max f2_TRT for the Hypervolume calculations
-    'ref_point_min_f2_TRT' : 94 # min f2_TRT for the Hypervolume calculations
+    'ref_point_min_f2_TRT' : 94, # min f2_TRT for the Hypervolume calculations
     }
     
     parameters_SA_routes={
@@ -101,6 +101,8 @@ else:
     "number_of_initial_solutions" : 1, # sets the number of initial solutions to generate as starting position
     "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
     "number_of_runs" : 20, # number of runs to complete John 2016 set 20
+    "iter_compare_HV" : 4000, # Compare generations for improvement in HV
+    "HV_improvement_th": 0.0001, # Treshold that terminates the search
     }
 
 '''Set the reference point for the Hypervolume calculations'''
@@ -218,24 +220,27 @@ if True:
             
             df_archive = pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"]) # create an archive in the correct format
             counter_archive = 1
-            df_SA_analysis = pd.DataFrame(columns = ["f1_ATT",\
-                                                     "f2_TRT",\
-                                                     "HV",\
-                                                     "Temperature",\
-                                                     "C_epoch_number",\
-                                                     "L_iteration_per_epoch",\
-                                                     "A_num_accepted_moves_per_epoch",\
-                                                     "eps_num_epochs_without_accepting_solution",\
-                                                     "Route",\
-                                                     "Attempts"]) # create a df to keep data for SA Analysis
-            
-            
+            # df_SA_analysis = pd.DataFrame(columns = ["f1_ATT",\
+            #                                          "f2_TRT",\
+            #                                          "HV",\
+            #                                          "Temperature",\
+            #                                          "C_epoch_number",\
+            #                                          "L_iteration_per_epoch",\
+            #                                          "A_num_accepted_moves_per_epoch",\
+            #                                          "eps_num_epochs_without_accepting_solution",\
+            #                                          "Route",\
+            #                                          "Attempts"]) # create a df to keep data for SA Analysis
+                            
             f_cur = fn_obj(routes_R, UTNDP_problem_1)
             df_archive.loc[0] = [f_cur[0], f_cur[1], gf.convert_routes_list2str(routes_R)]
             HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
-            df_SA_analysis.loc[0] = [f_cur[0], f_cur[1], HV,\
-                               SA_Temp, epoch, 0, 0, 0, gf.convert_routes_list2str(routes_R), 0]
+            # df_SA_analysis.loc[0] = [f_cur[0], f_cur[1], HV,\
+            #                    SA_Temp, epoch, 0, 0, 0, gf.convert_routes_list2str(routes_R), 0]
             
+            # Initial list of dictionaries to contain the SA analysis   
+            ld_SA_analysis = ga.add_UTRP_SA_data_ld(f_cur[0], f_cur[1], HV, SA_Temp, epoch, 
+                                                            0, 0, 0, gf.convert_routes_list2str(routes_R), 0)
+                        
             print(f'Epoch:{epoch-1} \tHV:{round(HV, 4)}')
              
             
@@ -259,9 +264,13 @@ if True:
                 
                     f_new = fn_obj(routes_R_new, UTNDP_problem_1)
                     HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
-                    df_SA_analysis.loc[len(df_SA_analysis)] = [f_new[0], f_new[1], HV,\
-                                                               SA_Temp, epoch, iteration_t, accepts, poor_epoch, gf.convert_routes_list2str(routes_R), attempts]
+                    # df_SA_analysis.loc[len(df_SA_analysis)] = [f_new[0], f_new[1], HV,\
+                    #                                            SA_Temp, epoch, iteration_t, accepts, poor_epoch, gf.convert_routes_list2str(routes_R), attempts]
                     
+                    ld_SA_analysis = ga.add_UTRP_SA_data_ld(f_new[0], f_new[1], HV, SA_Temp, epoch, 
+                                                            iteration_t, accepts, poor_epoch, gf.convert_routes_list2str(routes_R), 
+                                                            attempts, ld_data=ld_SA_analysis)
+                        
                     total_iterations = total_iterations + 1 # increments the total iterations for stopping criteria
                 
                     '''Test solution acceptance and add to archive if accepted and non-dominated'''
@@ -298,11 +307,20 @@ if True:
                 
                 print(f'Epoch:{epoch} \tTemp:{round(SA_Temp,4)} \tHV:{round(HV, 4)} \tAccepts:{accepts} \tAttempts:{attempts} \tPoor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \tTotal_i:{total_iterations}[{iteration_t}] \t P_accept:{round(sum(prob_acceptance_list)/len(prob_acceptance_list),4)}')
     
-                '''Úpdate parameters'''
+                '''Update parameters'''
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
                 epoch = epoch + 1 # Increase Epoch counter
                 attempts = 0 # resets the attempts
-                     
+                
+                # Test whether HV is still improving
+                iter_compare = UTNDP_problem_1.problem_SA_parameters.iter_compare_HV
+                HV_improvement_th = UTNDP_problem_1.problem_SA_parameters.HV_improvement_th
+                if iteration_t > iter_compare:
+                    HV_diff = ld_SA_analysis[-1]['HV'] - ld_SA_analysis[-iter_compare-1]['HV']
+                    if HV_diff < HV_improvement_th:
+                        stats['Termination'] = 'Non-improving_HV'
+                        print(f'Run terminated by non-improving HV after Iter {total_iterations} [Iter comp:{iter_compare} | HV diff: {HV_diff}')
+                        break
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, i, iteration_t, counter_archive
         
@@ -336,6 +354,7 @@ if True:
                 if not path_results_per_run.exists():
                     os.makedirs(path_results_per_run)
                 
+                df_SA_analysis = pd.DataFrame.from_dict(ld_SA_analysis)
                 df_SA_analysis.to_csv(path_results_per_run / "SA_Analysis.csv")
                 df_archive.to_csv(path_results_per_run / "Archive_Routes.csv")
                 
@@ -446,8 +465,8 @@ if True:
                     plt.savefig(path_results_per_run / "Results_parameters.pdf", bbox_inches='tight')
             
                     manager.window.close()
-        
-
+                    
+            
     # %% Save results after all runs
     if Decisions["Choice_print_results"]:
         '''Save the summarised results'''

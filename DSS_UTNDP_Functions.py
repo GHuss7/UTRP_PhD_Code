@@ -2133,12 +2133,6 @@ def add_path_prob_unmet_demand_limited_len(route_to_repair, main_problem, remove
     route so that it won't prefer moves benefiting passenger cost more.
     Routes to search is by default k-shortest paths, but another set of routes 
     may be imported and used to search for the best demand.'''
-    # NB: Need to make this function probabilistic. Putting the same route into set
-    
-    
-    #main_problem = UTNDP_problem_1
-    #removed_path = ld_mut_temp[0]['Route'][0]
-    #route_to_repair = ld_mut_temp[0]['Route'][1:]
     
     len_removed = len(removed_path)
     
@@ -2168,13 +2162,59 @@ def add_path_prob_unmet_demand_limited_len(route_to_repair, main_problem, remove
         prob_d_routes = d_routes / sum(d_routes)
     
     path_to_add = random.choices(routes_to_search, weights=prob_d_routes, k=1)[0]
-    # path_to_add = routes_to_search[random.choice(pot_route_indices)]
     
     print(f"{path_to_add}")
     repaired_route = copy.deepcopy(route_to_repair)
     repaired_route.extend([path_to_add])
     
     return repaired_route
+
+def replace_path_prob_unmet_demand_limited_len(route_to_replace, main_problem, replace_index, routes_to_search=False): 
+    '''Function for replacing a path in a route set r_i that at index i, 
+    based on probability of meeting max unmet demand
+    while also inserting a route that has a length on one more than the removed 
+    route so that it won't prefer moves benefiting passenger cost more.
+    Routes to search is by default k-shortest paths, but another set of routes 
+    may be imported and used to search for the best demand.'''
+    route_copy = copy.deepcopy(route_to_replace)
+    replace_path = route_copy[replace_index]   
+    len_removed = len(replace_path)
+    
+    del route_copy[replace_index] # removes the route that should be replaced
+    
+    if not routes_to_search:
+        routes_to_search = main_problem.k_short_paths.paths # retrieves ksp as default
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_demand_unmet = remove_cum_demand_route_set(route_copy, mx_demand) # calc unmet demand mx
+
+    d_max = 0
+    d_routes = np.zeros((len(routes_to_search),1)) # demand met by routes
+    pot_route_indices = [] # a list of the indices of potential routes that may suffice
+    
+    for i in range(len(routes_to_search)):
+        if len(routes_to_search[i]) <= len_removed + 1:
+            d_met = calc_cum_demand(routes_to_search[i], mx_demand_unmet)
+            d_routes[i,0] = d_met
+            
+            # calc max demand met
+            if d_met == d_max:
+                pot_route_indices.extend([i])
+            if d_met > d_max:
+                pot_route_indices = [i]
+                d_max = d_met
+    
+    # use demand met proportions to select route for inclusion
+    if sum(d_routes) == 0:
+        prob_d_routes = np.ones((len(d_routes), 1))*(1/len(d_routes))
+    else:
+        prob_d_routes = d_routes / sum(d_routes)
+    
+    path_to_add = random.choices(routes_to_search, weights=prob_d_routes, k=1)[0]
+    
+    print(f"{path_to_add}")
+    route_copy.insert(replace_index, path_to_add)
+    
+    return route_copy
 
 # %% Crossover functions
 
@@ -2858,9 +2898,7 @@ def mut_replace_high_sim_routes(routes_R, main_problem):
     P_1 = routes_R[pair[0]]
     P_2 = routes_R[pair[1]]
         
-    # Identify shortest subset that should be replaced
     #NOTE: Only most similar would be replaced, and not pure subsets 
-    #TODO: Change to finding subset (wont be so similar, but subset portion)
     if len(P_1) < len(P_2):
         repl_P_1 = True
     else:
@@ -2882,11 +2920,6 @@ def mut_replace_high_sim_routes(routes_R, main_problem):
     else:
         return routes_R
     
-#def mut_replace_subsets(routes_R, main_problem):    
-
-list_A = [8, 14, 6, 9, 13, 12]
-list_B = [8, 14]
-
 def are_lists_sublists(list_A, list_B):
     # using intersection() to 
     # check subset of list 
@@ -2902,27 +2935,24 @@ def are_lists_sublists(list_A, list_B):
         flag = True
     return flag    
 
-are_lists_sublists(list_A, list_B)
 
-# Python3 program to Remove elements of 
-# list that repeated less than k times
-# A should be a shorter list than B
 def test_list_order_and_subset(A, B):
+    # Python3 program to Remove elements of 
+    # list that repeated less than k times
+    # A should be a shorter list than B
     n = len(A)
     return any(A == B[i:i + n] for i in range(len(B)-n + 1))
     
-routes_R = [[8, 14],
-            [8, 14],
-            [14, 7, 5, 2, 1],
-            [14, 6, 9, 13, 12],
-            [9, 10, 11],
-            [0, 1, 3],
-            [4, 3]]
-
 def mut_remove_subset_route(routes_R, main_problem):
+    '''Á function that mutates a route set by replacing subsets of lists
+    subject to the same ordering in a given route set routes_R. Returns the
+    mutated route as output'''
+    # Identify shortest subset that should be replaced
 
-    for i, R_i in enumerate(routes_R):
-        for j, R_j in enumerate(routes_R):
+    mut_R = copy.deepcopy(routes_R)
+    
+    for i, R_i in enumerate(mut_R):
+        for j, R_j in enumerate(mut_R):
             if i < j:
                 if are_lists_sublists(R_i, R_j):
                     if len(R_i) < len(R_j):
@@ -2936,13 +2966,22 @@ def mut_remove_subset_route(routes_R, main_problem):
     
                     if test_list_order_and_subset(sub_list, test_list):
                         print(sub_list_index)
-                        #add_path_prob_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
-                    
+                        mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
+                        
                     elif test_list_order_and_subset(sub_list.reverse(), test_list):
                         print(sub_list_index)
-                        #add_path_prob_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
+                        mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
                      
-                        
+    return mut_R
+
+# routes_R = [[8, 14],
+#             [8, 14],
+#             [14, 7, 5, 2, 1],
+#             [8, 14, 6, 9, 13, 12],
+#             [9, 10, 11],
+#             [0, 1, 3],
+#             [4, 3]]
+#mut_remove_subset_route(routes_R, main_problem=UTNDP_problem_1)
 
 def no_mutation(routes_R, main_problem):   
     return routes_R 

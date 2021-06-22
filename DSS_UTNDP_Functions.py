@@ -2943,7 +2943,7 @@ def test_list_order_and_subset(A, B):
     n = len(A)
     return any(A == B[i:i + n] for i in range(len(B)-n + 1))
     
-def mut_remove_subset_route(routes_R, main_problem):
+def mut_replace_path_subsets(routes_R, main_problem):
     '''Á function that mutates a route set by replacing subsets of lists
     subject to the same ordering in a given route set routes_R. Returns the
     mutated route as output'''
@@ -2967,10 +2967,11 @@ def mut_remove_subset_route(routes_R, main_problem):
                     if test_list_order_and_subset(sub_list, test_list):
                         print(sub_list_index)
                         mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
-                        
-                    elif test_list_order_and_subset(sub_list.reverse(), test_list):
-                        print(sub_list_index)
-                        mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
+                    else:
+                        sub_list.reverse()
+                        if test_list_order_and_subset(sub_list, test_list):
+                            print(sub_list_index)
+                            mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
                      
     return mut_R
 

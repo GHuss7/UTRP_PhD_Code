@@ -2881,6 +2881,68 @@ def mut_replace_high_sim_routes(routes_R, main_problem):
     
     else:
         return routes_R
+    
+#def mut_replace_subsets(routes_R, main_problem):    
+
+list_A = [8, 14, 6, 9, 13, 12]
+list_B = [8, 14]
+
+def are_lists_sublists(list_A, list_B):
+    # using intersection() to 
+    # check subset of list 
+    if len(list_A) < len(list_B):
+        sub_list = list_A
+        test_list = list_B
+    else:
+        sub_list = list_B
+        test_list = list_A   
+
+    flag = False
+    if((set(sub_list) & set(test_list))== set(sub_list)):
+        flag = True
+    return flag    
+
+are_lists_sublists(list_A, list_B)
+
+# Python3 program to Remove elements of 
+# list that repeated less than k times
+# A should be a shorter list than B
+def test_list_order_and_subset(A, B):
+    n = len(A)
+    return any(A == B[i:i + n] for i in range(len(B)-n + 1))
+    
+routes_R = [[8, 14],
+            [8, 14],
+            [14, 7, 5, 2, 1],
+            [14, 6, 9, 13, 12],
+            [9, 10, 11],
+            [0, 1, 3],
+            [4, 3]]
+
+def mut_remove_subset_route(routes_R, main_problem):
+
+    for i, R_i in enumerate(routes_R):
+        for j, R_j in enumerate(routes_R):
+            if i < j:
+                if are_lists_sublists(R_i, R_j):
+                    if len(R_i) < len(R_j):
+                        sub_list = R_i
+                        sub_list_index = i
+                        test_list = R_j
+                    else:
+                        sub_list = R_j
+                        sub_list_index = j
+                        test_list = R_i 
+    
+                    if test_list_order_and_subset(sub_list, test_list):
+                        print(sub_list_index)
+                        #add_path_prob_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
+                    
+                    elif test_list_order_and_subset(sub_list.reverse(), test_list):
+                        print(sub_list_index)
+                        #add_path_prob_unmet_demand_limited_len(R_copy, main_problem, routes_R[pair[0]], routes_to_search=False)
+                     
+                        
 
 def no_mutation(routes_R, main_problem):   
     return routes_R 

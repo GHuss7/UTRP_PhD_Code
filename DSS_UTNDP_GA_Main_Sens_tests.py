@@ -65,7 +65,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_dis"][4]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -105,6 +105,11 @@ if Decisions["Choice_import_dictionaries"]:
 
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
+    
+    route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest, 
+                        "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
+                        "Unseen_robust" : gc.Routes.return_feasible_route_robust}
+    route_gen_func_name = "KSP_unseen_robust"
     
     mutations = {#"No_mutation" : gf.no_mutation,
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 
@@ -418,11 +423,21 @@ if True:
         # Frequently used variables
         pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
 
-        # Generate intitial population
+        # %% Generate intitial population
+                           
+        # Load and save initial population
+        directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
+        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], pop_size_to_create=2000)
+        
         pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
+        pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_loaded)
+        # Save initial population
+        ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
+
+        
         #pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
         #pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
-        pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2)
+        #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2)
         #pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
         
         # If disruption obj function employed, seed the solution
@@ -436,13 +451,7 @@ if True:
         # Create generational dataframe
         pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
         ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, generation_num=0)
-
-        # Save initial population
-        ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
-                           
-        # Load initial population
-        ga.load_obj_pickle("Pop_init", path_results_per_run)
-                                   
+                                  
 
         # Create data for analysis dataframe
         ld_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr_ld(pop_1, UTNDP_problem_1, generation_num=0)
@@ -475,6 +484,7 @@ if True:
                                                         round(HV, 4),
                                                         round(stats_overall['HV Benchmark'],4)))
         
+        # %% Run generations
         """ ######## Run each generation ################################################################ """
         for i_gen in range(1, UTNDP_problem_1.problem_GA_parameters.generations + 1):    
             # Some stats

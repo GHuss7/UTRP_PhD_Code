@@ -17,6 +17,8 @@ import networkx as nx
 import copy
 import datetime
 import multiset
+import os
+import pickle
 
 # import pygmo as pg
 
@@ -469,6 +471,37 @@ def normalise_route_set(R_x):
             R_x[i] = [x - 1 for x in R_x[i]] # subtract 1 from each element in the list
         del i
     return R_x
+
+ # Load or create and save initial population
+def load_obj_pickle(name, directory):
+    '''Function to easily load object from pickle file'''
+    with open(directory / (name+".pickle"),'rb') as read_file:
+        obj =  pickle.load(read_file) # load the object
+        return obj
+
+def save_obj_pickle(obj, name, directory):
+    '''Function to easily save object to pickle file'''
+    pickle.dump(obj, open(directory / (name+".pickle"), "ab"))
+
+def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, pop_size_to_create=False):
+    '''A function that loads the population data if it exists, and creates it
+    otherwise. This will help longterm to save time.'''
+    if os.path.exists(directory / (name+".pickle")):
+        pop_1 = load_obj_pickle(name, directory)
+        print(f'LOADED: Population {name} loaded from {directory}')
+    
+    else:
+        try: 
+            os.mkdir(directory) 
+        except OSError as error: 
+            print(error) 
+        pop_1 = gc.PopulationRoutes(main_problem)  
+        pop_1.generate_initial_population_smart(main_problem, fn_obj_2, route_gen_func, new_pop_size=pop_size_to_create)
+        save_obj_pickle(pop_1, name, directory)
+        print(f'SAVED: Population by {route_gen_func.__name__} saved to {directory}')
+        
+    return pop_1
+
 
 # %% Try to generate a feasible solution 
 def generate_solution(paths_shortest_all, con_r, N , iterations):
@@ -2531,8 +2564,18 @@ def crossover_pop_routes_individuals_debug(pop, main_problem):
             offspring_variables[i] = crossover_routes_unseen_probabilistic(parent_A, parent_B)
                 # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
             _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
-            if max_sim == 1: print("DUPLICATE: Crossover normal")
-                
+            if max_sim == 1: 
+                print("DUPLICATE: Crossover normal")
+            
+                # Attempt to replace any duplicate routes made by the crossover
+                offspring_variables[i] = mut_replace_path_subsets(offspring_variables[i], main_problem)
+                    
+                _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
+                if max_sim != 1: print("DUPLICATE: FIXED")
+            else:
+                offspring_variables[i] = mut_replace_path_subsets(offspring_variables[i], main_problem)
+
+            
             while not test_all_four_constraints(offspring_variables[i], main_problem):
                 offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
                 _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])

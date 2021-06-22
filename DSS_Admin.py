@@ -983,3 +983,4 @@ def load_obj_pickle(name, directory):
 def save_obj_pickle(obj, name, directory):
     '''Function to easily save object to pickle file'''
     pickle.dump(obj, open(directory / (name+".pickle"), "ab"))
+    

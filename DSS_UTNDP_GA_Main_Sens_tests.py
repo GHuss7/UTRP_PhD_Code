@@ -534,7 +534,7 @@ if True:
                     df_gen_temp = copy.deepcopy(df_data_generations)
                     df_gen_temp = df_gen_temp.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
                                        mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['f_2'].mean().iloc[:,1])
-                    labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations
+                    labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
                     gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
                                          df_gen_temp, df_mut_ratios, name_input_data, 
                                          path_results_per_run, labels,
@@ -542,7 +542,8 @@ if True:
                     
                     gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
 
-                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text=i_gen)
+                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, 
+                    #                                              df_data_generations, name_input_data, path_results_per_run, add_text=i_gen, labels)
                 except PermissionError:
                     pass
                 
@@ -642,7 +643,7 @@ if True:
             df_mut_summary.to_csv(path_results_per_run / "Mut_summary.csv")
             
             # Print and save result summary figures:
-            labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations
+            labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
             gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
                                          df_data_generations, df_mut_ratios, name_input_data, 
                                          path_results_per_run, labels,

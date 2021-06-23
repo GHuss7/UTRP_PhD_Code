@@ -528,7 +528,7 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
         plt.close(fig)
         
 def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, df_data_generations, name_input_data, path_results_per_run, add_text="",
-                                               labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"], validation_line=False):
+                                               labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"], validation_line=False):
     '''Print Objective functions over time, all solutions and pareto set obtained
     If the value of the validation HV line is given, it is printed'''
     fig, axs = plt.subplots(1, 2)

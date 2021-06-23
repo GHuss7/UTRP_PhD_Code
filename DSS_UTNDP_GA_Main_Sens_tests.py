@@ -65,7 +65,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
-                   "Mandl_UTRP_dis"][4]   # set the name of the input data
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -84,6 +84,36 @@ else:
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests"
     }
+    
+#%% Set functions to use
+    route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
+                       "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                        "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
+                        "Unseen_robust" : gc.Routes.return_feasible_route_robust}
+    route_gen_func_name = list(route_gen_funcs.keys())[1]
+    
+    crossover_funcs = {"Mumford" : gf.crossover_mumford,
+                       "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
+                        "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
+                        "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
+    crossover_func_name = list(crossover_funcs.keys())[3]
+    
+    mutations = {#"No_mutation" : gf.no_mutation,
+                    "Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                    "Add_vertex" : gf.add_vertex_to_terminal,
+                    "Delete_vertex" : gf.remove_vertex_from_terminal,
+                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                    "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                    "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                    #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                    #"Repl_high_sim_route":gf.mut_replace_high_sim_routes,
+                    "Repl_subsets" : gf.mut_replace_path_subsets
+                    }
+    
+        
+    mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
+    mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
+    mut_names = [v['name'] for (k,v) in mutations_dict.items()]
 
 # %% Load the respective files
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
@@ -105,29 +135,6 @@ if Decisions["Choice_import_dictionaries"]:
 
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
-    
-    route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
-                       "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
-                        "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
-                        "Unseen_robust" : gc.Routes.return_feasible_route_robust}
-    route_gen_func_name = "KSP_unseen_robust_prob"
-    
-    mutations = {#"No_mutation" : gf.no_mutation,
-                    "Intertwine_two" : gf.mutate_routes_two_intertwine, 
-                    "Add_vertex" : gf.add_vertex_to_terminal,
-                    "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                    "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
-                    #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
-                    #"Repl_high_sim_route":gf.mut_replace_high_sim_routes,
-                    "Repl_subsets" : gf.mut_replace_path_subsets
-                    }
-    
-        
-    mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
-    mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
-    mut_names = [v['name'] for (k,v) in mutations_dict.items()]
    
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
@@ -497,6 +504,7 @@ if True:
             
             # Crossover
             offspring_variables = gf.crossover_pop_routes_individuals_debug(pop_1, UTNDP_problem_1)
+            offspring_variables = gf.crossover_pop_routes_individuals_smart(pop_1, UTNDP_problem_1, crossover_func=crossover_funcs[crossover_func_name])
             
             # Mutation
             ld_mut_temp = gf.mutate_route_population_detailed_ld(offspring_variables, UTNDP_problem_1)

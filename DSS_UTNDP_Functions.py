@@ -451,7 +451,7 @@ def routes_generation_unseen_probabilistic(parent_i, parent_j, solution_len):
 
         else:
             max_indices = [i for i, j in enumerate(proportions)] # position of max proportion/s
-            proportions = proportions/sum(proportions)     
+            proportions = np.array(proportions)/sum(proportions)     
             max_index = random.choices(max_indices, weights=proportions, k=1)[0]
             
         
@@ -486,13 +486,13 @@ def save_obj_pickle(obj, name, directory):
 def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, pop_size_to_create=False):
     '''A function that loads the population data if it exists, and creates it
     otherwise. This will help longterm to save time.'''
-    if os.path.exists(directory / (name+".pickle")):
+    if (directory / (name+".pickle")).exists:
         pop_1 = load_obj_pickle(name, directory)
         print(f'LOADED: Population {name} loaded from {directory}')
     
     else:
         try: 
-            os.mkdir(directory) 
+            directory.mkdir() 
         except OSError as error: 
             print(error) 
         pop_1 = gc.PopulationRoutes(main_problem)  
@@ -2518,6 +2518,53 @@ def crossover_pop_routes(pop, main_problem):
     else:
         return pop.variables
     
+
+# Below crossover functions for testing
+def crossover_mumford(parent_A, parent_B, main_problem):
+    offspring_variable = crossover_routes_unseen_prob(parent_A, parent_B)        
+    return offspring_variable
+
+def crossover_unseen_probabilistic(parent_A, parent_B, main_problem):
+    offspring_variable = crossover_routes_unseen_probabilistic(parent_A, parent_B)
+    return offspring_variable
+
+def crossover_mumford_rem_subsets(parent_A, parent_B, main_problem):
+    debug = False
+    offspring_variable = crossover_routes_unseen_prob(parent_A, parent_B) 
+
+    _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+    if max_sim == 1: 
+        if debug: print("DUPLICATE: Crossover normal")
+    
+        # Attempt to replace any duplicate routes made by the crossover
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)
+            
+        _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+        if debug: 
+            if max_sim != 1: print("DUPLICATE: FIXED")
+    else:
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)       
+    return offspring_variable
+
+def crossover_unseen_probabilistic_rem_subsets(parent_A, parent_B, main_problem):
+    debug = False
+    offspring_variable = crossover_routes_unseen_prob(parent_A, parent_B) 
+    _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+    if max_sim == 1: 
+        if debug: print("DUPLICATE: Crossover normal")
+    
+        # Attempt to replace any duplicate routes made by the crossover
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)
+            
+        _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+        if debug: 
+            if max_sim != 1: print("DUPLICATE: FIXED")
+    else:
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)       
+    return offspring_variable
+
+# Functions used in NSGA II for crossover
+
 def crossover_pop_routes_individuals(pop, main_problem):
     """Crossover function applied to each route in population"""
     selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
@@ -2549,7 +2596,37 @@ def crossover_pop_routes_individuals(pop, main_problem):
     
     return offspring_variables
 
-def crossover_pop_routes_individuals_debug(pop, main_problem):
+def crossover_pop_routes_individuals_smart(pop, main_problem, crossover_func=crossover_mumford):
+    """Crossover function applied to each route in population"""
+    selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
+    
+    offspring_variables = [None] * main_problem.problem_GA_parameters.population_size
+     
+    for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
+        
+        if random.random() < main_problem.problem_GA_parameters.crossover_probability:
+            parent_A = pop.variables[selection[i,0]]
+            parent_B = pop.variables[selection[i,1]]
+        
+            offspring_variables[i] = crossover_func(parent_A, parent_B, main_problem)
+            
+            while not test_all_four_constraints(offspring_variables[i], main_problem):
+                offspring_variables[i] = repair_add_missing_from_terminal(offspring_variables[i], main_problem)
+                
+                if test_all_four_constraints(offspring_variables[i], main_problem):
+                    continue
+                else:
+                    offspring_variables[i] = crossover_func(parent_A, parent_B, main_problem)
+    
+        else:
+            if random.random() < 0.5:
+                offspring_variables[i] = pop.variables[selection[i,0]]
+            else:
+                offspring_variables[i] = pop.variables[selection[i,1]]
+    
+    return offspring_variables
+
+def crossover_pop_routes_individuals_debug(pop, main_problem, debug=False):
     """Crossover function applied to each route in population"""
     selection = tournament_selection_g2(pop, n_select=int(main_problem.problem_GA_parameters.population_size))
     
@@ -2562,16 +2639,17 @@ def crossover_pop_routes_individuals_debug(pop, main_problem):
             parent_B = pop.variables[selection[i,1]]
         
             offspring_variables[i] = crossover_routes_unseen_probabilistic(parent_A, parent_B)
-                # crossover_uniform_as_is(parent_A, parent_B, main_problem.R_routes.number_of_routes)
+
             _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
             if max_sim == 1: 
-                print("DUPLICATE: Crossover normal")
+                if debug: print("DUPLICATE: Crossover normal")
             
                 # Attempt to replace any duplicate routes made by the crossover
                 offspring_variables[i] = mut_replace_path_subsets(offspring_variables[i], main_problem)
                     
                 _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
-                if max_sim != 1: print("DUPLICATE: FIXED")
+                if debug: 
+                    if max_sim != 1: print("DUPLICATE: FIXED")
             else:
                 offspring_variables[i] = mut_replace_path_subsets(offspring_variables[i], main_problem)
 
@@ -2584,7 +2662,7 @@ def crossover_pop_routes_individuals_debug(pop, main_problem):
                 if test_all_four_constraints(offspring_variables[i], main_problem):
                     continue
                 else:
-                    offspring_variables[i] = crossover_routes_unseen_prob(parent_A, parent_B)
+                    offspring_variables[i] = crossover_routes_unseen_probabilistic(parent_A, parent_B)
                     _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variables[i])
                     if max_sim == 1: print("DUPLICATE: Crossover retry")
         else:

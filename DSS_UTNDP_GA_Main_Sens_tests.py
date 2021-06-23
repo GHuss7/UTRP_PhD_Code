@@ -106,10 +106,11 @@ if Decisions["Choice_import_dictionaries"]:
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
     
-    route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest, 
+    route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
+                       "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
                         "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
                         "Unseen_robust" : gc.Routes.return_feasible_route_robust}
-    route_gen_func_name = "KSP_unseen_robust"
+    route_gen_func_name = "KSP_unseen_robust_prob"
     
     mutations = {#"No_mutation" : gf.no_mutation,
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 

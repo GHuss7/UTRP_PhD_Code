@@ -171,6 +171,29 @@ class Routes():
                     return routes_R
         
         return False
+    
+    def return_feasible_route_robust_k_shortest_probabilistic(UTNDP_problem_input):
+        """Generate feasible route based on appending random shortest paths"""
+        for try_number in range(1000):   
+            
+            k_short_paths = copy.deepcopy(UTNDP_problem_input.k_short_paths.paths)
+            
+            # Shorten the candidate routes according to the constraints
+            for i in range(len(k_short_paths)-1, -1, -1):
+                if len(k_short_paths[i]) < UTNDP_problem_input.problem_constraints.con_minNodes or len(k_short_paths[i]) > UTNDP_problem_input.problem_constraints.con_maxNodes:  
+                    del k_short_paths[i]
+            
+            initial_route_set = gf.routes_generation_unseen_probabilistic(k_short_paths, k_short_paths, UTNDP_problem_input.problem_constraints.con_r)
+            
+            if gf.test_all_four_constraints(initial_route_set, UTNDP_problem_input):
+                return initial_route_set
+                
+            else:
+                routes_R = gf.repair_add_missing_from_terminal_multiple(initial_route_set, UTNDP_problem_input)
+                if gf.test_all_four_constraints(routes_R, UTNDP_problem_input):
+                    return routes_R
+        
+        return False
          
     def return_feasible_route_set_greedy_demand(UTNDP_problem_input):
         """Generate feasible route based on appending random shortest paths"""

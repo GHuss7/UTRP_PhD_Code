@@ -98,7 +98,7 @@ else:
                        "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
                        "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
                        "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
-    crossover_func_name = list(crossover_funcs.keys())[5]
+    crossover_func_name = list(crossover_funcs.keys())[4]
     
     mutations = {#"No_mutation" : gf.no_mutation,
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 

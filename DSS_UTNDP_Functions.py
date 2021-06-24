@@ -3387,7 +3387,7 @@ def mutate_route_population_detailed_ld(pop_variables_routes, main_problem):
     pop_mutated_variables = copy.deepcopy(pop_variables_routes)
     ld_mut_details = []
     for i in range(len(pop_mutated_variables)):
-        mut_output = mutate_overall_routes_all_smart_debug(pop_mutated_variables[i], main_problem)
+        mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
         ld_mut_details.append(mut_output)
                     
     return ld_mut_details

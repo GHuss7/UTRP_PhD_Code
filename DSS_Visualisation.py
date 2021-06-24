@@ -632,11 +632,16 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     
     axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', label='HV obtained')
     axs[0, 1].set_title('HV over all generations')
-    axs[0, 1].set(xlabel='Generations', ylabel='%')
+    axs[0, 1].set(xlabel='Generations', ylabel='HV [%]')
     axs[0, 1].legend(loc=0)
     if validation_line:
         axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', label='Benchmark')
+    ax_twin = axs[0, 1].twinx()
+    ax_twin.plot(df_data_generations["Generation"], df_data_generations["APD"], c='b', label='APD')
+    ax_twin.set(ylabel='Average population diversity [%]')
+    ax_twin.legend(loc=0)
+            
 
     if isinstance(validation_data, pd.DataFrame):
         axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    

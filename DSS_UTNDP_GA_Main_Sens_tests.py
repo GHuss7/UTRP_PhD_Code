@@ -141,9 +141,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 40, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 2, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -443,12 +443,6 @@ if True:
         pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_loaded)
         # Save initial population
         ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
-
-        
-        #pop_1.generate_initial_population_greedy_demand(UTNDP_problem_1, fn_obj_2) 
-        #pop_1.generate_initial_population_robust(UTNDP_problem_1, fn_obj_2) 
-        #pop_1.generate_initial_population_robust_ksp(UTNDP_problem_1, fn_obj_2)
-        #pop_1.generate_initial_population_hybrid(UTNDP_problem_1, fn_obj_2) 
         
         # If disruption obj function employed, seed the solution
         if dis_obj:
@@ -459,7 +453,6 @@ if True:
         pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)        
         
         # Create generational dataframe
-        pop_generations = np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),0)])
         ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, generation_num=0)
                                   
 
@@ -478,10 +471,10 @@ if True:
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
         HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
-
+        APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
         
-        df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
-        df_data_generations.loc[0] = [0, HV]
+        df_data_generations = pd.DataFrame(columns = ["Generation","HV","APD"]) # create a df to keep data
+        df_data_generations.loc[0] = [0, HV, APD]
         
         stats['end_time'] = datetime.datetime.now() # enter the begin time
         
@@ -489,10 +482,11 @@ if True:
         df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)
         initial_set = df_pop_generations.iloc[0:UTNDP_problem_1.problem_GA_parameters.population_size,:] # load initial set
 
-        print("Generation {0} duration: {1} [HV:{2} | BM:{3}]".format(str(0),
+        print("Generation {0} duration: {1} [HV:{2} | BM:{3}] APD:{4}".format(str(0),
                                                         ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                         round(HV, 4),
-                                                        round(stats_overall['HV Benchmark'],4)))
+                                                        round(stats_overall['HV Benchmark'],4),
+                                                        round(APD, 4)))
         
         # %% Run generations
         """ ######## Run each generation ################################################################ """
@@ -521,10 +515,56 @@ if True:
 
             # Determine non-dominated set
             df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
+                
+            # Get new generation
+            pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
+            pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
+            survivor_indices = gf.get_survivors_norm(pop_1, pop_size)
+            
+            # Add additional details for mutations
+            new_pop_details = [x - pop_size for x in survivor_indices if x >= pop_size]
+            new_pop_columns = np.zeros((pop_size))
+            new_pop_columns[new_pop_details] = 1
+                
+            for (v,k) in zip(range(len(ld_mut_temp)), new_pop_columns):
+                ld_mut_temp[v]["Included_new_gen"]=k
+            
+            ld_mut.extend(ld_mut_temp)
+            df_mut_temp = pd.DataFrame.from_dict(ld_mut_temp)
+            df_mut_temp.drop(['Route'], axis='columns', inplace=True)
+                        
+            # Update mutation summary and overall analysis
+            df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
+            df_mut = pd.DataFrame.from_dict(ld_mut)
+            df_mut.reset_index(drop=True, inplace=True)
+            
+            # Update the mutation ratios
+            def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
+                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+                success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
+                
+                # reset the success ratios if all have falied
+                if sum(success_ratio) == 0:
+                    success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
+                
+                success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
+                updated_ratio = mutation_threshold + success_proportion
+                UTNDP_problem_1.mutation_ratio = updated_ratio
+                
+            update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
+            df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
+            
+            # Remove old generation
+            gf.keep_individuals(pop_1, survivor_indices)
+        
+            # Adds the population to the dataframe
+            ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, i_gen, ld_pop_generations)
 
-            # Calculate the HV Quality Measure
+            # Calculate the HV and APD Quality Measure
             HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
-            df_data_generations.loc[i_gen] = [i_gen, HV]
+            APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
+            df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
             # Intermediate print-outs for observance 
             if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
@@ -557,62 +597,14 @@ if True:
                     #                                              df_data_generations, name_input_data, path_results_per_run, add_text=i_gen, labels)
                 except PermissionError:
                     pass
-                
-            # Get new generation
-            pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
-            pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
-            survivor_indices = gf.get_survivors_norm(pop_1, pop_size)
-            
-            # Add additional details for mutations
-            new_pop_details = [x - pop_size for x in survivor_indices if x >= pop_size]
-            new_pop_columns = np.zeros((pop_size))
-            new_pop_columns[new_pop_details] = 1
-                
-            for (v,k) in zip(range(len(ld_mut_temp)), new_pop_columns):
-                ld_mut_temp[v]["Included_new_gen"]=k
-            
-            ld_mut.extend(ld_mut_temp)
-            df_mut_temp = pd.DataFrame.from_dict(ld_mut_temp)
-            df_mut_temp.drop(['Route'], axis='columns', inplace=True)
-                        
-            # Update mutation summary and overall analysis
-            df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
-            df_mut = pd.DataFrame.from_dict(ld_mut)
-            df_mut.reset_index(drop=True, inplace=True)
-            # df_overall_analysis = pd.concat([df_data_for_analysis, df_mut], axis=1)
-            
-            # Update the mutation ratios
-            def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
-                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
-                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
-                success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
-                
-                # reset the success ratios if all have falied
-                if sum(success_ratio) == 0:
-                    success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
-                
-                success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
-                updated_ratio = mutation_threshold + success_proportion
-                UTNDP_problem_1.mutation_ratio = updated_ratio
-                
-            update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
-            df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
-            
-            # Remove old generation
-            gf.keep_individuals(pop_1, survivor_indices)
-        
-            # Adds the population to the dataframe
-            ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, i_gen, ld_pop_generations)
-
-            
-            pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, ga.extractDigits(pop_1.variables_str), np.full((len(pop_1.objectives),1),i_gen)])]) # add the population to the generations
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
             
             if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
-                print("Dur: {0} [HV:{1} | BM:{2}]".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
+                print("Dur: {0} [HV:{1} | BM:{2}] APD:{3}".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                                 round(HV, 4),
-                                                                round(stats_overall['HV Benchmark'],4)))
+                                                                round(stats_overall['HV Benchmark'],4),
+                                                                round(APD, 4)))
                 
             # Test whether HV is still improving
             gen_compare = UTNDP_problem_1.problem_GA_parameters.gen_compare_HV
@@ -621,8 +613,9 @@ if True:
                 HV_diff = df_data_generations['HV'].iloc[-1] - df_data_generations['HV'].iloc[-gen_compare-1]
                 if HV_diff < HV_improvement_th:
                     stats['Termination'] = 'Non-improving_HV'
-                    print(f'Run terminated by non-improving HV after Gen {i_gen} [Gen comp:{gen_compare} | HV diff: {HV_diff}')
+                    print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.4f}]')
                     break
+            
                 
         #%% Stats updates
         stats['end_time'] = datetime.datetime.now() # save the end time of the run
@@ -630,7 +623,7 @@ if True:
         stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
         stats['end_time'] =  stats['end_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format
         stats['HV obtained'] = HV
-        
+        stats['APD end'] = APD
             
         #%% Save the results #####################################################
         if Decisions["Choice_print_results"]:

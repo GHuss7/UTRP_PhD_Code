@@ -3536,6 +3536,23 @@ def calc_path_similarity_matrix_for_mut(P_list):
                     
     return max_sim_list, max_sim
 
+def calc_avg_route_set_diversity(R_list):
+    '''Takes as input a list of numerous routes and calculates the diversity
+    between all of the routes'''
+    n = len(R_list) # length of routes list
+    
+    R_ms = [multiset.Multiset(return_all_route_set_edges(r)) for r in R_list]
+    
+    mx_sim = np.zeros((n,n))
+    for i in range(n):
+        for j in range(n):
+            if i < j: 
+                sim = calc_similarity_from_ms(R_ms[i], R_ms[j])
+                mx_sim[i,j] = sim
+
+    avg_div = 1 - np.sum(mx_sim)/((n*n-n)/2)
+    return avg_div
+
 # %% Non-dominated set creation functions
 def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', obj_2_name='F_4'):
     df_non_dominated_set = copy.deepcopy(df_data_for_analysis.loc[df_data_for_analysis['Rank'] == 0]) # create df for non-dominated set

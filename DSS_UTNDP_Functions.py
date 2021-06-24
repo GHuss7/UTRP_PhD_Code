@@ -486,7 +486,7 @@ def save_obj_pickle(obj, name, directory):
 def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, pop_size_to_create=False):
     '''A function that loads the population data if it exists, and creates it
     otherwise. This will help longterm to save time.'''
-    if (directory / (name+".pickle")).exists:
+    if (directory / (name+".pickle")).exists():
         pop_1 = load_obj_pickle(name, directory)
         print(f'LOADED: Population {name} loaded from {directory}')
     
@@ -2209,6 +2209,8 @@ def replace_path_prob_unmet_demand_limited_len(route_to_replace, main_problem, r
     route so that it won't prefer moves benefiting passenger cost more.
     Routes to search is by default k-shortest paths, but another set of routes 
     may be imported and used to search for the best demand.'''
+    
+    debug = False
     route_copy = copy.deepcopy(route_to_replace)
     replace_path = route_copy[replace_index]   
     len_removed = len(replace_path)
@@ -2244,7 +2246,7 @@ def replace_path_prob_unmet_demand_limited_len(route_to_replace, main_problem, r
     
     path_to_add = random.choices(routes_to_search, weights=prob_d_routes, k=1)[0]
     
-    print(f"{path_to_add}")
+    if debug: print(f"{path_to_add}")
     route_copy.insert(replace_index, path_to_add)
     
     return route_copy
@@ -2528,7 +2530,7 @@ def crossover_unseen_probabilistic(parent_A, parent_B, main_problem):
     offspring_variable = crossover_routes_unseen_probabilistic(parent_A, parent_B)
     return offspring_variable
 
-def crossover_mumford_rem_subsets(parent_A, parent_B, main_problem):
+def crossover_mumford_rem_subsets_ksp(parent_A, parent_B, main_problem):
     debug = False
     offspring_variable = crossover_routes_unseen_prob(parent_A, parent_B) 
 
@@ -2544,6 +2546,41 @@ def crossover_mumford_rem_subsets(parent_A, parent_B, main_problem):
             if max_sim != 1: print("DUPLICATE: FIXED")
     else:
         offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)       
+    return offspring_variable
+
+def crossover_unseen_probabilistic_rem_subsets_ksp(parent_A, parent_B, main_problem):
+    debug = False
+    offspring_variable = crossover_routes_unseen_prob(parent_A, parent_B) 
+    _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+    if max_sim == 1: 
+        if debug: print("DUPLICATE: Crossover normal")
+    
+        # Attempt to replace any duplicate routes made by the crossover
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)
+            
+        _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+        if debug: 
+            if max_sim != 1: print("DUPLICATE: FIXED")
+    else:
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)       
+    return offspring_variable
+
+def crossover_mumford_rem_subsets(parent_A, parent_B, main_problem):
+    debug = False
+    offspring_variable = crossover_routes_unseen_prob(parent_A, parent_B) 
+
+    _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+    if max_sim == 1: 
+        if debug: print("DUPLICATE: Crossover normal")
+    
+        # Attempt to replace any duplicate routes made by the crossover
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem, parent_A+parent_B)
+            
+        _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
+        if debug: 
+            if max_sim != 1: print("DUPLICATE: FIXED")
+    else:
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem, parent_A+parent_B)       
     return offspring_variable
 
 def crossover_unseen_probabilistic_rem_subsets(parent_A, parent_B, main_problem):
@@ -2554,15 +2591,14 @@ def crossover_unseen_probabilistic_rem_subsets(parent_A, parent_B, main_problem)
         if debug: print("DUPLICATE: Crossover normal")
     
         # Attempt to replace any duplicate routes made by the crossover
-        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem, parent_A+parent_B)
             
         _, max_sim = calc_path_similarity_matrix_for_mut(offspring_variable)
         if debug: 
             if max_sim != 1: print("DUPLICATE: FIXED")
     else:
-        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem)       
+        offspring_variable = mut_replace_path_subsets(offspring_variable, main_problem, parent_A+parent_B)       
     return offspring_variable
-
 # Functions used in NSGA II for crossover
 
 def crossover_pop_routes_individuals(pop, main_problem):
@@ -3013,6 +3049,7 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
 def mut_replace_high_sim_routes(routes_R, main_problem):
     '''Mutation function where the routes with the maximum overlap is identified
     and then replaced by a better route'''
+    debug = False
     R_copy = copy.deepcopy(routes_R)
     max_sim_list, max_sim = calc_path_similarity_matrix_for_mut(R_copy)
     pair = random.choice(max_sim_list)
@@ -3026,7 +3063,7 @@ def mut_replace_high_sim_routes(routes_R, main_problem):
         repl_P_1 = False
     
     if max_sim > 0.5:
-        print(f"{P_1} \n{P_2} \n MAX:{max_sim} LIST:{max_sim_list}")
+        if debug: print(f"{P_1} \n{P_2} \n MAX:{max_sim} LIST:{max_sim_list}")
 
         if repl_P_1:
             del R_copy[pair[0]]
@@ -3064,12 +3101,13 @@ def test_list_order_and_subset(A, B):
     n = len(A)
     return any(A == B[i:i + n] for i in range(len(B)-n + 1))
     
-def mut_replace_path_subsets(routes_R, main_problem):
+def mut_replace_path_subsets(routes_R, main_problem, routes_to_search=False):
     '''Á function that mutates a route set by replacing subsets of lists
     subject to the same ordering in a given route set routes_R. Returns the
     mutated route as output'''
     # Identify shortest subset that should be replaced
-
+    
+    debug = False
     mut_R = copy.deepcopy(routes_R)
     
     for i, R_i in enumerate(mut_R):
@@ -3086,13 +3124,13 @@ def mut_replace_path_subsets(routes_R, main_problem):
                         test_list = R_i 
     
                     if test_list_order_and_subset(sub_list, test_list):
-                        print(sub_list_index)
-                        mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
+                        if debug: print(sub_list_index)
+                        mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search)
                     else:
                         sub_list.reverse()
                         if test_list_order_and_subset(sub_list, test_list):
-                            print(sub_list_index)
-                            mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index)
+                            if debug: print(sub_list_index)
+                            mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search)
                      
     return mut_R
 

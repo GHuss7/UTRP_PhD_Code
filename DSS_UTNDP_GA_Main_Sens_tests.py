@@ -94,20 +94,22 @@ else:
     
     crossover_funcs = {"Mumford" : gf.crossover_mumford,
                        "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
-                        "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
-                        "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
-    crossover_func_name = list(crossover_funcs.keys())[3]
+                       "Mumford_replace_subsets_ksp" : gf.crossover_mumford_rem_subsets_ksp,
+                       "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
+                       "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
+                       "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
+    crossover_func_name = list(crossover_funcs.keys())[5]
     
     mutations = {#"No_mutation" : gf.no_mutation,
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                    "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                    # "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                    # "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                    # "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes,
-                    "Repl_subsets" : gf.mut_replace_path_subsets
+                    # "Repl_subsets" : gf.mut_replace_path_subsets
                     }
     
         
@@ -503,7 +505,7 @@ if True:
                 print("Generation " + str(int(i_gen)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
             # Crossover
-            offspring_variables = gf.crossover_pop_routes_individuals_debug(pop_1, UTNDP_problem_1)
+            # offspring_variables = gf.crossover_pop_routes_individuals_debug(pop_1, UTNDP_problem_1)
             offspring_variables = gf.crossover_pop_routes_individuals_smart(pop_1, UTNDP_problem_1, crossover_func=crossover_funcs[crossover_func_name])
             
             # Mutation

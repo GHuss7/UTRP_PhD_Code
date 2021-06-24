@@ -656,7 +656,58 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
         plt.close()
     except:
         pass
-        
+
+def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results, labels, validation_line=False):
+    '''Print Objective functions over time, all solutions and pareto set obtained'''
+    '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format
+    If the value of the validation HV line is given, it is printed'''
+    fig, axs = plt.subplots(2, 2)
+    fig.set_figheight(15)
+    fig.set_figwidth(20)
+    
+    axs[0, 0].set_title('Averaged mean objectives over all generations')
+    axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', label=labels[2])
+    axs[0, 0].set(xlabel='Generations', ylabel=labels[2])
+    axs[0, 0].legend(loc="lower left") 
+    ax_twin = axs[0, 0].twinx()
+    ax_twin.plot(df_data_generations["Generation"], df_data_generations["mean_f_2"], c='b', label=labels[3])
+    ax_twin.set(ylabel=labels[3])
+    ax_twin.legend(loc=0) 
+    
+    
+    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+    for mut_nr in range(3,len(df_mut_smooth.columns)):
+        axs[1, 0].plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
+    axs[1, 0].set_title('Averaged mutation ratios over all generations')
+    axs[1, 0].set(xlabel='Generations', ylabel='Mutation ratio')
+    axs[1, 0].legend(loc=0) 
+    
+    axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', label='HV obtained')
+    axs[0, 1].set_title('Average HV over all generations')
+    axs[0, 1].set(xlabel='Generations', ylabel='HV [%]')
+    axs[0, 1].legend(loc=0)
+    if validation_line:
+        axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
+                        c='black', label='Benchmark')
+    ax_twin = axs[0, 1].twinx()
+    ax_twin.plot(df_data_generations["Generation"], df_data_generations["APD"], c='b', label='APD')
+    ax_twin.set(ylabel='Average population diversity [%]')
+    ax_twin.legend(loc=0)
+            
+
+    if isinstance(validation_data, pd.DataFrame):
+        axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
+    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Last initial set')
+    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
+    axs[1, 1].set_title('Overall non-dominated set obtained over all runs')
+    axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
+    axs[1, 1].legend(loc=0)
+    try:
+        plt.ioff()
+        plt.savefig(path_results / "Averaged_summary.pdf", bbox_inches='tight')
+        plt.close()
+    except:
+        pass
 
 def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels):
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''
@@ -722,6 +773,27 @@ def save_mutation_ratios_plot(df_mut_ratios, path, file_name):
     except:
         pass
     
+def save_obj_performances_plot(df_data, path, file_name):
+    '''A function to save the mutation summaries'''
+    for col_nr in range(2,len(df_data.columns)): # 2 is to avoid first two columns 
+    
+        fig = plt.figure()
+        #fig.set_figheight(15)
+        #fig.set_figwidth(20)
+        ax = fig.add_subplot(111)
+        
+        ax.plot(df_data["Generation"], df_data[df_data.columns[col_nr]], label=df_data.columns[col_nr])
+        ax.set_title(f'{df_data.columns[col_nr]} over all generations')
+        ax.set(xlabel='Generations', ylabel=df_data.columns[col_nr])
+        ax.legend(loc=0) 
+        
+        try:
+            plt.ioff()
+            plt.savefig(path / (df_data.columns[col_nr]+'_'+file_name+".pdf"), bbox_inches='tight')
+            plt.close()
+        except:
+            pass
+    
     
 def save_all_mutation_stats_and_plots(path_to_main_folder):
     '''A function that saves all the csv files and plots'''
@@ -733,6 +805,16 @@ def save_all_mutation_stats_and_plots(path_to_main_folder):
     for df, name in zip(df_list, df_names):
         df.to_csv(mut_folder / (name+'.csv'))    
         save_mutation_ratios_plot(df, mut_folder, name)
+
+def save_all_obj_stats_and_plots(path_to_main_folder):
+    '''A function that saves all the csv files and plots'''
+    df_list, df_names = ga.get_obj_stats_from_model_runs(path_to_main_folder)
+    save_folder = path_to_main_folder/'Performance'
+    if not os.path.isdir(save_folder):
+        os.mkdir(save_folder)
     
+    for df, name in zip(df_list, df_names):
+        df.to_csv(save_folder / (name+'.csv'))    
+        save_obj_performances_plot(df, save_folder, name)    
     
 #plot_mutation_ratios(df_mut_ratios, alpha=0.1, beta=0.1)

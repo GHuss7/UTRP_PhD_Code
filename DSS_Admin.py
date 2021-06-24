@@ -196,7 +196,49 @@ def get_mutation_stats_from_model_runs(path_to_main_folder):
     
     return df_list, df_names
     
-     
+def get_obj_stats_from_model_runs(path_to_main_folder):
+    # main folder should only contain folders of the runs
+    result_entries = os.listdir(path_to_main_folder) # gets the names of all the results entries
+    run_counter = 0
+    min_len = 0
+
+    for i in range(len(result_entries)):
+        if re.match("^Run_[0-9]+$", result_entries[i]):
+            results_file_path = path_to_main_folder / result_entries[i] # sets the path 
+            
+            len_df = len(pd.read_csv(results_file_path / 'Data_generations.csv'))
+
+            if min_len == 0:
+               min_len = len_df
+            else:
+                if len_df < min_len:
+                    min_len = len_df
+
+
+    for i in range(len(result_entries)):
+        if re.match("^Run_[0-9]+$", result_entries[i]):
+            results_file_path = path_to_main_folder / result_entries[i] # sets the path 
+            
+            df_data_gen = pd.read_csv(results_file_path / 'Data_generations.csv')
+            
+            if run_counter == 0:
+                data_gen_sums = np.array(df_data_gen.values)[:min_len,:]
+                run_counter += 1
+                
+            else:
+                data_gen_sums = data_gen_sums + np.array(df_data_gen.values)[:min_len,:]
+                run_counter += 1
+    
+    # average each array
+    data_gen_sums = data_gen_sums/ run_counter
+
+    df_all_data_gen_sums = pd.DataFrame(columns=df_data_gen.columns, data=data_gen_sums)
+    #df_all_data_gen_sums_end_smoothed = exp_smooth_df(df_all_data_gen_sums, alpha=0.1, beta=0.1, n=100) 
+            
+    df_list = [df_all_data_gen_sums]#, df_all_data_gen_sums_end_smoothed]
+    df_names = ["Avg_obj_performances"]#, "Smoothed_avg_mut_ratios"]
+    
+    return df_list, df_names     
 
 def get_sens_tests_stats_from_model_runs(path_to_main_folder, nr_of_runs):
     # NB: folders should be named "Run_1" for example

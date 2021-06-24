@@ -65,7 +65,8 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_testing", #5
+                   "Mandl_UTRP_dis"][5]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -98,7 +99,7 @@ else:
                        "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
                        "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
                        "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
-    crossover_func_name = list(crossover_funcs.keys())[4]
+    crossover_func_name = list(crossover_funcs.keys())[5]
     
     mutations = {#"No_mutation" : gf.no_mutation,
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 
@@ -141,9 +142,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 40, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 2, # STANDARD: 20 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 20, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -281,7 +282,7 @@ UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
-UTNDP_problem_1.add_text = f"G{parameters_GA['generations']}_P{parameters_GA['population_size']}_R{parameters_GA['number_of_runs']}" # define the additional text for the file name
+UTNDP_problem_1.add_text = f"G{parameters_GA['generations']}_P{parameters_GA['population_size']}_R{parameters_GA['number_of_runs']}_{crossover_func_name}" # define the additional text for the file name
 UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
@@ -613,7 +614,7 @@ if True:
                 HV_diff = df_data_generations['HV'].iloc[-1] - df_data_generations['HV'].iloc[-gen_compare-1]
                 if HV_diff < HV_improvement_th:
                     stats['Termination'] = 'Non-improving_HV'
-                    print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.4f}]')
+                    print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.6f}]')
                     break
             
                 
@@ -707,7 +708,14 @@ if True:
             del key, val
       
         ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
-        gv.save_all_mutation_stats_and_plots(path_results)# gets and prints the mutation stats
+        gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
+        gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
+        gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                                          pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                          pd.read_csv((path_results/'Mutations/Smoothed_avg_mut_ratios.csv')), 
+                                          name_input_data, 
+                                          path_results, labels,
+                                          stats_overall['HV Benchmark'])
         # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
 
         del archive_file, path_results_per_run, w           

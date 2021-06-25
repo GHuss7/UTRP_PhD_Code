@@ -3158,43 +3158,44 @@ def mut_invert_route_vertices(routes_R, main_problem):
     search_order = random.sample(range(len(R_1)), k=len(R_1))
     
     for i in search_order:
-        i_start = random.randint(0, len(R_1[i])-1)
-        vertex_start = R_1[i][i_start]
-        
-        # Find potential inversions
-        vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
-        potential_inverts = list(set(vertex_neighbours) & set(R_1[i]))
-        
-        if len(potential_inverts) != 0:
-            vertex_end = random.choice(potential_inverts)
-            i_end = R_1[i].index(vertex_end)       
+        if len(R_1[i]) > 2:
+            i_start = random.randint(0, len(R_1[i])-1)
+            vertex_start = R_1[i][i_start]
             
-            # i_start must be smaller than i_end
-            if i_start > i_end:
-                temp = i_start
-                i_start = i_end
-                i_end = temp
+            # Find potential inversions
+            vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
+            potential_inverts = list(set(vertex_neighbours) & set(R_1[i]))
+            
+            if len(potential_inverts) != 0:
+                vertex_end = random.choice(potential_inverts)
+                i_end = R_1[i].index(vertex_end)       
                 
-            R_mut = copy.deepcopy(R_1)
-            
-            # Reverse the part of route list from index i_start to i_end
-            if i_start == 0:
-                reversed_path = R_mut[i][i_end:i_start:-1] + R_mut[i][0:i_start+1] + R_mut[i][i_end+1:]
-            elif i_end == (len(R_1[i])-1):
-                reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1]
-            else:
-                reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1] + R_mut[i][i_end+1:]
-            
-            R_mut[i] = reversed_path
+                # i_start must be smaller than i_end
+                if i_start > i_end:
+                    temp = i_start
+                    i_start = i_end
+                    i_end = temp
+                    
+                R_mut = copy.deepcopy(R_1)
                 
-            
-            if False: # Debug
-                print(f'Start: {i_start} End:{i_end}')
-                x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
-                print(R_1[i])
-                print(R_mut[i])
-                print(len(R_mut[i]) - sum(x))
-            return R_mut
+                # Reverse the part of route list from index i_start to i_end
+                if i_start == 0:
+                    reversed_path = R_mut[i][i_end:i_start:-1] + R_mut[i][0:i_start+1] + R_mut[i][i_end+1:]
+                elif i_end == (len(R_1[i])-1):
+                    reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1]
+                else:
+                    reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1] + R_mut[i][i_end+1:]
+                
+                R_mut[i] = reversed_path
+                    
+                
+                if False: # Debug
+                    print(f'Start: {i_start} End:{i_end}')
+                    x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
+                    print(R_1[i])
+                    print(R_mut[i])
+                    print(len(R_mut[i]) - sum(x))
+                return R_mut
         
     return routes_R
         

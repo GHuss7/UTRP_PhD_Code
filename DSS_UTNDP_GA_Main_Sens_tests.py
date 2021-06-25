@@ -105,12 +105,12 @@ else:
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    # "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    # "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                    # "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                    "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                    "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
-                    #"Repl_high_sim_route":gf.mut_replace_high_sim_routes,
-                    # "Repl_subsets" : gf.mut_replace_path_subsets,
+                    #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
+                    "Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices
                     }
     

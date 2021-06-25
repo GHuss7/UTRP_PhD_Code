@@ -3188,12 +3188,12 @@ def mut_invert_route_vertices(routes_R, main_problem):
             R_mut[i] = reversed_path
                 
             
-             # Debug
-            print(f'Start: {i_start} End:{i_end}')
-            x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
-            print(R_1[i])
-            print(R_mut[i])
-            print(len(R_mut[i]) - sum(x))
+            if False: # Debug
+                print(f'Start: {i_start} End:{i_end}')
+                x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
+                print(R_1[i])
+                print(R_mut[i])
+                print(len(R_mut[i]) - sum(x))
             return R_mut
         
     return routes_R

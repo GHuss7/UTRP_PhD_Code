@@ -1951,7 +1951,7 @@ def repair_add_missing_from_terminal_multiple_debug(routes_R, UTNDP_problem):
                     for random_terminal_node in intersection_terminal_dist_list:
                     
                         path_to_add = find_path_from_dist_list([random_terminal_node], distance_list_vertex_u, distance_depth+1, UTNDP_problem.mapping_adjacent)[0]
-                        print(path_to_add)
+                        # print(path_to_add)
         
                         """Adds the connecting path to the correct route"""  
                         # Finds all the routes with the correct terminal vertex for the connection, ensuring no infeasible connections
@@ -2116,7 +2116,7 @@ def add_path_satisfying_max_unmet_demand(route_to_repair, main_problem, routes_t
             d_max = d_met
 
     path_to_add = routes_to_search[random.choice(pot_route_indices)]
-    print(f"{path_to_add}")
+    # print(f"{path_to_add}")
     repaired_route = copy.deepcopy(route_to_repair)
     repaired_route.extend([path_to_add])
     
@@ -2153,7 +2153,7 @@ def add_path_max_unmet_demand_limited_len(route_to_repair, main_problem, removed
                 d_max = d_met
 
     path_to_add = routes_to_search[random.choice(pot_route_indices)]
-    print(f"{path_to_add}")
+    # print(f"{path_to_add}")
     repaired_route = copy.deepcopy(route_to_repair)
     repaired_route.extend([path_to_add])
     
@@ -2196,7 +2196,7 @@ def add_path_prob_unmet_demand_limited_len(route_to_repair, main_problem, remove
     
     path_to_add = random.choices(routes_to_search, weights=prob_d_routes, k=1)[0]
     
-    print(f"{path_to_add}")
+    # print(f"{path_to_add}")
     repaired_route = copy.deepcopy(route_to_repair)
     repaired_route.extend([path_to_add])
     
@@ -3200,8 +3200,6 @@ def mut_invert_route_vertices(routes_R, main_problem):
     return routes_R
         
         
-
-
 def no_mutation(routes_R, main_problem):   
     return routes_R 
 

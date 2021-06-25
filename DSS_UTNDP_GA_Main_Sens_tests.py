@@ -66,7 +66,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][2]   # set the name of the input data
+                   "Mandl_UTRP_dis"][3]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -99,13 +99,13 @@ else:
                        "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
                        "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
                        "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
-    crossover_func_name = list(crossover_funcs.keys())[4]
+    crossover_func_name = list(crossover_funcs.keys())[5]
     
     mutations = {#"No_mutation" : gf.no_mutation,
                     "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                    #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
                     "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
                     "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,

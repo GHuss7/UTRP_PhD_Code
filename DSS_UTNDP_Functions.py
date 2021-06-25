@@ -3150,14 +3150,56 @@ def mut_replace_path_subsets(routes_R, main_problem, routes_to_search=False, lim
                      
     return mut_R
 
-# routes_R = [[8, 14],
-#             [8, 14],
-#             [14, 7, 5, 2, 1],
-#             [8, 14, 6, 9, 13, 12],
-#             [9, 10, 11],
-#             [0, 1, 3],
-#             [4, 3]]
-#mut_remove_subset_route(routes_R, main_problem=UTNDP_problem_1)
+
+def mut_invert_route_vertices(routes_R, main_problem):
+    '''A mutation function for inverting a randomly selected vertex and a 
+    potential inversion counter-part'''
+    R_1 = routes_R   
+    search_order = random.sample(range(len(R_1)), k=len(R_1))
+    
+    for i in search_order:
+        i_start = random.randint(0, len(R_1[i])-1)
+        vertex_start = R_1[i][i_start]
+        
+        # Find potential inversions
+        vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
+        potential_inverts = list(set(vertex_neighbours) & set(R_1[i]))
+        
+        if len(potential_inverts) != 0:
+            vertex_end = random.choice(potential_inverts)
+            i_end = R_1[i].index(vertex_end)       
+            
+            # i_start must be smaller than i_end
+            if i_start > i_end:
+                temp = i_start
+                i_start = i_end
+                i_end = temp
+                
+            R_mut = copy.deepcopy(R_1)
+            
+            # Reverse the part of route list from index i_start to i_end
+            if i_start == 0:
+                reversed_path = R_mut[i][i_end:i_start:-1] + R_mut[i][0:i_start+1] + R_mut[i][i_end+1:]
+            elif i_end == (len(R_1[i])-1):
+                reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1]
+            else:
+                reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1] + R_mut[i][i_end+1:]
+            
+            R_mut[i] = reversed_path
+                
+            
+             # Debug
+            print(f'Start: {i_start} End:{i_end}')
+            x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
+            print(R_1[i])
+            print(R_mut[i])
+            print(len(R_mut[i]) - sum(x))
+            return R_mut
+        
+    return routes_R
+        
+        
+
 
 def no_mutation(routes_R, main_problem):   
     return routes_R 

@@ -66,7 +66,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][3]   # set the name of the input data
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -143,9 +143,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 20, # STANDARD: 20 (John 2016)
+    "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 2, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -375,9 +375,10 @@ if True:
     
     #%% GA Implementation UTNDP ############################################
     '''Load validation data'''
-    if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv"):
-        validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers.csv")
-        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+    if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
+        validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
+        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
+                                                               UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
     else:
         validation_data = False
         stats_overall['HV Benchmark'] = 0

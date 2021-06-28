@@ -2766,7 +2766,7 @@ def crossover_pop_routes_UTRFSP(pop, main_problem):
     return offspring_variables_routes, np.array(offspring_variables_freq_args)
 
 
-#%% Mutation functions   
+# %% Mutation functions
 
 def mutate_routes_two_intertwine(routes_R, main_problem):
     """Mutate a route set by randomly choosing two routes that have a common 

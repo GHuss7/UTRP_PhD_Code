@@ -27,7 +27,6 @@ mplt.rcParams['mathtext.fontset']= 'cm'
 mplt.rcParams['font.size']= 11
 mplt.rcParams['axes.unicode_minus']= False
 
-
 #from timeit import default_timer as timer
 
 # %% Import personal functions
@@ -470,19 +469,25 @@ def save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, va
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
     
-    axs[0].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker="o", label='HV obtained')
+    
+    axs[0].plot(df_data_generations["Generation"], df_data_generations["HV"], marker="o", label='HV obtained')
     #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTRFSP_problem_1.max_objs, UTRFSP_problem_1.min_objs),\
-    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
+    #   s=1, marker="o", label='HV Mumford (2013)')
     axs[0].set_title('HV over all generations')
     axs[0].set(xlabel='Generations', ylabel='%')
     axs[0].legend(loc="upper right")
     if validation_line:
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', label='Benchmark')
-    if isinstance(validation_data, pd.DataFrame):
-        axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
-    axs[1].scatter(initial_set[f_1_col_name], initial_set[f_2_col_name], s=10, c='g', marker="o", label='Initial set')
-    axs[1].scatter(df_non_dominated_set[f_1_col_name], df_non_dominated_set[f_2_col_name], s=10, c='r', marker="o", label='Non-dom set obtained')
+    
+    axs[1].scatter(initial_set[f_1_col_name], initial_set[f_2_col_name], s=10, marker="o", label='Initial set')
+    axs[1].scatter(df_non_dominated_set[f_1_col_name], df_non_dominated_set[f_2_col_name], s=10, marker="o", label='Non-dom set obtained')
+    
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
     axs[1].set_title('Non-dominated set obtained vs benchmark results')
     axs[1].set(xlabel=f_1_label, ylabel=f_2_label)
     axs[1].legend(loc="upper right")
@@ -500,6 +505,7 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
     
+    
     axs[0].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker="o", label='HV obtained')
     axs[0].set_title('HV over all generations')
     axs[0].set(xlabel='Generations', ylabel='%')
@@ -507,10 +513,15 @@ def save_results_analysis_fig_interim(initial_set, df_non_dominated_set, validat
     if validation_line:
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', marker=".", label='Benchmark')
-    if isinstance(validation_data, pd.DataFrame):
-        axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
-    axs[1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, c='g', marker="o", label='Initial set')
-    axs[1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, c='r', marker="o", label='Non-dom set obtained')
+    
+    axs[1].scatter(initial_set['F_3'], initial_set['F_4'], s=10, marker="o", label='Initial set')
+    axs[1].scatter(df_non_dominated_set["F_3"], df_non_dominated_set["F_4"], s=10, marker="o", label='Non-dom set obtained')
+    
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
     axs[1].set_title('Non-dominated set obtained vs benchmark results')
     axs[1].set(xlabel='F_3_AETT', ylabel='F_4_TBR')
     axs[1].legend(loc="upper right")
@@ -535,6 +546,7 @@ def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set
     fig.set_figheight(7.5)
     fig.set_figwidth(20)
     
+    
     axs[0].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', marker="o", label='HV obtained')
     axs[0].set_title('HV over all generations')
     axs[0].set(xlabel='Generations', ylabel='%')
@@ -543,10 +555,14 @@ def save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set
         axs[0].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', marker=".", label='Benchmark')
     
-    if isinstance(validation_data, pd.DataFrame):
-        axs[1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
-    axs[1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
-    axs[1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
+    axs[1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Initial set')
+    axs[1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, marker="o", label='Non-dom set obtained')
+    
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
     axs[1].set_title('Non-dominated set obtained vs benchmark results')
     axs[1].set(xlabel=labels[2], ylabel=labels[3])
     axs[1].legend(loc="upper right")
@@ -575,6 +591,8 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
     fig, axs = plt.subplots(2, 2)
     fig.set_figheight(15)
     fig.set_figwidth(20)
+    
+    
     axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', marker="o", label=labels[2])
     axs[0, 0].set_title(f'Mean {labels[2]} over all generations')
     axs[0, 0].set(xlabel='Generations', ylabel=labels[2])
@@ -593,10 +611,14 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
         axs[0, 1].plot(range(len(df_data_generations["Generation"])), np.ones(len(df_data_generations["Generation"]))*validation_line,\
                         c='black', marker=".", label='Benchmark')
     
-    if isinstance(validation_data, pd.DataFrame):
-        axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
-    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
+    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Initial set')
     axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
+    
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1, 1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+    
     axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
     axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
     axs[1, 1].legend(loc="upper right")
@@ -612,6 +634,7 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     fig, axs = plt.subplots(2, 2)
     fig.set_figheight(15)
     fig.set_figwidth(20)
+    
     
     axs[0, 0].set_title('Mean objectives over all generations')
     axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', label=labels[2])
@@ -642,11 +665,14 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     ax_twin.set(ylabel='Average population diversity [%]')
     ax_twin.legend(loc=0)
             
+    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Initial set')
+    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, marker="o", label='Non-dom set obtained')
 
-    if isinstance(validation_data, pd.DataFrame):
-        axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
-    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
-    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1, 1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
     axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
     axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
     axs[1, 1].legend(loc=0)
@@ -664,6 +690,7 @@ def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validati
     fig, axs = plt.subplots(2, 2)
     fig.set_figheight(15)
     fig.set_figwidth(20)
+    
     
     axs[0, 0].set_title('Averaged mean objectives over all generations')
     axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', label=labels[2])
@@ -694,11 +721,13 @@ def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validati
     ax_twin.set(ylabel='Average population diversity [%]')
     ax_twin.legend(loc=0)
             
-
-    if isinstance(validation_data, pd.DataFrame):
-        axs[1, 1].scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")    
-    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Last initial set')
-    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, c='r', marker="o", label='Non-dom set obtained')
+    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Last initial set')
+    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, marker="o", label='Non-dom set obtained')
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1, 1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
     axs[1, 1].set_title('Overall non-dominated set obtained over all runs')
     axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
     axs[1, 1].legend(loc=0)
@@ -715,12 +744,16 @@ def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_dat
     fig.set_figheight(15)
     fig.set_figwidth(20)
     
-    if isinstance(validation_data, pd.DataFrame):
-        axs.scatter(validation_data.iloc[:,0], validation_data.iloc[:,1], s=10, c='b', marker="o", label=name_input_data+" validation")
-    axs.scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, c='g', marker="o", label='Initial set')
-    axs.scatter(df_overall_pareto_set[labels[0]], df_overall_pareto_set[labels[1]], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+    
+    axs.scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Initial set')
+    axs.scatter(df_overall_pareto_set[labels[0]], df_overall_pareto_set[labels[1]], s=10, marker="o", label='Pareto front obtained from all runs')
     if Decisions.get('Choice_use_NN_to_predict'):
         axs.scatter(df_overall_pareto_set[labels[0]+"_real"], df_overall_pareto_set[labels[1]+"_real"], s=10, c='orange', marker="o", label='Real Pareto front values')
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs.scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+    
     axs.set_title('Pareto front obtained from all runs')
     axs.set(xlabel=labels[2], ylabel=labels[3])
     axs.legend(loc="upper right")

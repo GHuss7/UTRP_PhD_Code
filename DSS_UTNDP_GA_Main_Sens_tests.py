@@ -66,7 +66,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_dis"][1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -106,12 +106,15 @@ else:
                     "Add_vertex" : gf.add_vertex_to_terminal,
                     "Delete_vertex" : gf.remove_vertex_from_terminal,
                     #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                    "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                    #"Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                    #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     "Repl_subsets" : gf.mut_replace_path_subsets,
-                    "Invert_path_vertices" : gf.mut_invert_route_vertices
+                    "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    "Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
+                    "Full trim" : gf.mut_full_trim,
+                    "Random trim" : gf.mut_random_trim,
                     }
     
     all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
@@ -145,8 +148,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 10, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 2, # STANDARD: 200 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 200, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

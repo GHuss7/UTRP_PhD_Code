@@ -114,6 +114,8 @@ else:
                     "Invert_path_vertices" : gf.mut_invert_route_vertices
                     }
     
+    all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
+    all_functions_dict = {'Route_gen':route_gen_func_name,**all_functions_dict, 'Crossover':crossover_func_name}
         
     mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
     mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
@@ -659,11 +661,19 @@ if True:
             #%% Post analysis 
             pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
             
+            # Writes all the stats in a csv file
             with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
                 w = csv.writer(archive_file)
                 for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
                     w.writerow([key, val])
                 del key, val
+            
+            # Writes all the functions used in a csv file
+            with open(path_results / "Functions_used.csv", "w") as archive_file:
+                w = csv.writer(archive_file)
+                for key, val in {**all_functions_dict}.items():
+                    w.writerow([key, val])
+                del key, val  
             
             print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
             
@@ -671,7 +681,7 @@ if True:
             gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
 
             
-    del HV, i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
+    del i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
     
     # %% Save results after all runs
     if Decisions["Choice_print_results"]:
@@ -692,14 +702,13 @@ if True:
         stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
         stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-        #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         
         df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean(), df_durations["HV Obtained"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")
         del df_durations
         
+        # Writes all the stats in a csv file
         with open(path_results / "Stats_overall.csv", "w") as archive_file:
             w = csv.writer(archive_file)
             for key, val in {**stats_overall,
@@ -708,6 +717,13 @@ if True:
                              **UTNDP_problem_1.problem_GA_parameters.__dict__}.items():
                 w.writerow([key, val])
             del key, val
+        
+        # Writes all the functions used in a csv file
+        with open(path_results / "Functions_used.csv", "w") as archive_file:
+            w = csv.writer(archive_file)
+            for key, val in {**all_functions_dict}.items():
+                w.writerow([key, val])
+            del key, val    
       
         ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
         gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats

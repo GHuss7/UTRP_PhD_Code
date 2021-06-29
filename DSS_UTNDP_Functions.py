@@ -3340,7 +3340,10 @@ def mut_random_trim(routes_R, main_problem):
             
     for i in list_I:
         r_i = route_copy[i]        
-        k = random.randint(1, len(r_i) - con_min_v) # number of vertices to remove
+        if len(r_i) > con_min_v:
+            k = random.randint(1, len(r_i) - con_min_v) # number of vertices to remove
+        else:
+            k = 0
         while k > 0: 
             route_copy = mut_remove_largest_cost_per_dem_terminal_from_path(route_copy, main_problem, i)
             k -= 1
@@ -3365,7 +3368,10 @@ def mut_full_trim(routes_R, main_problem):
             
     for i in list_I:
         r_i = route_copy[i]        
-        k = len(r_i) - con_min_v # number of vertices to remove
+        if len(r_i) > con_min_v:
+            k = random.randint(1, len(r_i) - con_min_v) # number of vertices to remove
+        else:
+            k = 0
         while k > 0: 
             route_copy = mut_remove_largest_cost_per_dem_terminal_from_path(route_copy, main_problem, i)
             k -= 1

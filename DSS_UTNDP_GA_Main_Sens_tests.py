@@ -66,7 +66,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][2]   # set the name of the input data
+                   "Mandl_UTRP_dis"][5]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -148,9 +148,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 400, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "population_size" : 20, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 2, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 5, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -684,68 +684,68 @@ if True:
             gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
 
             
-    del i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
+    #del i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
     
-    # %% Save results after all runs
-    if Decisions["Choice_print_results"]:
-        '''Save the summarised results'''
-        df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
-        df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["f_1","f_2"]].values, True)] # reduce the pareto front from the total archive
-        df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
-        df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
-        
-        '''Save the stats for all the runs'''
-        # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
-        df_durations = ga.get_stats_from_model_runs(path_results)
-        
-        stats_overall['execution_end_time'] =  datetime.datetime.now()
-        
-        stats_overall['total_model_runs'] = run_nr
-        stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
-        stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
-        stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-        
-        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean(), df_durations["HV Obtained"].mean()]
-        df_durations.to_csv(path_results / "Run_durations.csv")
-        del df_durations
-        
-        # Writes all the stats in a csv file
-        with open(path_results / "Stats_overall.csv", "w") as archive_file:
-            w = csv.writer(archive_file)
-            for key, val in {**stats_overall,
-                             **UTNDP_problem_1.problem_inputs.__dict__, 
-                             **UTNDP_problem_1.problem_constraints.__dict__, 
-                             **UTNDP_problem_1.problem_GA_parameters.__dict__}.items():
-                w.writerow([key, val])
-            del key, val
-        
-        # Writes all the functions used in a csv file
-        with open(path_results / "Functions_used.csv", "w") as archive_file:
-            w = csv.writer(archive_file)
-            for key, val in {**all_functions_dict}.items():
-                w.writerow([key, val])
-            del key, val    
-      
-        ga.get_sens_tests_stats_from_model_runs(path_results, parameters_GA["number_of_runs"]) # prints the runs summary
-        gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
-        gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
-        gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                          pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                          pd.read_csv((path_results/'Mutations/Smoothed_avg_mut_ratios.csv')), 
-                                          name_input_data, 
-                                          path_results, labels,
-                                          stats_overall['HV Benchmark'])
-        # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
-
-        del archive_file, path_results_per_run, w           
-        
-        # %% Plot analysis graph
-        '''Plot the analysis graph'''
-        gv.save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels)
-        
-    del run_nr
+        # %% Save results after all runs
+        if Decisions["Choice_print_results"]:
+            '''Save the summarised results'''
+            df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
+            df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["f_1","f_2"]].values, True)] # reduce the pareto front from the total archive
+            df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
+            df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+            
+            '''Save the stats for all the runs'''
+            # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
+            df_durations = ga.get_stats_from_model_runs(path_results)
+            
+            stats_overall['execution_end_time'] =  datetime.datetime.now()
+            
+            stats_overall['total_model_runs'] = run_nr
+            stats_overall['average_run_time'] = str(df_durations["Duration"].mean())
+            stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
+            stats_overall['start_time_formatted'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
+            stats_overall['end_time_formatted'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
+            stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+            
+            df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean(), df_durations["HV Obtained"].mean()]
+            df_durations.to_csv(path_results / "Run_durations.csv")
+            del df_durations
+            
+            # Writes all the stats in a csv file
+            with open(path_results / "Stats_overall.csv", "w") as archive_file:
+                w = csv.writer(archive_file)
+                for key, val in {**stats_overall,
+                                 **UTNDP_problem_1.problem_inputs.__dict__, 
+                                 **UTNDP_problem_1.problem_constraints.__dict__, 
+                                 **UTNDP_problem_1.problem_GA_parameters.__dict__}.items():
+                    w.writerow([key, val])
+                del key, val
+            
+            # Writes all the functions used in a csv file
+            with open(path_results / "Functions_used.csv", "w") as archive_file:
+                w = csv.writer(archive_file)
+                for key, val in {**all_functions_dict}.items():
+                    w.writerow([key, val])
+                del key, val    
+          
+            ga.get_sens_tests_stats_from_model_runs(path_results, run_nr) # prints the runs summary
+            gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
+            gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
+            gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                                              pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                              pd.read_csv((path_results/'Mutations/Smoothed_avg_mut_ratios.csv')), 
+                                              name_input_data, 
+                                              path_results, labels,
+                                              stats_overall['HV Benchmark'])
+            # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
+    
+            #del archive_file, path_results_per_run, w           
+            
+            # %% Plot analysis graph
+            '''Plot the analysis graph'''
+            gv.save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels)
+            
+    #del run_nr
 
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''

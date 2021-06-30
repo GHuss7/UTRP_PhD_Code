@@ -4335,3 +4335,8 @@ def print_extreme_solutions(df_overall_pareto_set, HV, HV_BM, name_input_data, m
             text_file.write(final_str)
     except:
         print("Could not print the text file of extreme solutions!")
+        
+def get_equispaced_indices(n_solutions, objs_sorted):
+    seed_indices = np.percentile(range(0,len(objs_sorted)),np.linspace(0, 100, num=n_solutions))
+    #seeding_route_choices = seeding_route_set.iloc[seed_indices,:]
+    return seed_indices

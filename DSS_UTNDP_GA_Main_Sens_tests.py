@@ -742,7 +742,7 @@ if True:
             gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
             gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
                                               pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                              pd.read_csv((path_results/'Mutations/Smoothed_avg_mut_ratios.csv')), 
+                                              pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
                                               name_input_data, 
                                               path_results, labels,
                                               stats_overall['HV Benchmark'])

@@ -3002,9 +3002,9 @@ def mut_remove_lowest_demand_terminal(route_to_mutate, main_problem):
     # extract candidate details and return mutated route
     mut_route = copy.deepcopy(route_to_mutate)
     if candidate['front']:
-        mut_route[i] = mut_route[candidate['route_nr']][1:]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][1:]
     else:
-        mut_route[i] = mut_route[candidate['route_nr']][:-1]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][:-1]
     
     return mut_route
 
@@ -3057,9 +3057,9 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
     # extract candidate details and return mutated route
     mut_route = copy.deepcopy(route_to_mutate)
     if candidate['front']:
-        mut_route[i] = mut_route[candidate['route_nr']][1:]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][1:]
     else:
-        mut_route[i] = mut_route[candidate['route_nr']][:-1]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][:-1]
     
     return mut_route
 
@@ -3115,9 +3115,9 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
     # extract candidate details and return mutated route
     mut_route = copy.deepcopy(route_to_mutate)
     if candidate['front']:
-        mut_route[i] = mut_route[candidate['route_nr']][1:]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][1:]
     else:
-        mut_route[i] = mut_route[candidate['route_nr']][:-1]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][:-1]
     
     return mut_route
 
@@ -3378,8 +3378,27 @@ def mut_full_trim(routes_R, main_problem):
     
     return route_copy
 
+def mut_full_trim_overall(routes_R, main_problem):
+    '''A mutation function that removes k_i vertices from path i in a route set
+    with with k_i being an integer number between 1 and |V(path_i)| - con_min_vertices
+    for each random path i chosen from the route set, where I random paths are
+    chosen with I being between 1 and |route set|.
+    Include a probabilistic element where the demand met per route cost is 
+    considered.'''
+    
+    route_copy = copy.deepcopy(routes_R)
+    route_to_mut = copy.deepcopy(routes_R)
+                  
+    route_copy = mut_remove_largest_cost_per_dem_terminal(route_to_mut, main_problem)
+    
+    while route_to_mut != route_copy:
+        route_to_mut = copy.deepcopy(route_copy)
+        route_copy = mut_remove_largest_cost_per_dem_terminal(route_to_mut, main_problem)
+
+    return route_copy
+
 #R_x = ld_mut_temp[0]['Route']
-#R_mut = mut_random_trim(routes_R=R_x, main_problem=UTNDP_problem_1)
+#R_mut = mut_full_trim_overall(routes_R=R_x, main_problem=UTNDP_problem_1)
 #mut_full_trim(routes_R=R_x, main_problem=UTNDP_problem_1)
 #print(R_mut)
 

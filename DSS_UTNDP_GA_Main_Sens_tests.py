@@ -113,8 +113,9 @@ else:
                     "Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices,
                     "Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
-                    "Full trim" : gf.mut_full_trim,
-                    "Random trim" : gf.mut_random_trim,
+                    "Random_trim" : gf.mut_random_trim,
+                    "Full_trim_per_path" : gf.mut_full_trim,
+                    "Full_trim_overall" : gf.mut_full_trim_overall,
                     }
     
     all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}

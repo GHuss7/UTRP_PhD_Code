@@ -3082,7 +3082,9 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
         if test_all_four_constraints(route_copy, main_problem):
             d = calc_cum_demand_route_set(route_copy, mx_demand)
             d_cont = d_init - d # calc direct demand contribution
+            if d_cont==0: d_cont = 0.001
             c = mx_dist[route_to_mutate[i][0], route_copy[i][0]] # get edge cost
+            
             candidates.append({'route_nr': i, 'front':True, 
                                'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
         
@@ -3093,6 +3095,7 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
         if test_all_four_constraints(route_copy, main_problem):
             d = calc_cum_demand_route_set(route_copy, mx_demand)
             d_cont = d_init - d # calc direct demand contribution
+            if d_cont==0: d_cont = 0.001
             c = mx_dist[route_to_mutate[i][-1], route_copy[i][-1]] # get edge cost
             candidates.append({'route_nr': i, 'front':False, 
                                'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
@@ -3278,6 +3281,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
     if test_all_four_constraints(route_copy, main_problem):
         d = calc_cum_demand_route_set(route_copy, mx_demand)
         d_cont = d_init - d # calc direct demand contribution
+        if d_cont==0: d_cont = 0.001
         c = mx_dist[route_to_mutate[i][0], route_copy[i][0]] # get edge cost
         candidates.append({'route_nr': i, 'front':True, 
                            'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
@@ -3290,6 +3294,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
     if test_all_four_constraints(route_copy, main_problem):
         d = calc_cum_demand_route_set(route_copy, mx_demand)
         d_cont = d_init - d # calc direct demand contribution
+        if d_cont==0: d_cont = 0.001
         c = mx_dist[route_to_mutate[i][-1], route_copy[i][-1]] # get edge cost
         candidates.append({'route_nr': i, 'front':False, 
                            'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
@@ -3332,7 +3337,7 @@ def mut_trim_one_path_random_cb(routes_R, main_problem):
     con_min_v = main_problem.problem_constraints.con_minNodes
         
     # Get the random route index for mutation 
-    list_I = random.choice(range(len_routes))
+    list_I = [random.choice(range(len_routes))]
             
     for i in list_I:
         r_i = route_copy[i]        
@@ -3507,7 +3512,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_grow funct did not produce feasible solution")
+        print("mut_add_terminal_highest_demand_per_cost func did not produce feasible solution")
         return routes_R
 
 
@@ -3604,7 +3609,7 @@ def mut_grow_one_path_random_cb(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_grow funct did not produce feasible solution")
+        print("mut_grow_one_path_random_cb funct did not produce feasible solution")
         return routes_R
 
 def mut_grow_routes_random_cb(routes_R, main_problem):
@@ -3700,7 +3705,7 @@ def mut_grow_routes_random_cb(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_grow funct did not produce feasible solution")
+        print("mut_grow_routes_random_cb funct did not produce feasible solution")
         return routes_R
     
     
@@ -4310,7 +4315,7 @@ d_un\t{d_un_op:.4f}\t\t{d_un_pas:.4f}\n"
 Best Operator Route set:\n\
 {routes_op}\n\n\
 Best Passenger Route set:\n\
-{routes_op}\n\n\
+{routes_pas}\n\n\
 Best Operator Route set string:\n\
 {convert_routes_list2str(routes_R_op)}\n\n\
 Best Passenger Route set sting:\n\

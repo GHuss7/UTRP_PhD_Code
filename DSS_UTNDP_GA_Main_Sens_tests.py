@@ -737,6 +737,11 @@ if True:
                                               name_input_data, 
                                               path_results, labels,
                                               stats_overall['HV Benchmark'])
+            
+            
+            
+            gf.print_extreme_solutions(df_overall_pareto_set, HV, stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
+            
             # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
     
             #del archive_file, path_results_per_run, w           

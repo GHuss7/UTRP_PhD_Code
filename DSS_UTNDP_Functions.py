@@ -3872,3 +3872,89 @@ def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', ob
     df_non_dominated_set = df_non_dominated_set[is_pareto_efficient(df_non_dominated_set[[obj_1_name,obj_2_name]].values, True)]
     df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
     return df_non_dominated_set
+
+def determine_extreme_sols_and_objs_from_pareto_set(df_overall_pareto_set):
+    routes_R_op_str = df_overall_pareto_set['R_x'].iloc[-1]
+    routes_R_op = convert_routes_str2list(routes_R_op_str)
+    op_objs = (df_overall_pareto_set['f_1'].iloc[-1], df_overall_pareto_set['f_2'].iloc[-1])
+    
+    routes_R_pas_str = df_overall_pareto_set['R_x'].iloc[0]
+    routes_R_pas = convert_routes_str2list(routes_R_pas_str)
+    pas_objs = (df_overall_pareto_set['f_1'].iloc[0], df_overall_pareto_set['f_2'].iloc[0])
+    
+    return {'R_op':routes_R_op, 'R_op_str':routes_R_op_str, 'Objs_op':op_objs, 'R_pas':routes_R_pas, 'R_pas_str':routes_R_pas_str, 'Objs_pas':pas_objs}
+
+
+def create_strings_extreme_solutions(routes_R_op, routes_R_pas, HV, HV_BM, name_input_data, main_problem, op_objs=False, pas_objs=False):
+    
+    # Get the main parameters
+    mx_dist = main_problem.problem_data.mx_dist
+    mx_demand = main_problem.problem_data.mx_demand
+    parameters_input = main_problem.problem_inputs.__dict__
+    
+    # OPERATOR EVALUATION
+    if op_objs: # saves time if the objectives are provided
+        objs_op = op_objs
+    else:
+        objs_op = ev.evalObjs(routes_R_op,mx_dist,mx_demand,parameters_input)
+    evaluation_op = ev.fullPassengerEvaluation(routes_R_op, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
+        
+    f1_op, f2_op = objs_op
+    d0_op, d1_op, d2_op, d_un_op  = evaluation_op[1:5] 
+    
+    # Generate string for route set
+    routes_op= "["
+    for route in routes_R_op:  
+        routes_op = routes_op + f"{route},\n"
+    routes_op = routes_op[:-2] + "]"
+    
+    # PASSENGER EVALUATION
+    if pas_objs: # saves time if the objectives are provided
+        objs_pas = pas_objs
+    else:
+        objs_pas = ev.evalObjs(routes_R_pas,mx_dist,mx_demand,parameters_input)
+    evaluation_pas = ev.fullPassengerEvaluation(routes_R_pas, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
+    
+    f1_pas, f2_pas = objs_pas
+    d0_pas, d1_pas, d2_pas, d_un_pas  = evaluation_pas[1:5] 
+    
+    # Generate string for route set
+    routes_pas= "["
+    for route in routes_R_pas:  
+        routes_pas = routes_pas + f"{route},\n"
+    routes_pas = routes_pas[:-2] + "]"  
+    
+    summary_str = f"{name_input_data} RESULTS EVALUATION:\n\
+HV:{HV:.4f} | BM:{HV_BM:.4f}\n\n\
+\tOperator\tPassenger\n\
+f1_ATT\t{f1_op:.4f}\t\t{f1_pas:.4f}\n\
+f2_TRT\t{f2_op:.0f}\t\t{f2_pas:.0f}\n\
+d_0\t{d0_op:.4f}\t\t{d0_pas:.4f}\n\
+d_1\t{d1_op:.4f}\t\t{d1_pas:.4f}\n\
+d_2\t{d2_op:.4f}\t\t{d2_pas:.4f}\n\
+d_un\t{d_un_op:.4f}\t\t{d_un_pas:.4f}\n"
+                    
+    final_str = f"{summary_str}\n\
+Best Operator Route set:\n\
+{routes_op}\n\n\
+Best Passenger Route set:\n\
+{routes_op}\n\n\
+Best Operator Route set string:\n\
+{convert_routes_list2str(routes_R_op)}\n\n\
+Best Passenger Route set sting:\n\
+{convert_routes_list2str(routes_R_pas)}"
+        
+    return final_str
+    
+    
+def print_extreme_solutions(df_overall_pareto_set, HV, HV_BM, name_input_data, main_problem, path_to_save):
+    
+    # Create dictionary for extreme solutions
+    EX = determine_extreme_sols_and_objs_from_pareto_set(df_overall_pareto_set)
+    
+    final_str = create_strings_extreme_solutions(EX['R_op'], EX['R_pas'], HV, HV_BM, name_input_data, main_problem, op_objs=EX['Objs_op'], pas_objs=EX['Objs_pas'])
+    try:
+        with open(path_to_save / "Extreme solutions.txt", "w") as text_file:
+            text_file.write(final_str)
+    except:
+        print("Could not print the text file of extreme solutions!")

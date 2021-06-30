@@ -15,7 +15,6 @@ import pickle
 import pandas as pd 
 import numpy as np
 from math import inf
-import pygmo as pg
 import random
 import copy
 import datetime
@@ -35,9 +34,9 @@ import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
 # %% Load the respective files
-name_input_data = "Mandl_Data"      # set the name of the input data
+name_input_data = "Mandl_UTRP"      # set the name of the input data
 name_input_data = "SSML_STB_1200_UTFSP"      # set the name of the input data
-name_input_data = "Mumford0"
+name_input_data = "Mumford0_UTRP"
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # Load the respective dictionaries for the instance
@@ -120,7 +119,7 @@ gv.plotRouteSetAndSavePDF_road_network(mx_dist, routes_R, mx_coords, name)
 
 gv.plot_igraph_from_dist_mx(mx_dist)
 
-if name_input_data == "Mandl_Data":
+if name_input_data == "Mandl_UTRP":
 
     ''' DBMOSA UTRP ATT MIN ROUTE '''
     name = 'UTRP_DBMOSA_ATT_MIN'
@@ -190,7 +189,7 @@ if name_input_data == "SSML_STB_1200_UTFSP":
 
 
 #%% Extra evaluations
-if name_input_data == 'Mumford0':
+if name_input_data == 'Mumford0_UTRP':
     print("Mumford0 Route set:")
     routes_R = "3-1*19-12*2-29-27-16-28-17-19-12-8*8-12-0-13-6-10-2-29-27-7-14-23-1-3*15-10*3-9*4-24-14-7-16-6-5-21*11-25-28-16-15-21*9-1-23-14-11-17-22-0-26*19-18-0-25-7-20-24-3*10-21*10-15*"
     routes_R = gf.convert_routes_str2list(routes_R)
@@ -214,3 +213,49 @@ if name_input_data == 'Mumford0':
     g_tn.vs[0]
     
     g_tn.get_eids
+
+
+
+# OPERATOR EVALUATION
+objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
+evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
+
+f1_op, f2_op = objs
+d0_op, d1_op, d2_op, d_un_op  = evaluation[1:5] 
+
+# Generate string for route set
+routes_op= "["
+for route in routes_R:  
+    routes_op = routes_op + f"{route},\n"
+routes_op = routes_op[:-2] + "]"
+
+# PASSENGER EVALUATION
+objs = ev.evalObjs(routes_R,mx_dist,mx_demand,parameters_input)
+evaluation = ev.fullPassengerEvaluation(routes_R, mx_dist, mx_demand, parameters_input['total_demand'],parameters_input['n'],parameters_input['tp'],parameters_input['wt'])
+
+f1_pas, f2_pas = objs
+d0_pas, d1_pas, d2_pas, d_un_pas  = evaluation[1:5] 
+
+# Generate string for route set
+routes_pas= "["
+for route in routes_R:  
+    routes_pas = routes_pas + f"{route},\n"
+routes_pas = routes_pas[:-2] + "]"  
+
+summary_str = f"{name_input_data} RESULTS EVALUATION:\n\n\
+\t\tOperator\tPassenger\n\
+f1_ATT\t{f1_op:.4f}\t\t{f1_pas:.4f}\n\
+f2_TRT\t{f2_op:.0f}\t\t\t{f2_pas:.0f}\n\
+d_0\t\t{d0_op:.4f}\t\t{d0_pas:.4f}\n\
+d_1\t\t{d1_op:.4f}\t\t{d1_pas:.4f}\n\
+d_2\t\t{d2_op:.4f}\t\t{d2_pas:.4f}\n\
+d_un\t{d_un_op:.4f}\t\t{d_un_pas:.4f}\n"
+                
+final_str = f"{summary_str}\n\
+Best Operator Route set:\n\
+{routes_op}\n\n\
+Best Passenger Route set:\n\
+{routes_op}"
+
+print(final_str)
+print(summary_str)

@@ -112,10 +112,18 @@ else:
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     "Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    
                     "Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
-                    "Random_trim" : gf.mut_random_trim,
-                    "Full_trim_per_path" : gf.mut_full_trim,
-                    "Full_trim_overall" : gf.mut_full_trim_overall,
+                    "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                    "Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
+                    "Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
+                    "Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
+                    
+                    "Add_largest_dem_per_cost" : gf.mut_add_terminal_highest_demand_per_cost,
+                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                    "Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
+                    "Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
+                    "Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
                     }
     
     all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}

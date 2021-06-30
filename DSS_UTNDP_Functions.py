@@ -2662,8 +2662,7 @@ def crossover_pop_routes_individuals_smart(pop, main_problem, crossover_func=cro
                         offspring_variables[i] = pop.variables[selection[i,0]]
                     else:
                         offspring_variables[i] = pop.variables[selection[i,1]]
-                    print(f"No feasible route found with Crossover between \n \
-                          parent_A:\n {parent_A} and \n parent_B:\n {parent_B}")
+                    print(f"No feasible route found with Crossover between \nparent_A:\n {parent_A} and \n parent_B:\n {parent_B}")
                     break
                     
                 if test_all_four_constraints(offspring_variables[i], main_problem):
@@ -3065,7 +3064,7 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
 
 def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
     '''Mutation function that removes an overlapping terminal vertex that 
-    either has the largest route cost associated'''
+    has the largest route cost per demand associated'''
 
     mx_demand = main_problem.problem_data.mx_demand
     mx_dist = main_problem.problem_data.mx_dist
@@ -3085,7 +3084,7 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
             d_cont = d_init - d # calc direct demand contribution
             c = mx_dist[route_to_mutate[i][0], route_copy[i][0]] # get edge cost
             candidates.append({'route_nr': i, 'front':True, 
-                               'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                               'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
         
         # end terminal vertex eval
         route_copy = copy.deepcopy(route_to_mutate)
@@ -3096,14 +3095,14 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
             d_cont = d_init - d # calc direct demand contribution
             c = mx_dist[route_to_mutate[i][-1], route_copy[i][-1]] # get edge cost
             candidates.append({'route_nr': i, 'front':False, 
-                               'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                               'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
     
     # if no candidates, return initial route
     if len(candidates) == 0: 
         return route_to_mutate
         
     # find terminals with lowest demand or cost
-    criteria = 'dem_per_cost'
+    criteria = 'cost_per_dem'
     demands = np.array([x[criteria] for x in candidates])
     if sum(demands)!=0: 
         dem_proportions = demands/sum(demands)
@@ -3260,7 +3259,7 @@ def mut_invert_route_vertices(routes_R, main_problem):
 
 def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_problem, path_index):
     '''Mutation function that removes a terminal vertex from a path that 
-    either has the lowest route demand per cost'''
+    has the highest cost per route demand'''
 
     mx_demand = main_problem.problem_data.mx_demand
     mx_dist = main_problem.problem_data.mx_dist
@@ -3281,7 +3280,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
         d_cont = d_init - d # calc direct demand contribution
         c = mx_dist[route_to_mutate[i][0], route_copy[i][0]] # get edge cost
         candidates.append({'route_nr': i, 'front':True, 
-                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                           'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
     
     # end terminal vertex eval
     route_copy = copy.deepcopy(route_to_mutate)
@@ -3293,14 +3292,14 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
         d_cont = d_init - d # calc direct demand contribution
         c = mx_dist[route_to_mutate[i][-1], route_copy[i][-1]] # get edge cost
         candidates.append({'route_nr': i, 'front':False, 
-                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                           'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
     
     # if no candidates, return initial route
     if len(candidates) == 0: 
         return route_to_mutate
         
     # find terminals with lowest demand or cost
-    criteria = 'dem_per_cost'
+    criteria = 'cost_per_dem'
     demands = np.array([x[criteria] for x in candidates])
     if sum(demands)!=0: 
         dem_proportions = demands/sum(demands)
@@ -3315,14 +3314,39 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
     # extract candidate details and return mutated route
     mut_route = copy.deepcopy(route_to_mutate)
     if candidate['front']:
-        mut_route[i] = mut_route[candidate['route_nr']][1:]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][1:]
     else:
-        mut_route[i] = mut_route[candidate['route_nr']][:-1]
+        mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][:-1]
     
     return mut_route
 
+def mut_trim_one_path_random_cb(routes_R, main_problem):
+    '''A mutation function that removes k_i vertices from path i in a route set
+    with with k_i being an integer number between 1 and |V(path_i)| - con_min_vertices
+    for one random path i chosen from the route set.
+    Include a probabilistic element where the demand met per route cost is 
+    considered.'''
+    
+    route_copy = copy.deepcopy(routes_R)
+    len_routes = len(routes_R)
+    con_min_v = main_problem.problem_constraints.con_minNodes
+        
+    # Get the random route index for mutation 
+    list_I = random.choice(range(len_routes))
+            
+    for i in list_I:
+        r_i = route_copy[i]        
+        if len(r_i) > con_min_v:
+            k = random.randint(1, len(r_i) - con_min_v) # number of vertices to remove
+        else:
+            k = 0
+        while k > 0: 
+            route_copy = mut_remove_largest_cost_per_dem_terminal_from_path(route_copy, main_problem, i)
+            k -= 1
+    
+    return route_copy
 
-def mut_random_trim(routes_R, main_problem):
+def mut_trim_routes_random_cb(routes_R, main_problem):
     '''A mutation function that removes k_i vertices from path i in a route set
     with with k_i being an integer number between 1 and |V(path_i)| - con_min_vertices
     for each random path i chosen from the route set, where I random paths are
@@ -3350,7 +3374,7 @@ def mut_random_trim(routes_R, main_problem):
     
     return route_copy
 
-def mut_full_trim(routes_R, main_problem):
+def mut_trim_all_paths_random_cb(routes_R, main_problem):
     '''A mutation function that removes k_i vertices from path i in a route set
     with with k_i being an integer number between 1 and |V(path_i)| - con_min_vertices
     for each random path i chosen from the route set, where I random paths are
@@ -3378,7 +3402,7 @@ def mut_full_trim(routes_R, main_problem):
     
     return route_copy
 
-def mut_full_trim_overall(routes_R, main_problem):
+def mut_trim_full_overall_cb(routes_R, main_problem):
     '''A mutation function that removes k_i vertices from path i in a route set
     with with k_i being an integer number between 1 and |V(path_i)| - con_min_vertices
     for each random path i chosen from the route set, where I random paths are
@@ -3402,12 +3426,97 @@ def mut_full_trim_overall(routes_R, main_problem):
 #mut_full_trim(routes_R=R_x, main_problem=UTNDP_problem_1)
 #print(R_mut)
 
-def mut_grow(routes_R, main_problem):
-    '''A mutation function that removes k_i vertices from path i in a route set
-    with with k_i being an integer number between 1 and |V(path_i)| - con_min_vertices
+def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
+    '''A mutation function that adds 1 vertex to path i in a route set
+    for 1 random path i chosen from the route set.
+    Include a probabilistic element where the highest demand contribution per 
+    route cost is considered.'''
+    
+    route_copy = copy.deepcopy(routes_R)
+    len_routes = len(routes_R)
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_dist = main_problem.problem_data.mx_dist
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    mapping_adjacent = main_problem.mapping_adjacent 
+    candidates = []   
+
+    for i in range(len_routes):
+
+        r_i = route_copy[i]
+        if len(r_i) < con_max_v: # ensures feasible solution
+            # test for best additional vertex to include based on demand per cost
+            d_init = calc_cum_demand_route_set(route_copy, mx_demand)
+    
+            # Evaluate the front of the route set first
+            adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
+            for adj in adjs_front:
+                
+                # front terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].insert(0,adj)
+                
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][0], route_temp[i][0]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                
+                
+            # Evaluate the end of the route set second
+            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
+            for adj in adjs_end:   
+                
+            # end terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].append(adj)
+             
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][-1], route_temp[i][-1]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                    
+    # if no candidates, return initial route
+    if len(candidates) == 0: 
+        return routes_R
+        
+    # find terminals with lowest demand per cost
+    criteria = 'dem_per_cost'
+    demands = np.array([x[criteria] for x in candidates])
+    if sum(demands)!=0: 
+        dem_proportions = demands/sum(demands)
+    else:
+        dem_proportions = [1/len(demands) for _ in demands]
+
+    candidate = random.choices(candidates, weights=dem_proportions, k=1)[0] 
+
+    # extract candidate details and return mutated route
+    mut_route = copy.deepcopy(route_copy)
+    if candidate['front']:
+        mut_route[candidate['route_nr']].insert(0,candidate['adj'])
+    else:
+        mut_route[candidate['route_nr']].append(candidate['adj'])
+
+    
+    route_copy = copy.deepcopy(mut_route)
+            
+    if test_all_four_constraints(route_copy, main_problem):
+        return route_copy 
+    else:
+        print("mut_grow funct did not produce feasible solution")
+        return routes_R
+
+
+def mut_grow_one_path_random_cb(routes_R, main_problem):
+    '''A mutation function that adds k_i vertices to path i in a route set
+    with with k_i being an integer number between 1 and con_max_vertices - |V(path_i)|
     for each random path i chosen from the route set, where I random paths are
-    chosen with I being between 1 and |route set|.
-    Include a probabilistic element where the demand met per route cost is 
+    chosen with I being 1.
+    Include a probabilistic element where the highest demand contribution per route cost is 
     considered.'''
     
     route_copy = copy.deepcopy(routes_R)
@@ -3415,66 +3524,310 @@ def mut_grow(routes_R, main_problem):
     mx_demand = main_problem.problem_data.mx_demand
     mx_dist = main_problem.problem_data.mx_dist
     con_max_v = main_problem.problem_constraints.con_maxNodes
-    con_min_v = main_problem.problem_constraints.con_minNodes
-    n_vertices = main_problem.problem_inputs.n
     mapping_adjacent = main_problem.mapping_adjacent 
+       
+    # Get random route indices for mutations    
+    I = 1 # the number of routes to mutate
+    list_I = random.sample(range(len_routes), I)
+        
+    for i in list_I:
+        r_i = route_copy[i]
+        if len(r_i) < con_max_v:
+            k = random.randint(1, con_max_v - len(r_i)) # number of vertices to add
+        else:
+            k = 0
+
+        while k > 0:
+            candidates = []   
+            r_i = route_copy[i]
+            # test for best additional vertex to include based on demand per cost
+            d_init = calc_cum_demand_route_set(route_copy, mx_demand)
+
+            # Evaluate the front of the route set first
+            adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
+            for adj in adjs_front:
+                
+                # front terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].insert(0,adj)
+                
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][0], route_temp[i][0]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                
+                
+            # Evaluate the end of the route set second
+            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
+            for adj in adjs_end:   
+                
+            # end terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].append(adj)
+             
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][-1], route_temp[i][-1]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                
+            # if no candidates, return initial route
+            if len(candidates) == 0: 
+                break
+                
+            # find terminals with lowest demand per cost
+            criteria = 'dem_per_cost'
+            demands = np.array([x[criteria] for x in candidates])
+            if sum(demands)!=0: 
+                dem_proportions = demands/sum(demands)
+            else:
+                dem_proportions = [1/len(demands) for _ in demands]
+        
+            candidate = random.choices(candidates, weights=dem_proportions, k=1)[0] 
     
-    # calc tot initial direct demand
-    d_init = calc_cum_demand_route_set(routes_R, mx_demand)
-    mx_demand_temp = remove_cum_demand_route_set(routes_R, mx_demand)
+            # extract candidate details and return mutated route
+            mut_route = copy.deepcopy(route_copy)
+            if candidate['front']:
+                mut_route[candidate['route_nr']].insert(0,candidate['adj'])
+            else:
+                mut_route[candidate['route_nr']].append(candidate['adj'])
     
+            
+            route_copy = copy.deepcopy(mut_route)
+            k -= 1
+            
+    if test_all_four_constraints(route_copy, main_problem):
+        return route_copy 
+    else:
+        print("mut_grow funct did not produce feasible solution")
+        return routes_R
+
+def mut_grow_routes_random_cb(routes_R, main_problem):
+    '''A mutation function that adds k_i vertices to path i in a route set
+    with with k_i being an integer number between 1 and con_max_vertices - |V(path_i)|
+    for each random path i chosen from the route set, where I random paths are
+    chosen with I being between 1 and |route set|.
+    Include a probabilistic element where the highest demand contribution per route cost is 
+    considered.'''
+    
+    route_copy = copy.deepcopy(routes_R)
+    len_routes = len(routes_R)
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_dist = main_problem.problem_data.mx_dist
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    mapping_adjacent = main_problem.mapping_adjacent 
+       
     # Get random route indices for mutations    
     I = random.randint(1,len_routes) # the number of routes to mutate
     list_I = random.sample(range(len_routes), I)
-    
-    mx_d_temp = copy.deepcopy(main_problem.problem_data.mx_demand)
         
     for i in list_I:
-        r_i = [] # create route i
-        route_vertices = set([y for x in R_x for y in x]) # flatten elements in route
-        missing_vs = list(set(range(n_vertices)).difference(route_vertices))
-        
-        try:
-            v = random.choice(missing_vs)
-        except:
-            v = get_vertex_with_max_unmet_demand(mx_d_temp)
-      
-        r_i.append(v)
-        flag_r_swop = 0 # flag to swop route around if v is terminal/ infeasible
-        
-        while len(r_i) < con_max_v:
-            adjs = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))
-            if len(adjs) == 0:
-                if not flag_r_swop:
-                    flag_r_swop = 1
-                    r_i.reverse()
-                    break
-                    
-            random.shuffle(adjs)
-            d_best = 0 # create variable to keep best demand satisfied thusfar
-            
-            # test for best additional vertex to include based on demand
-            for adj in adjs:
-                r_temp = copy.deepcopy(r_i)
-                r_temp.append(adj)
-                d = calc_cum_demand(r_temp, mx_d_temp)
+        r_i = route_copy[i]
+        if len(r_i) < con_max_v:
+            k = random.randint(1, con_max_v - len(r_i)) # number of vertices to add
+        else:
+            k = 0
+
+        while k > 0:
+            candidates = []   
+            r_i = route_copy[i]
+            # test for best additional vertex to include based on demand per cost
+            d_init = calc_cum_demand_route_set(route_copy, mx_demand)
+
+            # Evaluate the front of the route set first
+            adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
+            for adj in adjs_front:
                 
-                if d > d_best:
-                    d_best = d
-                    r_best = copy.deepcopy(r_temp)
+                # front terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].insert(0,adj)
                 
-            # if no demand can be met additionally
-            if d_best == 0:
-                r_best = copy.deepcopy(r_temp) # random because adjs are shuffled
-            
-            r_i = copy.deepcopy(r_best)
-            mx_d_temp = remove_cum_demand(r_i, mx_d_temp)
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][0], route_temp[i][0]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                
+                
+            # Evaluate the end of the route set second
+            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
+            for adj in adjs_end:   
+                
+            # end terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].append(adj)
+             
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][-1], route_temp[i][-1]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                
+            # if no candidates, return initial route
+            if len(candidates) == 0: 
+                break
+                
+            # find terminals with lowest demand per cost
+            criteria = 'dem_per_cost'
+            demands = np.array([x[criteria] for x in candidates])
+            if sum(demands)!=0: 
+                dem_proportions = demands/sum(demands)
+            else:
+                dem_proportions = [1/len(demands) for _ in demands]
         
-        if len(r_i) >= con_min_v:  
-            R_x.append(r_i)
+            candidate = random.choices(candidates, weights=dem_proportions, k=1)[0] 
     
-    return routes_R 
+            # extract candidate details and return mutated route
+            mut_route = copy.deepcopy(route_copy)
+            if candidate['front']:
+                mut_route[candidate['route_nr']].insert(0,candidate['adj'])
+            else:
+                mut_route[candidate['route_nr']].append(candidate['adj'])
+    
+            
+            route_copy = copy.deepcopy(mut_route)
+            k -= 1
+            
+    if test_all_four_constraints(route_copy, main_problem):
+        return route_copy 
+    else:
+        print("mut_grow funct did not produce feasible solution")
+        return routes_R
+    
+    
+def mut_grow_all_paths_random_cb(routes_R, main_problem):
+    '''A mutation function that adds k_i vertices to path i in a route set
+    with with k_i being an integer number con_max_vertices - |V(path_i)|
+    for each all paths i chosen from the route set, where I random paths are
+    chosen with I being |route set|.
+    Include a probabilistic element where the highest demand contribution per route cost is 
+    considered.'''
+    
+    route_copy = copy.deepcopy(routes_R)
+    len_routes = len(routes_R)
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_dist = main_problem.problem_data.mx_dist
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    mapping_adjacent = main_problem.mapping_adjacent 
+       
+    # Get random route indices for mutations    
+    I = len_routes # the number of routes to mutate
+    list_I = random.sample(range(len_routes), I)
         
+    for i in list_I:
+        r_i = route_copy[i]
+        if len(r_i) < con_max_v:
+            k = random.randint(1, con_max_v - len(r_i)) # number of vertices to add
+        else:
+            k = 0
+
+        while k > 0:
+            candidates = []   
+            r_i = route_copy[i]
+            # test for best additional vertex to include based on demand per cost
+            d_init = calc_cum_demand_route_set(route_copy, mx_demand)
+
+            # Evaluate the front of the route set first
+            adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
+            for adj in adjs_front:
+                
+                # front terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].insert(0,adj)
+                
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][0], route_temp[i][0]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                
+                
+            # Evaluate the end of the route set second
+            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
+            for adj in adjs_end:   
+                
+            # end terminal vertex eval
+                route_temp = copy.deepcopy(route_copy)
+                route_temp[i].append(adj)
+             
+                # test feasibility
+                if test_all_four_constraints(route_temp, main_problem):
+                    d = calc_cum_demand_route_set(route_temp, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[route_copy[i][-1], route_temp[i][-1]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                
+            # if no candidates, return initial route
+            if len(candidates) == 0: 
+                break
+                
+            # find terminals with lowest demand per cost
+            criteria = 'dem_per_cost'
+            demands = np.array([x[criteria] for x in candidates])
+            if sum(demands)!=0: 
+                dem_proportions = demands/sum(demands)
+            else:
+                dem_proportions = [1/len(demands) for _ in demands]
+        
+            candidate = random.choices(candidates, weights=dem_proportions, k=1)[0] 
+    
+            # extract candidate details and return mutated route
+            mut_route = copy.deepcopy(route_copy)
+            if candidate['front']:
+                mut_route[candidate['route_nr']].insert(0,candidate['adj'])
+            else:
+                mut_route[candidate['route_nr']].append(candidate['adj'])
+    
+            
+            route_copy = copy.deepcopy(mut_route)
+            k -= 1
+            
+    if test_all_four_constraints(route_copy, main_problem):
+        return route_copy 
+    else:
+        print("mut_grow funct did not produce feasible solution")
+        return routes_R
+ 
+    
+def mut_grow_full_overall_cb(routes_R, main_problem):
+    '''A mutation function that adds vertices to a path in the route set until
+    all paths are the maximum number of nodes.
+    Include a probabilistic element where the highest demand contribution per route cost is 
+    considered.'''
+    
+    route_copy = copy.deepcopy(routes_R)
+    route_to_mut = copy.deepcopy(routes_R)
+                  
+    route_copy = mut_add_terminal_highest_demand_per_cost(route_to_mut, main_problem)
+    
+    while route_to_mut != route_copy:
+        route_to_mut = copy.deepcopy(route_copy)
+        route_copy = mut_add_terminal_highest_demand_per_cost(route_to_mut, main_problem)
+
+    return route_copy
+    
+#R_x = ld_mut_temp[0]['Route']
+#R_mut = mut_grow(routes_R=R_x, main_problem=UTNDP_problem_1)
+#R_mut_2 = mut_grow_full(routes_R=R_x, main_problem=UTNDP_problem_1)
+#R_mut_3 = mut_add_terminal_highest_demand_per_cost(routes_R=R_x, main_problem=UTNDP_problem_1)
+# print(R_mut_3)
+#R_mut_4 = mut_grow_full_overall(routes_R=R_x, main_problem=UTNDP_problem_1)
+#mut_grow(routes_R=R_x, main_problem=UTNDP_problem_1)
+#print(R_mut)
+
+       
 def no_mutation(routes_R, main_problem):   
     return routes_R 
 

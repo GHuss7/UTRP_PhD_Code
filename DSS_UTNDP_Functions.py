@@ -1219,15 +1219,15 @@ def test_connectedness_nx(routes_R):
     return nx.is_connected(G)
 
 def test_connectedness_sets(routes_R, n_nodes):
-    R_copy = copy.deepcopy(routes_R)
+    R_copy = list(routes_R)
     R_copy.sort(key = len)
     #flag = False
     
     #print(R_copy)
     for i, r_i in reversed(list(enumerate(R_copy))):
-        if i == 0:
+        if i == len(R_copy)-1:
             V_set = set(r_i)
-            del R_copy[i]
+            #del R_copy[i]
             #print(R_copy)
             #print(r_i)
         for j, r_j in reversed(list(enumerate(R_copy))):
@@ -1238,7 +1238,7 @@ def test_connectedness_sets(routes_R, n_nodes):
             if i > j:
                 if V_set.intersection(set(r_j)):
                     V_set = V_set.union(set(r_j))
-                    del r_j
+                    #del r_j
                     if len(V_set) == n_nodes:
                         #print(f"final:{i} {j}")
                         #flag = True
@@ -1386,7 +1386,7 @@ def test_all_four_constraints(routes_R, main_problem):
         return False
     return True
 
-def test_all_constraints_fast(routes_R, main_problem):
+#def test_all_constraints_fast(routes_R, main_problem):
 
 
 def test_all_four_constraints_slow(routes_R, main_problem):

@@ -1223,9 +1223,9 @@ def test_connectedness_sets(routes_R, n_nodes):
     R_copy.sort(key = len)
     #flag = False
     
-    print(R_copy)
+    #print(R_copy)
     for i, r_i in reversed(list(enumerate(R_copy))):
-        if i == 0:
+        if i == len(R_copy)-1:
             V_set = set(r_i)
             del R_copy[i]
             #print(R_copy)
@@ -1240,7 +1240,7 @@ def test_connectedness_sets(routes_R, n_nodes):
                     V_set = V_set.union(set(r_j))
                     del r_j
                     if len(V_set) == n_nodes:
-                        print(f"final:{i} {j}")
+                        #print(f"final:{i} {j}")
                         #flag = True
                         return True
         # if flag == True:
@@ -1386,7 +1386,7 @@ def test_all_four_constraints(routes_R, main_problem):
         return False
     return True
 
-def test_all_constraints_fast(routes_R, main_problem):
+#def test_all_constraints_fast(routes_R, main_problem):
 
 
 def test_all_four_constraints_slow(routes_R, main_problem):
@@ -2785,14 +2785,14 @@ def crossover_pop_routes_individuals_smart(pop, main_problem, crossover_func=cro
                 if counter > 100:
                     offspring_variables[i] = crossover_mumford(parent_A, parent_B, main_problem)
                     if test_all_four_constraints(offspring_variables[i], main_problem):
-                        print("Crossover by Mumford last resort success")
+                        #print("Crossover by Mumford last resort success")
                         break
                     else:
                         if random.random() < 0.5:
                             offspring_variables[i] = pop.variables[selection[i,0]]
                         else:
                             offspring_variables[i] = pop.variables[selection[i,1]]
-                        print(f"No feasible route found with Crossover between \nparent_A:\n {parent_A} and \n parent_B:\n {parent_B}")
+                        #print(f"No feasible route found with Crossover between \nparent_A:\n {parent_A} and \n parent_B:\n {parent_B}")
                         break
                     
                 if test_all_four_constraints(offspring_variables[i], main_problem):
@@ -3660,7 +3660,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_add_terminal_highest_demand_per_cost func did not produce feasible solution")
+        #print("mut_add_terminal_highest_demand_per_cost func did not produce feasible solution")
         return routes_R
 
 
@@ -3757,7 +3757,7 @@ def mut_grow_one_path_random_cb(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_grow_one_path_random_cb funct did not produce feasible solution")
+        #print("mut_grow_one_path_random_cb funct did not produce feasible solution")
         return routes_R
 
 def mut_grow_routes_random_cb(routes_R, main_problem):
@@ -3853,7 +3853,7 @@ def mut_grow_routes_random_cb(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_grow_routes_random_cb funct did not produce feasible solution")
+        #print("mut_grow_routes_random_cb funct did not produce feasible solution")
         return routes_R
     
     
@@ -3950,7 +3950,7 @@ def mut_grow_all_paths_random_cb(routes_R, main_problem):
     if test_all_four_constraints(route_copy, main_problem):
         return route_copy 
     else:
-        print("mut_grow funct did not produce feasible solution")
+        #print("mut_grow funct did not produce feasible solution")
         return routes_R
  
     

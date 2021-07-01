@@ -1218,6 +1218,39 @@ def test_connectedness_nx(routes_R):
         G.add_edges_from(route_links[i])
     return nx.is_connected(G)
 
+def test_connectedness_sets(routes_R, n_nodes):
+    R_copy = copy.deepcopy(routes_R)
+    R_copy.sort(key = len)
+    R_copy.reverse()
+    #flag = False
+    
+    print(R_copy)
+    for i, r_i in enumerate(R_copy):
+        if i == 0:
+            V_set = set(r_i)
+            del R_copy[i]
+            #print(R_copy)
+            #print(r_i)
+        for j, r_j in enumerate(R_copy):
+            #print(i,j)
+            #print(R_copy)
+            #print(r_j)
+
+            if i != j:
+                if V_set.intersection(set(r_j)):
+                    V_set = V_set.union(set(r_j))
+                    del r_j
+                    if len(V_set) == n_nodes:
+                        print(f"final:{i} {j}")
+                        #flag = True
+                        return True
+        # if flag == True:
+        #     break
+    return False
+
+#R_x = mutated_variables[0]
+#test_connectedness_sets(R_x, n_nodes=15)
+
 def test_all_nodes_present(routes_R, N):
     all_nodes = np.zeros(N)
     r = len(routes_R)
@@ -1333,8 +1366,28 @@ def test_cycles_and_backtracks(routes_R):
             # Could customise this function to return the route giving the problem
     return True
 
+def test_cycles_and_backtracks_sets(routes_R):
+    return not any([len(set(i)) != len(i) for i in routes_R])
+    
 
 def test_all_four_constraints(routes_R, main_problem):
+    """Function to test for all four constraints"""
+    parameters_constraints = main_problem.problem_constraints.__dict__
+    
+    if not test_all_nodes_present_set(routes_R, parameters_constraints['con_N_nodes']):
+        #print("Not all nodes present")
+        return False
+    if not test_connectedness_sets(routes_R, parameters_constraints['con_N_nodes']):
+        return False
+    if not test_separate_route_lengths(routes_R, parameters_constraints):
+        #print("Route length violation")
+        return False
+    if not test_cycles_and_backtracks_sets(routes_R):
+        #print("Cycle or backtracks exist")
+        return False
+    return True
+
+def test_all_four_constraints_slow(routes_R, main_problem):
     """Function to test for all four constraints"""
     parameters_constraints = main_problem.problem_constraints.__dict__
     
@@ -1351,6 +1404,7 @@ def test_all_four_constraints(routes_R, main_problem):
         #print("Cycle or backtracks exist")
         return False
     return True
+
 
 def test_all_four_constraints_debug(routes_R, main_problem):
     """Function to test for all four constraints and prints violation"""

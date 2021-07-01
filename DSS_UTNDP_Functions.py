@@ -483,7 +483,7 @@ def save_obj_pickle(obj, name, directory):
     '''Function to easily save object to pickle file'''
     pickle.dump(obj, open(directory / (name+".pickle"), "ab"))
 
-def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, pop_size_to_create=False):
+def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, fn_obj, pop_size_to_create=False):
     '''A function that loads the population data if it exists, and creates it
     otherwise. This will help longterm to save time.'''
     if (directory / (name+".pickle")).exists():
@@ -496,9 +496,28 @@ def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, pop_s
         except OSError as error: 
             print(error) 
         pop_1 = gc.PopulationRoutes(main_problem)  
-        pop_1.generate_initial_population_smart(main_problem, fn_obj_2, route_gen_func, new_pop_size=pop_size_to_create)
+        pop_1.generate_initial_population_smart(main_problem, fn_obj, route_gen_func, new_pop_size=pop_size_to_create)
         save_obj_pickle(pop_1, name, directory)
         print(f'SAVED: Population by {route_gen_func.__name__} saved to {directory}')
+        
+    return pop_1
+
+def load_UTRP_supplemented_pop_or_create(name, directory, main_problem, route_gen_func, fn_obj, pop_loaded):
+    '''A function that loads the supplemented population data if it exists, and creates it
+    otherwise. This will help longterm to save time.'''
+    if (directory / (name+".pickle")).exists():
+        pop_1 = load_obj_pickle(name, directory)
+        print(f'LOADED: Supplemented population {name} loaded from {directory}')
+    
+    else:
+        try: 
+            directory.mkdir() 
+        except OSError as error: 
+            print(error) 
+        pop_1 = gc.PopulationRoutes(main_problem)  
+        pop_1.supplement_initial_population_smart(main_problem, fn_obj, pop_loaded, route_gen_func)
+        save_obj_pickle(pop_1, name, directory)
+        print(f'SAVED: Supplemented population by {route_gen_func.__name__} saved to {directory}')
         
     return pop_1
 

@@ -500,6 +500,85 @@ class PopulationRoutes(Routes):
                 self.rank[i] = k
                 self.crowding_dist[i] = crowding_of_front[j]
     
+    def supplement_initial_population_smart(self, main_problem, fn_obj, pop_loaded, route_gen_func=Routes.return_feasible_route_robust_k_shortest):
+        t_now = datetime.now() # TIMING FUNCTION
+        st = [] # List for starting times
+        ft = [] # List for finishing times
+        average_at = 5 # TIMING FUNCTION
+        
+        old_pop_size = pop_loaded.population_size
+        new_pop_size = pop_loaded.population_size*5
+        
+        # Reinitiate the population to make provision for larger population
+        pop_size = new_pop_size
+        self.population_size = pop_size
+        self.variables = [None] * pop_size
+        self.variables_str = [None] * pop_size
+        self.objectives = np.empty([pop_size,
+                                   main_problem.problem_GA_parameters.number_of_objectives])
+        self.rank = np.empty([pop_size, 1])
+        self.crowding_dist = np.empty([pop_size, 1])
+            
+        
+        for i in range(old_pop_size):
+            
+            start_time = datetime.now() # TIMING FUNCTION
+
+            # Create a feasible route set
+            sol_i = copy.deepcopy(pop_loaded.variables[i])
+            self.variables[i+0*old_pop_size] = sol_i
+            self.variables_str[i+0*old_pop_size] = gf.convert_routes_list2str(self.variables[i+0*old_pop_size])
+            
+            self.variables[i+1*old_pop_size] = gf.mut_grow_full_overall_cb(sol_i, main_problem)
+            self.variables_str[i+1*old_pop_size] = gf.convert_routes_list2str(self.variables[i+1*old_pop_size])
+            
+            self.variables[i+2*old_pop_size] = gf.mut_grow_all_paths_random_cb(sol_i, main_problem)
+            self.variables_str[i+2*old_pop_size] = gf.convert_routes_list2str(self.variables[i+2*old_pop_size])
+            
+            self.variables[i+3*old_pop_size] = gf.mut_trim_full_overall_cb(sol_i, main_problem)
+            self.variables_str[i+3*old_pop_size] = gf.convert_routes_list2str(self.variables[i+3*old_pop_size])
+            
+            self.variables[i+4*old_pop_size] = gf.mut_trim_all_paths_random_cb(sol_i, main_problem) 
+            self.variables_str[i+4*old_pop_size] = gf.convert_routes_list2str(self.variables[i+4*old_pop_size])
+            
+            
+            # Determine the objective function values
+            self.objectives[i+0*old_pop_size,] = pop_loaded.objectives[i]
+            self.objectives[i+1*old_pop_size,] = fn_obj(self.variables[i+1*old_pop_size], main_problem)
+            self.objectives[i+2*old_pop_size,] = fn_obj(self.variables[i+2*old_pop_size], main_problem)
+            self.objectives[i+3*old_pop_size,] = fn_obj(self.variables[i+3*old_pop_size], main_problem)
+            self.objectives[i+4*old_pop_size,] = fn_obj(self.variables[i+4*old_pop_size], main_problem)
+
+            end_time = datetime.now() # TIMING FUNCTION
+            st.append(start_time) # TIMING FUNCTION
+            ft.append(end_time) # TIMING FUNCTION
+    
+            # Determine and print projections
+            if i == average_at-1 or i == old_pop_size-1: # TIMING FUNCTION
+                diffs = [x-y for x,y in zip(ft,st)]
+                diffs_sec = [float(str(x.seconds)+"."+str(x.microseconds)) for x in diffs]
+                avg_time = np.average(np.asarray(diffs_sec))
+                tot_iter = old_pop_size
+                ga.time_projection(avg_time, tot_iter, t_now=t_now, print_iter_info=True) # prints the time projection of the algorithm
+
+            # get the objective space values and objects
+            # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+        
+            # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
+
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = gf.calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]
+    
+    
     def generate_or_load_initial_population(self, main_problem, fn_obj, route_gen_func=Routes.return_feasible_route_robust_k_shortest, pop_choices=False):
         t_now = datetime.now() # TIMING FUNCTION
         st = [] # List for starting times

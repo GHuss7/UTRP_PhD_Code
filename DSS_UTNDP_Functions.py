@@ -19,6 +19,9 @@ import datetime
 import multiset
 import os
 import pickle
+import itertools
+import scipy.sparse
+
 
 # import pygmo as pg
 
@@ -625,8 +628,8 @@ def calc_cum_demand(r_i, mx_demand):
     
     return dem_tot
 
-def calc_cum_demand_route_set(r_i, mx_demand):
-    '''Calc cumulative demand for a route set'''
+def calc_cum_demand_route_set_slow(r_i, mx_demand):
+    '''Calc cumulative demand for a route set -- slow for loop'''
     dem_tot = 0 # initiate demand count
     # for each connection, calculate demand between OD pairs direct route
     for path_i in range(len(r_i)):
@@ -636,6 +639,38 @@ def calc_cum_demand_route_set(r_i, mx_demand):
                     dem_tot = dem_tot + mx_demand[i,j] + mx_demand[j,i]
     
     return dem_tot
+
+def calc_cum_demand_route_set(r_i, mx_demand):
+    '''Calc cumulative demand for a route set -- faster with list comprehension'''
+    dem_combinations = [i for j in [list(itertools.combinations(x,2)) for x in r_i] for i in j]
+    return sum([mx_demand[tup] for tup in dem_combinations])*2 
+
+def calc_cum_demand_route_set_vectorisation(r_i, mx_demand):
+    dem_combinations = [i for j in [list(itertools.combinations(x,2)) for x in r_i] for i in j]
+    A = np.zeros((mx_demand.shape)) # answers
+    B = np.array(dem_combinations) # coordinates
+    C = mx_demand # values to sum
+    
+    B_sparse = scipy.sparse.coo_matrix(B).todense()
+    
+    A = B_sparse*C
+    
+    np.ravel(B, order='C')
+    
+    
+    i = np.arange(2)[:,np.newaxis]
+    mask = (B == i).astype(int)
+    for j in range(len(mx_demand)):
+        A[:,j] = (C[j] * mask).sum(axis=-1)
+    
+    
+    total = 0
+    for tup in dem_combinations:
+        total = total + mx_demand[tup]
+    return (total*2)   
+
+
+    
 
 def remove_cum_demand(r_i, mx_demand):
     '''Remove cumulative demand for a single path'''

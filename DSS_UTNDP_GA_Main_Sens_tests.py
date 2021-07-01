@@ -66,12 +66,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_dis"][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -112,7 +113,7 @@ else:
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     "Repl_subsets" : gf.mut_replace_path_subsets,
-                    "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    #"Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
                     "Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
                     "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -158,9 +159,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1200, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "population_size" : 100, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 10, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 2, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -457,9 +458,13 @@ if True:
         directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
         pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=10000)
         
-        pop_sup_loaded = gf.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
+        if load_sup:
+            pop_sup_loaded = gf.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
+            pop_1 = pop_sup_loaded
         
-        pop_1 = pop_sup_loaded
+        else:
+            pop_1 = pop_loaded
+            
         #pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
         #pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_sup_loaded)
         

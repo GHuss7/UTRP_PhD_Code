@@ -89,9 +89,10 @@ else:
 #%% Set functions to use
     route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
                        "KSP_unseen_robust_prob_10000" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                       "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
                         "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
                         "Unseen_robust" : gc.Routes.return_feasible_route_robust}
-    route_gen_func_name = list(route_gen_funcs.keys())[1]
+    route_gen_func_name = list(route_gen_funcs.keys())[2]
     
     crossover_funcs = {"Mumford" : gf.crossover_mumford,
                        "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
@@ -458,8 +459,17 @@ if True:
         
         pop_sup_loaded = gf.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
         
-        pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
-        pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_sup_loaded)
+        pop_1 = pop_sup_loaded
+        #pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
+        #pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_sup_loaded)
+        
+        # Get non-dominated initial population
+        pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
+        pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
+        survivor_indices = gf.get_survivors_norm(pop_1, pop_size)
+        gf.keep_individuals(pop_1, survivor_indices)
+        pop_1.population_size = pop_size
+        
         # Save initial population
         ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
         
@@ -614,8 +624,7 @@ if True:
 
                     #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, 
                     #                                              df_data_generations, name_input_data, path_results_per_run, add_text=i_gen, labels)
-                except PermissionError:
-                    pass
+                except PermissionError: pass
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
             
@@ -657,43 +666,49 @@ if True:
             df_data_generations = df_data_generations.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
                                        mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['f_2'].mean().iloc[:,1])
             
-            """Print-outs for observations"""
-            df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
-            df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
-            df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
-            df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
-            df_mut_ratios.to_csv(path_results_per_run / "Mut_ratios.csv")
-            df_mut_summary.to_csv(path_results_per_run / "Mut_summary.csv")
-            
-            # Print and save result summary figures:
-            labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
-            gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
-                                         df_data_generations, df_mut_ratios, name_input_data, 
-                                         path_results_per_run, labels,
-                                         stats_overall['HV Benchmark'])
+            try:
+                """Print-outs for observations"""
+                df_pop_generations.to_csv(path_results_per_run / "Pop_generations.csv")
+                df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
+                df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
+                df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
+                df_mut_ratios.to_csv(path_results_per_run / "Mut_ratios.csv")
+                df_mut_summary.to_csv(path_results_per_run / "Mut_summary.csv")
+                
+                # Print and save result summary figures:
+                labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
+                gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                                             df_data_generations, df_mut_ratios, name_input_data, 
+                                             path_results_per_run, labels,
+                                             stats_overall['HV Benchmark'])
+            except PermissionError: pass
             
             #%% Post analysis 
-            pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
+            try:
+                pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
+                
+                # Writes all the stats in a csv file
+                with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
+                    w = csv.writer(archive_file)
+                    for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
+                        w.writerow([key, val])
+                    del key, val
+                
+                # Writes all the functions used in a csv file
+                with open(path_results / "Functions_used.csv", "w") as archive_file:
+                    w = csv.writer(archive_file)
+                    for key, val in {**all_functions_dict}.items():
+                        w.writerow([key, val])
+                    del key, val  
             
-            # Writes all the stats in a csv file
-            with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:
-                w = csv.writer(archive_file)
-                for key, val in {**parameters_input, **parameters_constraints, **parameters_GA, **stats}.items():
-                    w.writerow([key, val])
-                del key, val
-            
-            # Writes all the functions used in a csv file
-            with open(path_results / "Functions_used.csv", "w") as archive_file:
-                w = csv.writer(archive_file)
-                for key, val in {**all_functions_dict}.items():
-                    w.writerow([key, val])
-                del key, val  
+            except PermissionError: pass
             
             print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
             
             # Visualise the generations
-            gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
-
+            try:
+                gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
+            except PermissionError: pass
             
     #del i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
     
@@ -703,7 +718,9 @@ if True:
             df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
             df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["f_1","f_2"]].values, True)] # reduce the pareto front from the total archive
             df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
-            df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+            try:
+                df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+            except PermissionError: pass
             
             '''Save the stats for all the runs'''
             # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
@@ -722,45 +739,49 @@ if True:
             df_durations.to_csv(path_results / "Run_durations.csv")
             del df_durations
             
-            # Writes all the stats in a csv file
-            with open(path_results / "Stats_overall.csv", "w") as archive_file:
-                w = csv.writer(archive_file)
-                for key, val in {**stats_overall,
-                                 **UTNDP_problem_1.problem_inputs.__dict__, 
-                                 **UTNDP_problem_1.problem_constraints.__dict__, 
-                                 **UTNDP_problem_1.problem_GA_parameters.__dict__}.items():
-                    w.writerow([key, val])
-                del key, val
+            try:
+                # Writes all the stats in a csv file
+                with open(path_results / "Stats_overall.csv", "w") as archive_file:
+                    w = csv.writer(archive_file)
+                    for key, val in {**stats_overall,
+                                     **UTNDP_problem_1.problem_inputs.__dict__, 
+                                     **UTNDP_problem_1.problem_constraints.__dict__, 
+                                     **UTNDP_problem_1.problem_GA_parameters.__dict__}.items():
+                        w.writerow([key, val])
+                    del key, val
+                
+                # Writes all the functions used in a csv file
+                with open(path_results / "Functions_used.csv", "w") as archive_file:
+                    w = csv.writer(archive_file)
+                    for key, val in {**all_functions_dict}.items():
+                        w.writerow([key, val])
+                    del key, val
             
-            # Writes all the functions used in a csv file
-            with open(path_results / "Functions_used.csv", "w") as archive_file:
-                w = csv.writer(archive_file)
-                for key, val in {**all_functions_dict}.items():
-                    w.writerow([key, val])
-                del key, val    
-          
-            ga.get_sens_tests_stats_from_model_runs(path_results, run_nr) # prints the runs summary
-            gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
-            gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
-            gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                              pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                              pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                              name_input_data, 
-                                              path_results, labels,
-                                              stats_overall['HV Benchmark'])
+            except PermissionError: pass
             
+            try:
+                ga.get_sens_tests_stats_from_model_runs(path_results, run_nr) # prints the runs summary
+                gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
+                gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
+                gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                                                  pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                                  pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                                                  name_input_data, 
+                                                  path_results, labels,
+                                                  stats_overall['HV Benchmark'])
             
+                gf.print_extreme_solutions(df_overall_pareto_set, HV, stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
+                # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
             
-            gf.print_extreme_solutions(df_overall_pareto_set, HV, stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
-            
-            # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
+            except PermissionError: pass
     
             #del archive_file, path_results_per_run, w           
             
             # %% Plot analysis graph
             '''Plot the analysis graph'''
-            gv.save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels)
-            
+            try:
+                gv.save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels)
+            except PermissionError: pass
     #del run_nr
 
 # %% Sensitivity analysis

@@ -683,7 +683,7 @@ class PopulationRoutes(Routes):
                           f_2 = self.objectives[:,1],
                           rank = self.rank[:,0])
         
-        plt.style.use('seaborn-whitegrid')
+        #plt.style.use('seaborn-whitegrid')
         
         if plot_all_black:
             plt.plot(self.objectives[:,0], self.objectives[:,1], 'o', color='black')
@@ -957,7 +957,7 @@ class PopulationFreq_2(list):
                           f_2 = self.objectives[:,1],
                           rank = self.rank[:,0])
         
-        plt.style.use('seaborn-whitegrid')
+        #plt.style.use('seaborn-whitegrid')
         
         if plot_all_black:
             plt.plot(self.objectives[:,0], self.objectives[:,1], 'o', color='black')

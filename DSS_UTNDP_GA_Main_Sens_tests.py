@@ -88,7 +88,7 @@ else:
     
 #%% Set functions to use
     route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
-                       "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                       "KSP_unseen_robust_prob_10000" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
                         "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
                         "Unseen_robust" : gc.Routes.return_feasible_route_robust}
     route_gen_func_name = list(route_gen_funcs.keys())[1]
@@ -454,7 +454,7 @@ if True:
                            
         # Load and save initial population
         directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=2000)
+        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=10000)
         
         pop_sup_loaded = gf.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
         

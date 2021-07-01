@@ -2273,6 +2273,56 @@ def replace_path_prob_unmet_demand_limited_len(route_to_replace, main_problem, r
     
     return route_copy
 
+def replace_path_prob_demand_per_cost(route_to_replace, main_problem, replace_index, routes_to_search=False): 
+    '''Function for replacing a path in a route set r_i that at index i, 
+    based on probability of meeting max unmet demand
+    while also inserting a route that has a length on one more than the removed 
+    route so that it won't prefer moves benefiting passenger cost more.
+    Routes to search is by default k-shortest paths, but another set of routes 
+    may be imported and used to search for the best demand.'''
+
+    debug = False
+    route_copy = copy.deepcopy(route_to_replace)  
+    
+    del route_copy[replace_index] # removes the route that should be replaced
+    
+    if not routes_to_search:
+        routes_to_search = main_problem.k_short_paths.paths # retrieves ksp as default
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_demand_unmet = remove_cum_demand_route_set(route_copy, mx_demand) # calc unmet demand mx
+    
+    mx_dist = main_problem.problem_data.mx_dist
+    c_routes = calc_seperate_route_length(routes_to_search, mx_dist).reshape(((len(routes_to_search),1)))
+
+    d_max = 0
+    d_routes = np.zeros((len(routes_to_search),1)) # demand met by routes
+    pot_route_indices = [] # a list of the indices of potential routes that may suffice
+    
+    for i in range(len(routes_to_search)):
+        d_met = calc_cum_demand(routes_to_search[i], mx_demand_unmet)
+        d_routes[i,0] = d_met
+        
+        # calc max demand met
+        if d_met == d_max:
+            pot_route_indices.extend([i])
+        if d_met > d_max:
+            pot_route_indices = [i]
+            d_max = d_met
+    dem_per_cost = d_routes / c_routes
+    
+    # use demand met proportions to select route for inclusion
+    if sum(dem_per_cost) == 0:
+        prob_routes = np.ones((len(dem_per_cost), 1))*(1/len(dem_per_cost))
+    else:
+        prob_routes = dem_per_cost / sum(dem_per_cost)
+    
+    path_to_add = random.choices(routes_to_search, weights=prob_routes, k=1)[0]
+    
+    if debug: print(f"{path_to_add}")
+    route_copy.insert(replace_index, path_to_add)
+    
+    return route_copy
+
 # %% Crossover functions
 
 def crossover_routes_random(parent_i, parent_j):
@@ -2676,13 +2726,18 @@ def crossover_pop_routes_individuals_smart(pop, main_problem, crossover_func=cro
                 counter += 1
                 
                 # A case for when no feasible route can be found in the odd occasion
-                if counter > 1000:
-                    if random.random() < 0.5:
-                        offspring_variables[i] = pop.variables[selection[i,0]]
+                if counter > 100:
+                    offspring_variables[i] = crossover_mumford(parent_A, parent_B, main_problem)
+                    if test_all_four_constraints(offspring_variables[i], main_problem):
+                        print("Crossover by Mumford last resort success")
+                        break
                     else:
-                        offspring_variables[i] = pop.variables[selection[i,1]]
-                    print(f"No feasible route found with Crossover between \nparent_A:\n {parent_A} and \n parent_B:\n {parent_B}")
-                    break
+                        if random.random() < 0.5:
+                            offspring_variables[i] = pop.variables[selection[i,0]]
+                        else:
+                            offspring_variables[i] = pop.variables[selection[i,1]]
+                        print(f"No feasible route found with Crossover between \nparent_A:\n {parent_A} and \n parent_B:\n {parent_B}")
+                        break
                     
                 if test_all_four_constraints(offspring_variables[i], main_problem):
                     continue
@@ -3204,6 +3259,7 @@ def mut_replace_path_subsets(routes_R, main_problem, routes_to_search=False, lim
     # Identify shortest subset that should be replaced
     debug = False
     mut_R = copy.deepcopy(routes_R)
+    ksp = main_problem.k_short_paths.paths
     
     for i, R_i in enumerate(mut_R):
         for j, R_j in enumerate(mut_R):
@@ -3220,15 +3276,32 @@ def mut_replace_path_subsets(routes_R, main_problem, routes_to_search=False, lim
     
                     if test_list_order_and_subset(sub_list, test_list):
                         if debug: print(sub_list_index)
-                        mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search, limit_len=limit_len)
+                        mut_R = replace_path_prob_demand_per_cost(mut_R, main_problem, sub_list_index, routes_to_search)
+                        # mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search, limit_len=limit_len)
                     else:
                         sub_list.reverse()
                         if test_list_order_and_subset(sub_list, test_list):
                             if debug: print(sub_list_index)
-                            mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search, limit_len=limit_len)
-                     
-    return mut_R
+                            mut_R = replace_path_prob_demand_per_cost(mut_R, main_problem, sub_list_index, routes_to_search)
+                            # mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search, limit_len=limit_len)
+                
+                    while is_route_sublist_in_set(mut_R, sub_list_index):
+                        mut_R = replace_path_prob_demand_per_cost(mut_R, main_problem, sub_list_index, ksp)
+                
+                return mut_R
 
+def is_route_sublist_in_set(routes_R, index_i):
+    '''Function to test whether the route at index i is a sublist of the 
+    routeset'''
+    
+    R_i = routes_R[index_i]
+    routes_copy = copy.deepcopy(routes_R)
+    del routes_copy[index_i]
+    
+    for R_j in routes_copy:
+        if are_lists_sublists(R_i, R_j):
+            return True   
+    return False
 
 def mut_invert_route_vertices(routes_R, main_problem):
     '''A mutation function for inverting a randomly selected vertex and a 

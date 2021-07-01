@@ -318,7 +318,7 @@ def get_sens_tests_stats_from_UTRP_SA_runs(path_to_main_folder):
     IQR = abs((df_HV_description["uq"] - df_HV_description["lq"]).values)[0]
     
     """Calculate stats without outliers""" 
-    df_results_cons_outliers = df_overall_results.copy()
+    df_results_cons_outliers = copy.deepcopy(df_overall_results)
     outlier_list = []
     
     for i_entry in range(len(df_results_cons_outliers["HV"])-1,-1,-1):

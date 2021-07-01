@@ -66,7 +66,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_dis"][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -616,7 +616,7 @@ if True:
                     #                                           stats_overall['HV Benchmark']) 
                     
                     # Compute means for generations
-                    df_gen_temp = df_data_generations.copy()
+                    df_gen_temp = copy.deepcopy(df_data_generations)
                     df_gen_temp = df_gen_temp.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
                                        mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['f_2'].mean().iloc[:,1])
                     labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations

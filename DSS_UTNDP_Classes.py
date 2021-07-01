@@ -34,7 +34,7 @@ from pymoo.util.misc import random_permuations
 
 def format_routes_with_letters(R_routes):
     # format routes with letters
-    R_routes_named = list(R_routes)
+    R_routes_named = copy.deepcopy(R_routes)
     for i in range(len(R_routes)):
         if i <= 25:
             for j in range(len(R_routes[i])):
@@ -525,7 +525,7 @@ class PopulationRoutes(Routes):
             start_time = datetime.now() # TIMING FUNCTION
 
             # Create a feasible route set
-            sol_i = list(pop_loaded.variables[i])
+            sol_i = copy.deepcopy(pop_loaded.variables[i])
             self.variables[i+0*old_pop_size] = sol_i
             self.variables_str[i+0*old_pop_size] = gf.convert_routes_list2str(self.variables[i+0*old_pop_size])
             

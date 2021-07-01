@@ -1221,22 +1221,21 @@ def test_connectedness_nx(routes_R):
 def test_connectedness_sets(routes_R, n_nodes):
     R_copy = copy.deepcopy(routes_R)
     R_copy.sort(key = len)
-    R_copy.reverse()
     #flag = False
     
     print(R_copy)
-    for i, r_i in enumerate(R_copy):
+    for i, r_i in reversed(list(enumerate(R_copy))):
         if i == 0:
             V_set = set(r_i)
             del R_copy[i]
             #print(R_copy)
             #print(r_i)
-        for j, r_j in enumerate(R_copy):
+        for j, r_j in reversed(list(enumerate(R_copy))):
             #print(i,j)
             #print(R_copy)
             #print(r_j)
 
-            if i != j:
+            if i > j:
                 if V_set.intersection(set(r_j)):
                     V_set = V_set.union(set(r_j))
                     del r_j
@@ -1386,6 +1385,9 @@ def test_all_four_constraints(routes_R, main_problem):
         #print("Cycle or backtracks exist")
         return False
     return True
+
+def test_all_constraints_fast(routes_R, main_problem):
+
 
 def test_all_four_constraints_slow(routes_R, main_problem):
     """Function to test for all four constraints"""

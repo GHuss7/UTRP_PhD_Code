@@ -4528,10 +4528,11 @@ def get_equispaced_indices(n_solutions, objs_sorted):
 
 # %% Obj function experiments
 
-routeset=R_x
-travelTimes=mx_dist
-DemandMat=mx_demand
-if True:
+if False:
+    routeset=mutated_variables[0]
+    travelTimes=mx_dist
+    DemandMat=mx_demand
+
 #def evalObjs(routeset=R_x,travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input):
     total_demand = parameters_input['total_demand']
     n = parameters_input['n'] # number of nodes
@@ -4543,9 +4544,9 @@ if True:
     D = ev.floyd_warshall_fastest(routeadj,t)
     SPMatrix = ev.shortest_paths_matrix(D, inv_map, t, n)
     ATT = ev.EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
-    return ATT, RL
+#    return ATT, RL
 
-evalObjs(routeset=offspring_variables[0],travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input)
+#evalObjs(routeset=offspring_variables[0],travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input)
 
 
 def shortest_paths_matrix(D, inv_map, t, n):
@@ -4561,8 +4562,22 @@ def shortest_paths_matrix(D, inv_map, t, n):
                 #count = count + 1
     return(SPMatrix)
 
-shortest_paths_matrix(D, inv_map, t, n)
+#shortest_paths_matrix(D, inv_map, t, n)
 
-ev.floyd_warshall_fastest(routeadj,t)
+if False:
+    ev.floyd_warshall_fastest(routeadj,t)
+    
+    #E = D[inv_map == 1]
+    
+    from floyd_warshall_cython_master import floyd_warshall
+    
+    np.fill_diagonal(routeadj, 0)
+    
+#    %timeit floyd_warshall.floyd_warshall_single_core(mx_dist)
+#    %timeit ev.floyd_warshall_fastest(mx_dist,len(mx_dist))
 
-E = D[inv_map == 1]
+#    %timeit floyd_warshall.floyd_warshall_single_core(routeadj)
+#    %timeit ev.floyd_warshall_fastest(routeadj,len(routeadj))
+
+    c_M = floyd_warshall.floyd_warshall_single_core(routeadj)
+    p_M = ev.floyd_warshall_fastest(routeadj,len(routeadj))

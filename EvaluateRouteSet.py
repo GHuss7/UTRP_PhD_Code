@@ -40,6 +40,9 @@ from tkinter import simpledialog
 from numpy import array,loadtxt,isfinite,set_printoptions,zeros,ones,int,empty,inf,asarray,minimum,newaxis
 import numpy as np
 
+from floyd_warshall_cython_master import floyd_warshall
+
+
 def main():
 
     '''Read files'''
@@ -194,6 +197,7 @@ def floyd_warshall_fastest(mat,t):
         mat = minimum(mat, mat[newaxis,k,:] + mat[:,k,newaxis]) 
 
     return mat
+
     
 def EvaluateATT(SPMatrix,Demand, total_demand, WT):
     
@@ -322,7 +326,13 @@ def evaluateTotalRouteLength(routes,travelTimes):
 def evaluateObjectives(routeset,travelTimes,DemandMat,total_demand,n,r,wt,tp):
     RL = evaluateTotalRouteLength(routeset,travelTimes)
     routeadj,inv_map,t,shortest,longest = expandTravelMatrix(routeset, travelTimes,n,tp,wt)
-    D = floyd_warshall_fastest(routeadj,t)
+    
+    # Numpy floyd_warshall:
+    #D = floyd_warshall_fastest(routeadj,t)
+    
+    # Cython floyd_warshall:
+    np.fill_diagonal(routeadj, 0)
+    D = floyd_warshall.floyd_warshall_single_core(routeadj)
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
     return(ATT,RL)
@@ -336,7 +346,14 @@ def evalObjs(routeset,travelTimes,DemandMat,parameters_input):
     
     RL = evaluateTotalRouteLength(routeset,travelTimes)
     routeadj,inv_map,t,shortest,longest = expandTravelMatrix(routeset, travelTimes,n,tp,wt)
-    D = floyd_warshall_fastest(routeadj,t)
+    
+    # Numpy floyd_warshall:
+    #D = floyd_warshall_fastest(routeadj,t)
+    
+    # Cython floyd_warshall:
+    np.fill_diagonal(routeadj, 0)
+    D = floyd_warshall.floyd_warshall_single_core(routeadj)
+    
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
     return ATT, RL

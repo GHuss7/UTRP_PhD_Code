@@ -4551,7 +4551,7 @@ if False:
 
 def shortest_paths_matrix(D, inv_map, t, n):
 
-    SPMatrix = inf*np.ones((n,n), dtype=float)
+    SPMatrix = np.inf*np.ones((n,n), dtype=float)
     #count = 0
     for i in range(t):
         p1 = inv_map[i]
@@ -4581,3 +4581,6 @@ if False:
 
     c_M = floyd_warshall.floyd_warshall_single_core(routeadj)
     p_M = ev.floyd_warshall_fastest(routeadj,len(routeadj))
+    
+    p_SPM = shortest_paths_matrix(D, inv_map, t, n)
+    c_SPM = floyd_warshall.shortest_paths_matrix(D, inv_map, t, n)

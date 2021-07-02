@@ -93,7 +93,7 @@ class Timer(object):
         self.stop()
 
 def test_floyd_warshall_speed():
-    M = random((2000, 2000))
+    M = random((100, 100))
     fill_diagonal(M, 0)
 
     prev_res = None

@@ -13,6 +13,8 @@ Created on Fri Jul  2 12:25:14 2021
 #     ext_modules = cythonize("floyd_warshall.pyx")
 # )
 
+# Run > cd directory
+#     >python setup.py build_ext --inplace
 
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
@@ -31,4 +33,16 @@ setup(
 setup(
     ext_modules=cythonize("floyd_warshall.pyx"),
     include_dirs=[numpy.get_include()]
-)  
+) 
+
+#%%
+# # from: https://stackoverflow.com/questions/11368486/openmp-and-python
+# from Cython.Distutils import build_ext
+# setup(
+#       cmdclass = {'build_ext': build_ext},
+#       ext_modules = [Extension("calculate",
+#                                 ["floyd_warshall.pyx"],
+#                                 extra_compile_args=['-fopenmp'],
+#                                 extra_link_args=['-fopenmp'])]
+      
+#       ) 

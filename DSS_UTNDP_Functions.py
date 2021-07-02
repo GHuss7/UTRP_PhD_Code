@@ -4523,3 +4523,46 @@ def get_equispaced_indices(n_solutions, objs_sorted):
     seed_indices = np.percentile(range(0,len(objs_sorted)),np.linspace(0, 100, num=n_solutions))
     #seeding_route_choices = seeding_route_set.iloc[seed_indices,:]
     return seed_indices
+
+
+
+# %% Obj function experiments
+
+routeset=R_x
+travelTimes=mx_dist
+DemandMat=mx_demand
+if True:
+#def evalObjs(routeset=R_x,travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input):
+    total_demand = parameters_input['total_demand']
+    n = parameters_input['n'] # number of nodes
+    wt = parameters_input['wt'] # waiting time
+    tp = parameters_input['tp'] # transfer penalty
+    
+    RL = ev.evaluateTotalRouteLength(routeset,travelTimes)
+    routeadj,inv_map,t,shortest,longest = ev.expandTravelMatrix(routeset, travelTimes,n,tp,wt)
+    D = ev.floyd_warshall_fastest(routeadj,t)
+    SPMatrix = ev.shortest_paths_matrix(D, inv_map, t, n)
+    ATT = ev.EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
+    return ATT, RL
+
+evalObjs(routeset=offspring_variables[0],travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input)
+
+
+def shortest_paths_matrix(D, inv_map, t, n):
+
+    SPMatrix = inf*np.ones((n,n), dtype=float)
+    #count = 0
+    for i in range(t):
+        p1 = inv_map[i]
+        for j in range(t):
+            p2 = inv_map[j]
+            if (D[i][j]<SPMatrix[p1][p2]):
+                SPMatrix[p1][p2] = D[i][j]
+                #count = count + 1
+    return(SPMatrix)
+
+shortest_paths_matrix(D, inv_map, t, n)
+
+ev.floyd_warshall_fastest(routeadj,t)
+
+E = D[inv_map == 1]

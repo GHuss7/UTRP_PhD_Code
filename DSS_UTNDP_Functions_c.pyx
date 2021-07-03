@@ -623,18 +623,36 @@ def generate_initial_route_sets(main_problem, printing=True):
     return routes_R_initial_set, df_routes_R_initial_set
 
 # Generate longer feasible solutions and covering demand with direct routes
-def calc_cum_demand(r_i, mx_demand):
+def calc_cum_demand(list r_i, mx_demand):
     '''Calc cumulative demand for a single path'''
-    cdef unsigned long long dem_tot = 0 # initiate demand count
+    dem_tot = 0 # initiate demand count
     # for each connection, calculate demand between OD pairs direct route
     cdef unsigned int i, j
     
     for i in r_i:
         for j in r_i:
             if i < j:
-                dem_tot = dem_tot + mx_demand[i,j] + mx_demand[j,i]
+                dem_tot = dem_tot + mx_demand[i,j]
     
-    return dem_tot
+    return dem_tot*2
+
+# def calc_cum_demand(list r_i, int[:,:] mx_demand):
+#     '''Calc cumulative demand for a single path'''
+#     cdef unsigned long long dem_tot = 0 # initiate demand count
+#     # for each connection, calculate demand between OD pairs direct route
+#     cdef unsigned int i, j
+    
+#     for i in r_i:
+#         for j in r_i:
+#             if i < j:
+#                 dem_tot = dem_tot + <unsigned long long>mx_demand[i,j]
+    
+#     return dem_tot*2
+
+'''File "DSS_UTNDP_Functions_c.pyx", line 626, in DSS_UTNDP_Functions_c.calc_cum_demand
+    def calc_cum_demand(list r_i, int[:,:] mx_demand):
+ValueError: Buffer dtype mismatch, expected 'int' but got 'long long'''
+
 
 def calc_cum_demand_route_set_slow(r_i, mx_demand):
     '''Calc cumulative demand for a route set -- slow for loop'''
@@ -648,10 +666,34 @@ def calc_cum_demand_route_set_slow(r_i, mx_demand):
     
     return dem_tot
 
-def calc_cum_demand_route_set(r_i, mx_demand):
+
+def calc_cum_demand_route_set(list r_i, mx_demand):
     '''Calc cumulative demand for a route set -- faster with list comprehension'''
-    dem_combinations = [i for j in [list(itertools.combinations(x,2)) for x in r_i] for i in j]
-    return sum([mx_demand[tup] for tup in dem_combinations])*2 
+    cdef list dem_combinations, x
+    cdef unsigned int i,j
+    total = 0
+    dem_combinations = [t for k in [list(itertools.combinations(x,2)) for x in r_i] for t in k]
+    
+    for i,j in dem_combinations:
+        total += mx_demand[i, j] 
+    
+    return total*2
+
+# def calc_cum_demand_route_set(list r_i, int[:,:] mx_demand):
+#     '''Calc cumulative demand for a route set -- faster with list comprehension'''
+#     cdef list dem_combinations, x
+#     cdef unsigned int i,j
+#     cdef unsigned long long total = 0
+#     dem_combinations = [i for j in [list(itertools.combinations(x,2)) for x in r_i] for i in j]
+    
+#     for i,j in dem_combinations:
+#         total += <unsigned long long>mx_demand[i, j] 
+    
+#     return total*2 
+
+'''File "DSS_UTNDP_Functions_c.pyx", line 626, in DSS_UTNDP_Functions_c.calc_cum_demand
+    def calc_cum_demand(list r_i, int[:,:] mx_demand):
+ValueError: Buffer dtype mismatch, expected 'int' but got 'long long'''
 
 def calc_cum_demand_route_set_vectorisation(r_i, mx_demand):
     dem_combinations = [i for j in [list(itertools.combinations(x,2)) for x in r_i] for i in j]
@@ -2183,7 +2225,8 @@ def repair_add_path_to_route_set_ksp(route_to_repair, main_problem, k_shortest_p
     
     else:
         path_to_add = random.choice(ksp)
-        repaired_route = copy.deepcopy(route_to_repair)
+        #repaired_route = copy.deepcopy(route_to_repair)
+        repaired_route = route_to_repair
         repaired_route.extend([path_to_add])
         
         return repaired_route

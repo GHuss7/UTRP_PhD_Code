@@ -12,11 +12,11 @@ import numpy
 
 #%% Shortest Path Matrix Cython
 
-def shortest_paths_matrix(int[:,:] D, int[:] inv_map, int t, int n):
+def shortest_paths_matrix(double[:,:] D, int[:] inv_map, int t, int n):
 
-    cdef unsigned int i, j, p1, p2
+    cdef int i, j, p1, p2
 
-    cdef float[:,:] SPMatrix = numpy.inf*numpy.ones((n,n), dtype=float)
+    cdef float[:,:] SPMatrix = numpy.inf*numpy.ones((n,n))
 
     for i in range(t):
         p1 = inv_map[i]

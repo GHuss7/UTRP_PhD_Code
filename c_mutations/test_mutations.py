@@ -15,14 +15,14 @@ pyximport.install(reload_support=True)
 
 #%% Import all the packages as usual to test with
 import os
+
 main_dir = os.path.abspath(os.curdir)
+os.chdir(main_dir)
 print (os.path.abspath(os.curdir))
 os.chdir("..")
 print (os.path.abspath(os.curdir))
 ###############################################################################################################
 # Special imports
-from floyd_warshall_cython_master import floyd_warshall
-
 
 
 if True:
@@ -377,96 +377,112 @@ print (os.path.abspath(os.curdir))
 # %% Function experiments
 
 if True:
-    routeset=pop_1.variables[2]
-    travelTimes=mx_dist
-    DemandMat=mx_demand
+    routes_R=pop_1.variables[2]
+    main_problem=UTNDP_problem_1
 
-#def evalObjs(routeset=R_x,travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input):
-    total_demand = parameters_input['total_demand']
-    n = parameters_input['n'] # number of nodes
-    wt = parameters_input['wt'] # waiting time
-    tp = parameters_input['tp'] # transfer penalty
+def mut_add_terminal_highest_demand_per_cost_fast(routes_R, main_problem):
+    '''A mutation function that adds 1 vertex to path i in a route set
+    for 1 random path i chosen from the route set.
+    Include a probabilistic element where the highest demand contribution per 
+    route cost is considered.'''
     
-    RL = ev.evaluateTotalRouteLength(routeset,travelTimes)
-    routeadj,inv_map,t,shortest,longest = ev.expandTravelMatrix(routeset, travelTimes,n,tp,wt)
+    route_copy = copy.deepcopy(routes_R)
+    len_routes = len(routes_R)
+    mx_demand = main_problem.problem_data.mx_demand
+    mx_dist = main_problem.problem_data.mx_dist
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    mapping_adjacent = main_problem.mapping_adjacent 
+    candidates = []   
 
-    # Numpy floyd_warshall:
-    #D = floyd_warshall_fastest(routeadj,t)
+    d_init = gf.calc_cum_demand_route_set(route_copy, mx_demand)
+
+    for i in range(len_routes):
+        r_i = route_copy[i].copy() # keep a copy of the route that is evaluated
+        
+        if len(r_i) < con_max_v: # ensures feasible solution
+            # test for best additional vertex to include based on demand per cost
+
     
-    # Cython floyd_warshall:
-    np.fill_diagonal(routeadj, 0)
-    D = floyd_warshall.floyd_warshall_single_core(routeadj)    
+            # Evaluate the front of the route set first
+            adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
+            for adj in adjs_front:
+                route_copy[i] = r_i.copy() # replace the route in index i
+                
+                # front terminal vertex eval
+                route_copy[i].insert(0,adj)
+                
+                # test feasibility
+                if gf.test_all_four_constraints(route_copy, main_problem):
+                    d = gf.calc_cum_demand_route_set(route_copy, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                
+                
+            # Evaluate the end of the route set second
+            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
+            for adj in adjs_end:   
+                route_copy[i] = r_i.copy() # replace the route in index i
 
-    SPMatrix = ev.shortest_paths_matrix(D, inv_map, t, n)
-    ATT = ev.EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
-#    return ATT, RL
+                # end terminal vertex eval
+                route_copy[i].append(adj)
+             
+                # test feasibility
+                if gf.test_all_four_constraints(route_copy, main_problem):
+                    d = gf.calc_cum_demand_route_set(route_copy, mx_demand)
+                    d_cont = d - d_init # calc direct demand contribution
+                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
+                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+        
+        # Replace the route in index i to reset route
+        route_copy[i] = r_i.copy() 
 
-#evalObjs(routeset=offspring_variables[0],travelTimes=mx_dist,DemandMat=mx_demand,parameters_input=parameters_input)
+    # if no candidates, return initial route
+    if len(candidates) == 0: 
+        return routes_R
+        
+    # find terminals with lowest demand per cost
+    criteria = 'dem_per_cost'
+    demands = np.array([x[criteria] for x in candidates])
+    if sum(demands)!=0: 
+        dem_proportions = demands/sum(demands)
+    else:
+        dem_proportions = [1/len(demands) for _ in demands]
 
+    candidate = random.choices(candidates, weights=dem_proportions, k=1)[0] 
 
-def shortest_paths_matrix_naive(D, inv_map, t, n):
+    # extract candidate details and return mutated route
+    if candidate['front']:
+        route_copy[candidate['route_nr']].insert(0,candidate['adj'])
+    else:
+        route_copy[candidate['route_nr']].append(candidate['adj'])
 
-    SPMatrix = np.inf*np.ones((n,n), dtype=float)
-    #count = 0
-    for i in range(t):
-        p1 = inv_map[i]
-        for j in range(t):
-            p2 = inv_map[j]
-            if (D[i][j]<SPMatrix[p1][p2]):
-                SPMatrix[p1][p2] = D[i][j]
-                #count = count + 1
-    return(SPMatrix)
+    return route_copy
 
-#shortest_paths_matrix(D, inv_map, t, n)
-
-if False:
-#    %timeit floyd_warshall.floyd_warshall_single_core(routeadj)
-#    %timeit ev.floyd_warshall_fastest(routeadj,len(routeadj))
-
-    np.fill_diagonal(routeadj, 0)
-    c_M = floyd_warshall.floyd_warshall_single_core(routeadj)
-    p_M = ev.floyd_warshall_fastest(routeadj,len(routeadj))
-    assert (c_M == p_M).all() 
 
 if True:
-    from shortest_paths_matrix_master import shortest_paths_matrix
     
-    p_SPM = shortest_paths_matrix_naive(D, inv_map, t, n)
-    c_SPM = shortest_paths_matrix(D, inv_map, t, n)
-    assert (c_SPM == p_SPM).all() 
+    random.seed(0)
+    p_R = gf.mut_add_terminal_highest_demand_per_cost(routes_R, main_problem)
+    random.seed(0)
+    c_R = mut_add_terminal_highest_demand_per_cost_fast(routes_R, main_problem)
+    assert (c_R == p_R)
     
-    #    %timeit shortest_paths_matrix_naive(D, inv_map, t, n)
-    #    %timeit shortest_paths_matrix(D, inv_map, t, n)
+    x = [p_R[i]==c_R[i] for i in range(len(p_R))]
 
+    #    %timeit gf.mut_add_terminal_highest_demand_per_cost(routes_R, main_problem)
+    #    %timeit mut_add_terminal_highest_demand_per_cost_fast(routes_R, main_problem)
 
+for k in range(10):
+    random.seed(k)
+    p_R = gf.mut_add_terminal_highest_demand_per_cost(routes_R, main_problem)
+    random.seed(k)
+    c_R = mut_add_terminal_highest_demand_per_cost_fast(routes_R, main_problem)
+    assert (c_R == p_R)
+    
 # %% Defs
-def check_and_convert_adjacency_matrix(adjacency_matrix):
-    mat = asarray(adjacency_matrix)
-
-    (nrows, ncols) = mat.shape
-    assert nrows == ncols
-    n = nrows
-
-    assert (diagonal(mat) == 0.0).all()
-
-    return (mat, n)
-
-# def test_floyd_warshall_algorithms_on_small_matrix():
-#     INPUT = array([
-#         [  0.,  inf,  -2.,  inf],
-#         [  4.,   0.,   3.,  inf],
-#         [ inf,  inf,   0.,   2.],
-#         [ inf,  -1.,  inf,   0.]
-#     ])
-
-#     OUTPUT = array([
-#         [ 0., -1., -2.,  0.],
-#         [ 4.,  0.,  2.,  4.],
-#         [ 5.,  1.,  0.,  2.],
-#         [ 3., -1.,  1.,  0.]])
-
-#     assert (floyd_warshall_naive(INPUT) == OUTPUT).all()
-#     assert (floyd_warshall_numpy(INPUT) == OUTPUT).all()
 
 class Timer(object):
     def __init__(self, text = None):
@@ -484,19 +500,17 @@ class Timer(object):
         self.stop()
 
 def test_funcs_speed():
-    M = np.random.random((100, 100))
-    np.fill_diagonal(M, 0)
 
     prev_res = None
     print('')
-    for (name, func) in [('Python+NumPy', shortest_paths_matrix_naive), ('Cython', shortest_paths_matrix)]:
+    for (name, func) in [('Python+NumPy', gf.mut_add_terminal_highest_demand_per_cost), ('Cython', mut_add_terminal_highest_demand_per_cost_fast)]:
         print ('%20s: ' % name),
         with Timer():
-            result = func(D, inv_map, t, n)
-        if not (prev_res == result).all():
+            result = func(routes_R, main_problem)
+        if not (prev_res == result):
         #if prev_res == None:
             prev_res = result
         else:
-            assert (prev_res == result).all()
+            assert (prev_res == result)
 
 test_funcs_speed()

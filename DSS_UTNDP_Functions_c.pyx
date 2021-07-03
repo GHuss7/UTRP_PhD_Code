@@ -37,6 +37,12 @@ from pymoo.factory import get_performance_indicator
 import DSS_UTNDP_Classes as gc
 import EvaluateRouteSet as ev
 
+
+#%% CYTHON:
+import cython
+from cython.parallel cimport prange, parallel
+cimport numpy as np
+
 # %% Range functions 
 def rangeEx(a,b,c):
     # A function for creating a range between a and b and excluding a number c
@@ -1662,43 +1668,43 @@ def norm_and_calc_2d_hv_np(numpy_objs, max_objs, min_objs):
     return hv.calc(numpy_objs_copy) # assume minimisation and compute
     
 ''' Calculate Hypervolume using Pygmo ''' 
-def calc_hv_from_df(df_archive):
-    points = list()
-    for i in range(len(df_archive)):
-        points.append([df_archive.iloc[i,0], df_archive.iloc[i,1]])
+# def calc_hv_from_df(df_archive):
+#     points = list()
+#     for i in range(len(df_archive)):
+#         points.append([df_archive.iloc[i,0], df_archive.iloc[i,1]])
     
-    hv = pg.hypervolume(points = points)
-    ref_point = hv.refpoint()
-    return hv.compute(ref_point)
+#     hv = pg.hypervolume(points = points)
+#     ref_point = hv.refpoint()
+#     return hv.compute(ref_point)
 
-def calc_hv_from_df_from_ref_point(df_archive, ref_point):
-    points = list()
-    for i in range(len(df_archive)):
-        points.append([df_archive.iloc[i,0], df_archive.iloc[i,1]])
+# def calc_hv_from_df_from_ref_point(df_archive, ref_point):
+#     points = list()
+#     for i in range(len(df_archive)):
+#         points.append([df_archive.iloc[i,0], df_archive.iloc[i,1]])
     
-    hv = pg.hypervolume(points = points)
-    return hv.compute(ref_point)
+#     hv = pg.hypervolume(points = points)
+#     return hv.compute(ref_point)
 
-def calc_hv_from_normalised_df(df_archive_norm):
-    df_archive_norm[df_archive_norm < 0] = 0
-    df_archive_norm[df_archive_norm > 1] = 1
+# def calc_hv_from_normalised_df(df_archive_norm):
+#     df_archive_norm[df_archive_norm < 0] = 0
+#     df_archive_norm[df_archive_norm > 1] = 1
     
-    points = list()
-    for i in range(len(df_archive_norm)):
-        points.append([df_archive_norm.iloc[i,0], df_archive_norm.iloc[i,1]])
+#     points = list()
+#     for i in range(len(df_archive_norm)):
+#         points.append([df_archive_norm.iloc[i,0], df_archive_norm.iloc[i,1]])
     
-    hv = pg.hypervolume(points = points)
-    return hv.compute((1,1)) # assume minimisation
+#     hv = pg.hypervolume(points = points)
+#     return hv.compute((1,1)) # assume minimisation
 
-def calc_hv_from_normalised_df2(df_archive_norm):
-    # send in only the values and not the routes
-    df_archive_norm[df_archive_norm < 0] = 0
-    df_archive_norm[df_archive_norm > 1] = 1
+# def calc_hv_from_normalised_df2(df_archive_norm):
+#     # send in only the values and not the routes
+#     df_archive_norm[df_archive_norm < 0] = 0
+#     df_archive_norm[df_archive_norm > 1] = 1
     
-    points = df_archive_norm.iloc[:,0:2].values
+#     points = df_archive_norm.iloc[:,0:2].values
     
-    hv = pg.hypervolume(points = points)
-    return hv.compute((1,1)) # assume minimisation
+#     hv = pg.hypervolume(points = points)
+#     return hv.compute((1,1)) # assume minimisation
 
 '''Own function to calculate Hypervolume'''
 def calc_hypervolume_from_archive(df_archive, ref_point):
@@ -1908,28 +1914,6 @@ def tournament_selection_g2(pop, n_select, n_parents=2, pressure=2):
     S = binary_tournament_g2(pop, P)
     
     return np.reshape(S, (n_select, n_parents))
-
-
-def pop_from_array_or_individual(array, pop=None):
-    # the population type can be different - (different type of individuals)
-    if pop is None:
-        pop = Population()
-
-    # provide a whole population object - (individuals might be already evaluated)
-    if isinstance(array, Population):
-        pop = array
-    elif isinstance(array, np.ndarray):
-        pop = pop.new("X", np.atleast_2d(array))
-    elif isinstance(array, Individual):
-        pop = Population(1)
-        pop[0] = array
-    else:
-        return None
-
-    return pop
-
-
-
 
 def keep_individuals(pop, survivor_indices):
     # Function that only keeps to individuals with the specified indices

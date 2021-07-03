@@ -625,8 +625,10 @@ def generate_initial_route_sets(main_problem, printing=True):
 # Generate longer feasible solutions and covering demand with direct routes
 def calc_cum_demand(r_i, mx_demand):
     '''Calc cumulative demand for a single path'''
-    dem_tot = 0 # initiate demand count
+    cdef unsigned long long dem_tot = 0 # initiate demand count
     # for each connection, calculate demand between OD pairs direct route
+    cdef unsigned int i, j
+    
     for i in r_i:
         for j in r_i:
             if i < j:

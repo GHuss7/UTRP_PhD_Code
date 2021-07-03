@@ -19,8 +19,9 @@ import os
 main_dir = os.path.abspath(os.curdir)
 os.chdir(main_dir)
 print (os.path.abspath(os.curdir))
-os.chdir("..")
-print (os.path.abspath(os.curdir))
+if False:
+    os.chdir("..")
+    print (os.path.abspath(os.curdir))
 ###############################################################################################################
 # Special imports
 
@@ -446,8 +447,8 @@ def mut_add_terminal_highest_demand_per_cost_fast(routes_R, main_problem):
     # find terminals with lowest demand per cost
     criteria = 'dem_per_cost'
     demands = np.array([x[criteria] for x in candidates])
-    if sum(demands)!=0: 
-        dem_proportions = demands/sum(demands)
+    if np.sum(demands)!=0: 
+        dem_proportions = demands/np.sum(demands)
     else:
         dem_proportions = [1/len(demands) for _ in demands]
 
@@ -475,7 +476,7 @@ if True:
     #    %timeit gf.mut_add_terminal_highest_demand_per_cost(routes_R, main_problem)
     #    %timeit mut_add_terminal_highest_demand_per_cost_fast(routes_R, main_problem)
 
-for k in range(10):
+for k in range(1000):
     random.seed(k)
     p_R = gf.mut_add_terminal_highest_demand_per_cost(routes_R, main_problem)
     random.seed(k)

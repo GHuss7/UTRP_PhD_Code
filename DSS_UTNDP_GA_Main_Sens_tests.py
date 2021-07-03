@@ -30,7 +30,8 @@ import concurrent.futures
 
 # %% Import personal functions
 import DSS_Admin as ga
-import DSS_UTNDP_Functions as gf
+import DSS_UTNDP_Functions as gf_p
+import DSS_UTNDP_Functions_c as gf
 import DSS_UTNDP_Classes as gc
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
@@ -393,7 +394,7 @@ if True:
     '''Load validation data'''
     if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
         validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
-        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
+        stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
                                                                UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
     else:
         validation_data = False
@@ -504,7 +505,7 @@ if True:
         
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
-        HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
+        HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
         APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
         
         df_data_generations = pd.DataFrame(columns = ["Generation","HV","APD"]) # create a df to keep data
@@ -596,7 +597,7 @@ if True:
             ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, i_gen, ld_pop_generations)
 
             # Calculate the HV and APD Quality Measure
-            HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
+            HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
             APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
             df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
@@ -738,7 +739,7 @@ if True:
             stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
             stats_overall['start_time_formatted'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
             stats_overall['end_time_formatted'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-            stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+            stats_overall['HV obtained'] = gf_p.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
             df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean(), df_durations["HV Obtained"].mean()]
             df_durations.to_csv(path_results / "Run_durations.csv")

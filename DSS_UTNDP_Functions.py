@@ -4581,6 +4581,11 @@ if False:
 
     c_M = floyd_warshall.floyd_warshall_single_core(routeadj)
     p_M = ev.floyd_warshall_fastest(routeadj,len(routeadj))
+
+if False:
+    from c_shortest_paths_matrix import shortest_paths_matrix
     
     p_SPM = shortest_paths_matrix(D, inv_map, t, n)
-    c_SPM = floyd_warshall.shortest_paths_matrix(D, inv_map, t, n)
+    c_SPM = shortest_paths_matrix.shortest_paths_matrix(D, inv_map, t, n)
+
+

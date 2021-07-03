@@ -11,7 +11,10 @@ from numpy.random import random
 
 import pyximport; #pyximport.install()
 pyximport.install(reload_support=True)
-import floyd_warshall
+import shortest_paths_matrix
+
+from . import EvaluateRouteSet as ev
+
 
 def check_and_convert_adjacency_matrix(adjacency_matrix):
     mat = asarray(adjacency_matrix)

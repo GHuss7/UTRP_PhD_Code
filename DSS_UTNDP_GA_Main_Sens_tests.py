@@ -113,17 +113,17 @@ else:
                     #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
-                    "Repl_subsets" : gf.mut_replace_path_subsets,
+                    #"Repl_subsets" : gf.mut_replace_path_subsets,
                     #"Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
-                    "Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
-                    "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                    #"Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
+                    #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
                     #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
                     #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
-                    "Add_largest_dem_per_cost" : gf.mut_add_terminal_highest_demand_per_cost,
-                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                    #"Add_largest_dem_per_cost" : gf.mut_add_terminal_highest_demand_per_cost,
+                    #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                     #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
@@ -829,7 +829,7 @@ if __name__ == "__main__":
                 UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
                 
                 # Run model
-                main(UTNDP_problem_1)
+                #main(UTNDP_problem_1)
                 
                 # Reset the original parameters
                 parameter_dict[dict_entry] = temp_storage
@@ -839,4 +839,5 @@ if __name__ == "__main__":
         print(f'Finished in {round(finish-start, 6)} second(s)')
         
     else:
-        main(UTNDP_problem_1) 
+        pass
+        #main(UTNDP_problem_1) 

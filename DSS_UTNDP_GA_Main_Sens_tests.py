@@ -67,13 +67,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][3]   # set the name of the input data
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
-load_sup = False #TODO Remove later
+load_sup = True #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -94,7 +94,7 @@ else:
                        "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
                         "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
                         "Unseen_robust" : gc.Routes.return_feasible_route_robust}
-    route_gen_func_name = list(route_gen_funcs.keys())[2]
+    route_gen_func_name = list(route_gen_funcs.keys())[1]
     
     crossover_funcs = {"Mumford" : gf.crossover_mumford,
                        "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
@@ -160,9 +160,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 100, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 10, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 2, # STANDARD: 20 (John 2016)
+    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 1000, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later

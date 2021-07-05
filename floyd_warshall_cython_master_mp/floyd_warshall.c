@@ -1767,6 +1767,7 @@ static const char __pyx_k_floyd_warshall_pyx[] = "floyd_warshall.pyx";
 static const char __pyx_k_floyd_warshall_single_core[] = "floyd_warshall_single_core";
 static const char __pyx_k_floyd_warshall_parallelized[] = "floyd_warshall_parallelized";
 static const char __pyx_k_An_efficient_Cython_implementat[] = "\nAn efficient Cython implementation of the Floyd-Warshall algorithm for finding the shortest path distances between all nodes of a weighted graph.\nSee http://en.wikipedia.org/wiki/Floyd-Warshall_algorithm\n\nAmit Moscovich Eiger, 2014\n";
+static const char __pyx_k_floyd_warshall_parallelized_nbc[] = "floyd_warshall_parallelized_nbc";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
 static const char __pyx_k_unknown_dtype_code_in_numpy_pxd[] = "unknown dtype code in numpy.pxd (%d)";
 static const char __pyx_k_Format_string_allocated_too_shor[] = "Format string allocated too short, see comment in numpy.pxd";
@@ -1801,6 +1802,7 @@ static PyObject *__pyx_n_s_double;
 static PyObject *__pyx_n_s_flags;
 static PyObject *__pyx_n_s_floyd_warshall;
 static PyObject *__pyx_n_s_floyd_warshall_parallelized;
+static PyObject *__pyx_n_s_floyd_warshall_parallelized_nbc;
 static PyObject *__pyx_kp_s_floyd_warshall_pyx;
 static PyObject *__pyx_n_s_floyd_warshall_single_core;
 static PyObject *__pyx_n_s_i;
@@ -1823,6 +1825,7 @@ static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_pf_14floyd_warshall_floyd_warshall_single_core(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix); /* proto */
 static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix); /* proto */
+static PyObject *__pyx_pf_14floyd_warshall_4floyd_warshall_parallelized_nbc(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix); /* proto */
 static PyObject *__pyx_float_0_0;
 static PyObject *__pyx_tuple_;
 static PyObject *__pyx_tuple__2;
@@ -1831,8 +1834,10 @@ static PyObject *__pyx_tuple__4;
 static PyObject *__pyx_tuple__5;
 static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__8;
+static PyObject *__pyx_tuple__10;
 static PyObject *__pyx_codeobj__7;
 static PyObject *__pyx_codeobj__9;
+static PyObject *__pyx_codeobj__11;
 /* Late includes */
 
 /* "floyd_warshall.pyx":12
@@ -2818,7 +2823,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  *                         M_i_ptr[j] = cost_ikkj
  *     return M             # <<<<<<<<<<<<<<
  * 
- * # %% Shortest Path Matrix Cython
+ * # Fastest for large matrices!
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(((PyObject *)__pyx_v_M));
@@ -2846,6 +2851,542 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_M.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
   __Pyx_AddTraceback("floyd_warshall.floyd_warshall_parallelized", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  goto __pyx_L2;
+  __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_M.rcbuffer->pybuffer);
+  __pyx_L2:;
+  __Pyx_XDECREF(__pyx_v_nrows);
+  __Pyx_XDECREF(__pyx_v_ncols);
+  __Pyx_XDECREF(__pyx_v_adj_mat_copy);
+  __Pyx_XDECREF((PyObject *)__pyx_v_M);
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "floyd_warshall.pyx":109
+ * @cython.boundscheck(False)  # Deactivate bounds checking
+ * @cython.wraparound(False)   # Deactivate negative indexing.
+ * def floyd_warshall_parallelized_nbc(adjacency_matrix):             # <<<<<<<<<<<<<<
+ *     '''floyd_warshall_parallelized(adjacency_matrix) -> shortest_path_distance_matrix
+ * 
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_14floyd_warshall_5floyd_warshall_parallelized_nbc(PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix); /*proto*/
+static char __pyx_doc_14floyd_warshall_4floyd_warshall_parallelized_nbc[] = "floyd_warshall_parallelized(adjacency_matrix) -> shortest_path_distance_matrix\n\n    Input\n        An NxN NumPy array describing the directed distances between N nodes.\n\n        adjacency_matrix[i,j] = distance to travel directly from node i to node j (without passing through other nodes)\n\n        Notes:\n        * If there is no edge connecting i->j then adjacency_matrix[i,j] should be equal to numpy.inf.\n        * The diagonal of adjacency_matrix should be zero.\n\n    Output\n        An NxN NumPy array such that result[i,j] is the shortest distance to travel between node i and node j. If no such path exists then result[i,j] == numpy.inf\n\n    This function uses Cython's integrated OpenMP multithreaded capabilities via the prange() function\n    This functions does no bounds check to increase speed even more.\n    ";
+static PyMethodDef __pyx_mdef_14floyd_warshall_5floyd_warshall_parallelized_nbc = {"floyd_warshall_parallelized_nbc", (PyCFunction)__pyx_pw_14floyd_warshall_5floyd_warshall_parallelized_nbc, METH_O, __pyx_doc_14floyd_warshall_4floyd_warshall_parallelized_nbc};
+static PyObject *__pyx_pw_14floyd_warshall_5floyd_warshall_parallelized_nbc(PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("floyd_warshall_parallelized_nbc (wrapper)", 0);
+  __pyx_r = __pyx_pf_14floyd_warshall_4floyd_warshall_parallelized_nbc(__pyx_self, ((PyObject *)__pyx_v_adjacency_matrix));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_14floyd_warshall_4floyd_warshall_parallelized_nbc(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix) {
+  PyObject *__pyx_v_nrows = NULL;
+  PyObject *__pyx_v_ncols = NULL;
+  int __pyx_v_n;
+  PyObject *__pyx_v_adj_mat_copy = NULL;
+  PyArrayObject *__pyx_v_M = 0;
+  double __pyx_v_cost_ik;
+  double __pyx_v_cost_ikkj;
+  int __pyx_v_i;
+  int __pyx_v_j;
+  int __pyx_v_k;
+  double *__pyx_v_M_ptr;
+  double *__pyx_v_M_i_ptr;
+  double *__pyx_v_M_k_ptr;
+  double __pyx_v_M_ij;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_M;
+  __Pyx_Buffer __pyx_pybuffer_M;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *(*__pyx_t_5)(PyObject *);
+  int __pyx_t_6;
+  int __pyx_t_7;
+  Py_ssize_t __pyx_t_8;
+  Py_ssize_t __pyx_t_9;
+  int __pyx_t_10;
+  int __pyx_t_11;
+  int __pyx_t_12;
+  int __pyx_t_13;
+  int __pyx_t_14;
+  int __pyx_t_15;
+  int __pyx_t_16;
+  int __pyx_t_17;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("floyd_warshall_parallelized_nbc", 0);
+  __pyx_pybuffer_M.pybuffer.buf = NULL;
+  __pyx_pybuffer_M.refcount = 0;
+  __pyx_pybuffernd_M.data = NULL;
+  __pyx_pybuffernd_M.rcbuffer = &__pyx_pybuffer_M;
+
+  /* "floyd_warshall.pyx":127
+ *     This functions does no bounds check to increase speed even more.
+ *     '''
+ *     (nrows, ncols) = adjacency_matrix.shape             # <<<<<<<<<<<<<<
+ *     assert nrows == ncols
+ *     cdef int n = nrows # removed unsigned here too
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_adjacency_matrix, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 127, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
+    PyObject* sequence = __pyx_t_1;
+    Py_ssize_t size = __Pyx_PySequence_SIZE(sequence);
+    if (unlikely(size != 2)) {
+      if (size > 2) __Pyx_RaiseTooManyValuesError(2);
+      else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
+      __PYX_ERR(0, 127, __pyx_L1_error)
+    }
+    #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+    if (likely(PyTuple_CheckExact(sequence))) {
+      __pyx_t_2 = PyTuple_GET_ITEM(sequence, 0); 
+      __pyx_t_3 = PyTuple_GET_ITEM(sequence, 1); 
+    } else {
+      __pyx_t_2 = PyList_GET_ITEM(sequence, 0); 
+      __pyx_t_3 = PyList_GET_ITEM(sequence, 1); 
+    }
+    __Pyx_INCREF(__pyx_t_2);
+    __Pyx_INCREF(__pyx_t_3);
+    #else
+    __pyx_t_2 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    #endif
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  } else {
+    Py_ssize_t index = -1;
+    __pyx_t_4 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_5 = Py_TYPE(__pyx_t_4)->tp_iternext;
+    index = 0; __pyx_t_2 = __pyx_t_5(__pyx_t_4); if (unlikely(!__pyx_t_2)) goto __pyx_L3_unpacking_failed;
+    __Pyx_GOTREF(__pyx_t_2);
+    index = 1; __pyx_t_3 = __pyx_t_5(__pyx_t_4); if (unlikely(!__pyx_t_3)) goto __pyx_L3_unpacking_failed;
+    __Pyx_GOTREF(__pyx_t_3);
+    if (__Pyx_IternextUnpackEndCheck(__pyx_t_5(__pyx_t_4), 2) < 0) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_5 = NULL;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    goto __pyx_L4_unpacking_done;
+    __pyx_L3_unpacking_failed:;
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_5 = NULL;
+    if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
+    __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_L4_unpacking_done:;
+  }
+  __pyx_v_nrows = __pyx_t_2;
+  __pyx_t_2 = 0;
+  __pyx_v_ncols = __pyx_t_3;
+  __pyx_t_3 = 0;
+
+  /* "floyd_warshall.pyx":128
+ *     '''
+ *     (nrows, ncols) = adjacency_matrix.shape
+ *     assert nrows == ncols             # <<<<<<<<<<<<<<
+ *     cdef int n = nrows # removed unsigned here too
+ * 
+ */
+  #ifndef CYTHON_WITHOUT_ASSERTIONS
+  if (unlikely(!Py_OptimizeFlag)) {
+    __pyx_t_1 = PyObject_RichCompare(__pyx_v_nrows, __pyx_v_ncols, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (unlikely(!__pyx_t_6)) {
+      PyErr_SetNone(PyExc_AssertionError);
+      __PYX_ERR(0, 128, __pyx_L1_error)
+    }
+  }
+  #endif
+
+  /* "floyd_warshall.pyx":129
+ *     (nrows, ncols) = adjacency_matrix.shape
+ *     assert nrows == ncols
+ *     cdef int n = nrows # removed unsigned here too             # <<<<<<<<<<<<<<
+ * 
+ *     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)
+ */
+  __pyx_t_7 = __Pyx_PyInt_As_int(__pyx_v_nrows); if (unlikely((__pyx_t_7 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 129, __pyx_L1_error)
+  __pyx_v_n = __pyx_t_7;
+
+  /* "floyd_warshall.pyx":131
+ *     cdef int n = nrows # removed unsigned here too
+ * 
+ *     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)             # <<<<<<<<<<<<<<
+ *     assert adj_mat_copy.flags['C_CONTIGUOUS']
+ *     cdef numpy.ndarray[numpy.double_t, ndim=2, mode='c'] M = adj_mat_copy
+ */
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_adjacency_matrix, __pyx_n_s_astype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_order, __pyx_n_s_C) < 0) __PYX_ERR(0, 131, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_casting, __pyx_n_s_safe) < 0) __PYX_ERR(0, 131, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_copy, Py_True) < 0) __PYX_ERR(0, 131, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 131, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_adj_mat_copy = __pyx_t_4;
+  __pyx_t_4 = 0;
+
+  /* "floyd_warshall.pyx":132
+ * 
+ *     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)
+ *     assert adj_mat_copy.flags['C_CONTIGUOUS']             # <<<<<<<<<<<<<<
+ *     cdef numpy.ndarray[numpy.double_t, ndim=2, mode='c'] M = adj_mat_copy
+ *     assert (numpy.diagonal(M) == 0.0).all()
+ */
+  #ifndef CYTHON_WITHOUT_ASSERTIONS
+  if (unlikely(!Py_OptimizeFlag)) {
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_adj_mat_copy, __pyx_n_s_flags); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 132, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_2 = __Pyx_PyObject_Dict_GetItem(__pyx_t_4, __pyx_n_s_C_CONTIGUOUS); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 132, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 132, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_6)) {
+      PyErr_SetNone(PyExc_AssertionError);
+      __PYX_ERR(0, 132, __pyx_L1_error)
+    }
+  }
+  #endif
+
+  /* "floyd_warshall.pyx":133
+ *     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)
+ *     assert adj_mat_copy.flags['C_CONTIGUOUS']
+ *     cdef numpy.ndarray[numpy.double_t, ndim=2, mode='c'] M = adj_mat_copy             # <<<<<<<<<<<<<<
+ *     assert (numpy.diagonal(M) == 0.0).all()
+ * 
+ */
+  if (!(likely(((__pyx_v_adj_mat_copy) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_adj_mat_copy, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 133, __pyx_L1_error)
+  __pyx_t_2 = __pyx_v_adj_mat_copy;
+  __Pyx_INCREF(__pyx_t_2);
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_M.rcbuffer->pybuffer, (PyObject*)((PyArrayObject *)__pyx_t_2), &__Pyx_TypeInfo_nn___pyx_t_5numpy_double_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 2, 0, __pyx_stack) == -1)) {
+      __pyx_v_M = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_M.rcbuffer->pybuffer.buf = NULL;
+      __PYX_ERR(0, 133, __pyx_L1_error)
+    } else {__pyx_pybuffernd_M.diminfo[0].strides = __pyx_pybuffernd_M.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_M.diminfo[0].shape = __pyx_pybuffernd_M.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_M.diminfo[1].strides = __pyx_pybuffernd_M.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_M.diminfo[1].shape = __pyx_pybuffernd_M.rcbuffer->pybuffer.shape[1];
+    }
+  }
+  __pyx_v_M = ((PyArrayObject *)__pyx_t_2);
+  __pyx_t_2 = 0;
+
+  /* "floyd_warshall.pyx":134
+ *     assert adj_mat_copy.flags['C_CONTIGUOUS']
+ *     cdef numpy.ndarray[numpy.double_t, ndim=2, mode='c'] M = adj_mat_copy
+ *     assert (numpy.diagonal(M) == 0.0).all()             # <<<<<<<<<<<<<<
+ * 
+ *     cdef double cost_ik, cost_ikkj
+ */
+  #ifndef CYTHON_WITHOUT_ASSERTIONS
+  if (unlikely(!Py_OptimizeFlag)) {
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_diagonal); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_3 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_1))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_1);
+      if (likely(__pyx_t_3)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+        __Pyx_INCREF(__pyx_t_3);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_1, function);
+      }
+    }
+    __pyx_t_4 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_3, ((PyObject *)__pyx_v_M)) : __Pyx_PyObject_CallOneArg(__pyx_t_1, ((PyObject *)__pyx_v_M));
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __Pyx_PyFloat_EqObjC(__pyx_t_4, __pyx_float_0_0, 0.0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_all); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+      __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_4);
+      if (likely(__pyx_t_1)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+        __Pyx_INCREF(__pyx_t_1);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_4, function);
+      }
+    }
+    __pyx_t_2 = (__pyx_t_1) ? __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_1) : __Pyx_PyObject_CallNoArg(__pyx_t_4);
+    __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 134, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (unlikely(!__pyx_t_6)) {
+      PyErr_SetNone(PyExc_AssertionError);
+      __PYX_ERR(0, 134, __pyx_L1_error)
+    }
+  }
+  #endif
+
+  /* "floyd_warshall.pyx":141
+ * 
+ * 
+ *     cdef double* M_ptr = &M[0,0]             # <<<<<<<<<<<<<<
+ *     cdef double* M_i_ptr
+ *     cdef double* M_k_ptr
+ */
+  __pyx_t_8 = 0;
+  __pyx_t_9 = 0;
+  __pyx_v_M_ptr = (&(*__Pyx_BufPtrCContig2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_M.rcbuffer->pybuffer.buf, __pyx_t_8, __pyx_pybuffernd_M.diminfo[0].strides, __pyx_t_9, __pyx_pybuffernd_M.diminfo[1].strides)));
+
+  /* "floyd_warshall.pyx":146
+ *     cdef double M_ij
+ * 
+ *     with nogil, parallel():             # <<<<<<<<<<<<<<
+ *         for k in range(n):
+ *             M_k_ptr = M_ptr + n*k
+ */
+  {
+      #ifdef WITH_THREAD
+      PyThreadState *_save;
+      Py_UNBLOCK_THREADS
+      __Pyx_FastGIL_Remember();
+      #endif
+      /*try:*/ {
+        {
+            #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+                #undef likely
+                #undef unlikely
+                #define likely(x)   (x)
+                #define unlikely(x) (x)
+            #endif
+            #ifdef _OPENMP
+            #pragma omp parallel private(__pyx_v_M_k_ptr, __pyx_v_k) private(__pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_t_17, __pyx_t_6, __pyx_t_7)
+            #endif /* _OPENMP */
+            {
+                /* Initialize private variables to invalid values */
+                __pyx_v_M_k_ptr = ((double *)1);
+                __pyx_v_k = ((int)0xbad0bad0);
+
+                /* "floyd_warshall.pyx":147
+ * 
+ *     with nogil, parallel():
+ *         for k in range(n):             # <<<<<<<<<<<<<<
+ *             M_k_ptr = M_ptr + n*k
+ *             for i in prange(n):
+ */
+                __pyx_t_7 = __pyx_v_n;
+                __pyx_t_10 = __pyx_t_7;
+                for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
+                  __pyx_v_k = __pyx_t_11;
+
+                  /* "floyd_warshall.pyx":148
+ *     with nogil, parallel():
+ *         for k in range(n):
+ *             M_k_ptr = M_ptr + n*k             # <<<<<<<<<<<<<<
+ *             for i in prange(n):
+ *                 M_i_ptr = M_ptr + n*i
+ */
+                  __pyx_v_M_k_ptr = (__pyx_v_M_ptr + (__pyx_v_n * __pyx_v_k));
+
+                  /* "floyd_warshall.pyx":149
+ *         for k in range(n):
+ *             M_k_ptr = M_ptr + n*k
+ *             for i in prange(n):             # <<<<<<<<<<<<<<
+ *                 M_i_ptr = M_ptr + n*i
+ *                 cost_ik = M_i_ptr[k]
+ */
+                  __pyx_t_12 = __pyx_v_n;
+                  if ((1 == 0)) abort();
+                  {
+                      __pyx_t_14 = (__pyx_t_12 - 0 + 1 - 1/abs(1)) / 1;
+                      if (__pyx_t_14 > 0)
+                      {
+                          #ifdef _OPENMP
+                          #pragma omp for lastprivate(__pyx_v_M_i_ptr) lastprivate(__pyx_v_M_ij) lastprivate(__pyx_v_cost_ik) lastprivate(__pyx_v_cost_ikkj) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j)
+                          #endif /* _OPENMP */
+                          for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_14; __pyx_t_13++){
+                              {
+                                  __pyx_v_i = (int)(0 + 1 * __pyx_t_13);
+                                  /* Initialize private variables to invalid values */
+                                  __pyx_v_M_i_ptr = ((double *)1);
+                                  __pyx_v_M_ij = ((double)__PYX_NAN());
+                                  __pyx_v_cost_ik = ((double)__PYX_NAN());
+                                  __pyx_v_cost_ikkj = ((double)__PYX_NAN());
+                                  __pyx_v_j = ((int)0xbad0bad0);
+
+                                  /* "floyd_warshall.pyx":150
+ *             M_k_ptr = M_ptr + n*k
+ *             for i in prange(n):
+ *                 M_i_ptr = M_ptr + n*i             # <<<<<<<<<<<<<<
+ *                 cost_ik = M_i_ptr[k]
+ *                 for j in range(n):
+ */
+                                  __pyx_v_M_i_ptr = (__pyx_v_M_ptr + (__pyx_v_n * __pyx_v_i));
+
+                                  /* "floyd_warshall.pyx":151
+ *             for i in prange(n):
+ *                 M_i_ptr = M_ptr + n*i
+ *                 cost_ik = M_i_ptr[k]             # <<<<<<<<<<<<<<
+ *                 for j in range(n):
+ *                     cost_ikkj = cost_ik + M_k_ptr[j]
+ */
+                                  __pyx_v_cost_ik = (__pyx_v_M_i_ptr[__pyx_v_k]);
+
+                                  /* "floyd_warshall.pyx":152
+ *                 M_i_ptr = M_ptr + n*i
+ *                 cost_ik = M_i_ptr[k]
+ *                 for j in range(n):             # <<<<<<<<<<<<<<
+ *                     cost_ikkj = cost_ik + M_k_ptr[j]
+ *                     M_ij = M_i_ptr[j]
+ */
+                                  __pyx_t_15 = __pyx_v_n;
+                                  __pyx_t_16 = __pyx_t_15;
+                                  for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
+                                    __pyx_v_j = __pyx_t_17;
+
+                                    /* "floyd_warshall.pyx":153
+ *                 cost_ik = M_i_ptr[k]
+ *                 for j in range(n):
+ *                     cost_ikkj = cost_ik + M_k_ptr[j]             # <<<<<<<<<<<<<<
+ *                     M_ij = M_i_ptr[j]
+ *                     if cost_ikkj < M_ij:
+ */
+                                    __pyx_v_cost_ikkj = (__pyx_v_cost_ik + (__pyx_v_M_k_ptr[__pyx_v_j]));
+
+                                    /* "floyd_warshall.pyx":154
+ *                 for j in range(n):
+ *                     cost_ikkj = cost_ik + M_k_ptr[j]
+ *                     M_ij = M_i_ptr[j]             # <<<<<<<<<<<<<<
+ *                     if cost_ikkj < M_ij:
+ *                         M_i_ptr[j] = cost_ikkj
+ */
+                                    __pyx_v_M_ij = (__pyx_v_M_i_ptr[__pyx_v_j]);
+
+                                    /* "floyd_warshall.pyx":155
+ *                     cost_ikkj = cost_ik + M_k_ptr[j]
+ *                     M_ij = M_i_ptr[j]
+ *                     if cost_ikkj < M_ij:             # <<<<<<<<<<<<<<
+ *                         M_i_ptr[j] = cost_ikkj
+ *     return M
+ */
+                                    __pyx_t_6 = ((__pyx_v_cost_ikkj < __pyx_v_M_ij) != 0);
+                                    if (__pyx_t_6) {
+
+                                      /* "floyd_warshall.pyx":156
+ *                     M_ij = M_i_ptr[j]
+ *                     if cost_ikkj < M_ij:
+ *                         M_i_ptr[j] = cost_ikkj             # <<<<<<<<<<<<<<
+ *     return M
+ * 
+ */
+                                      (__pyx_v_M_i_ptr[__pyx_v_j]) = __pyx_v_cost_ikkj;
+
+                                      /* "floyd_warshall.pyx":155
+ *                     cost_ikkj = cost_ik + M_k_ptr[j]
+ *                     M_ij = M_i_ptr[j]
+ *                     if cost_ikkj < M_ij:             # <<<<<<<<<<<<<<
+ *                         M_i_ptr[j] = cost_ikkj
+ *     return M
+ */
+                                    }
+                                  }
+                              }
+                          }
+                      }
+                  }
+                }
+            }
+        }
+        #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+            #undef likely
+            #undef unlikely
+            #define likely(x)   __builtin_expect(!!(x), 1)
+            #define unlikely(x) __builtin_expect(!!(x), 0)
+        #endif
+      }
+
+      /* "floyd_warshall.pyx":146
+ *     cdef double M_ij
+ * 
+ *     with nogil, parallel():             # <<<<<<<<<<<<<<
+ *         for k in range(n):
+ *             M_k_ptr = M_ptr + n*k
+ */
+      /*finally:*/ {
+        /*normal exit:*/{
+          #ifdef WITH_THREAD
+          __Pyx_FastGIL_Forget();
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L7;
+        }
+        __pyx_L7:;
+      }
+  }
+
+  /* "floyd_warshall.pyx":157
+ *                     if cost_ikkj < M_ij:
+ *                         M_i_ptr[j] = cost_ikkj
+ *     return M             # <<<<<<<<<<<<<<
+ * 
+ * # %% Shortest Path Matrix Cython
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __Pyx_INCREF(((PyObject *)__pyx_v_M));
+  __pyx_r = ((PyObject *)__pyx_v_M);
+  goto __pyx_L0;
+
+  /* "floyd_warshall.pyx":109
+ * @cython.boundscheck(False)  # Deactivate bounds checking
+ * @cython.wraparound(False)   # Deactivate negative indexing.
+ * def floyd_warshall_parallelized_nbc(adjacency_matrix):             # <<<<<<<<<<<<<<
+ *     '''floyd_warshall_parallelized(adjacency_matrix) -> shortest_path_distance_matrix
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_M.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("floyd_warshall.floyd_warshall_parallelized_nbc", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   goto __pyx_L2;
   __pyx_L0:;
@@ -4526,6 +5067,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_flags, __pyx_k_flags, sizeof(__pyx_k_flags), 0, 0, 1, 1},
   {&__pyx_n_s_floyd_warshall, __pyx_k_floyd_warshall, sizeof(__pyx_k_floyd_warshall), 0, 0, 1, 1},
   {&__pyx_n_s_floyd_warshall_parallelized, __pyx_k_floyd_warshall_parallelized, sizeof(__pyx_k_floyd_warshall_parallelized), 0, 0, 1, 1},
+  {&__pyx_n_s_floyd_warshall_parallelized_nbc, __pyx_k_floyd_warshall_parallelized_nbc, sizeof(__pyx_k_floyd_warshall_parallelized_nbc), 0, 0, 1, 1},
   {&__pyx_kp_s_floyd_warshall_pyx, __pyx_k_floyd_warshall_pyx, sizeof(__pyx_k_floyd_warshall_pyx), 0, 0, 1, 0},
   {&__pyx_n_s_floyd_warshall_single_core, __pyx_k_floyd_warshall_single_core, sizeof(__pyx_k_floyd_warshall_single_core), 0, 0, 1, 1},
   {&__pyx_n_s_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 0, 1, 1},
@@ -4640,6 +5182,18 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
   __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(1, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_floyd_warshall_pyx, __pyx_n_s_floyd_warshall_parallelized, 57, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 57, __pyx_L1_error)
+
+  /* "floyd_warshall.pyx":109
+ * @cython.boundscheck(False)  # Deactivate bounds checking
+ * @cython.wraparound(False)   # Deactivate negative indexing.
+ * def floyd_warshall_parallelized_nbc(adjacency_matrix):             # <<<<<<<<<<<<<<
+ *     '''floyd_warshall_parallelized(adjacency_matrix) -> shortest_path_distance_matrix
+ * 
+ */
+  __pyx_tuple__10 = PyTuple_Pack(15, __pyx_n_s_adjacency_matrix, __pyx_n_s_nrows, __pyx_n_s_ncols, __pyx_n_s_n, __pyx_n_s_adj_mat_copy, __pyx_n_s_M, __pyx_n_s_cost_ik, __pyx_n_s_cost_ikkj, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_M_ptr, __pyx_n_s_M_i_ptr, __pyx_n_s_M_k_ptr, __pyx_n_s_M_ij); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__10);
+  __Pyx_GIVEREF(__pyx_tuple__10);
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_floyd_warshall_pyx, __pyx_n_s_floyd_warshall_parallelized_nbc, 109, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 109, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4994,6 +5548,18 @@ if (!__Pyx_RefNanny) {
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14floyd_warshall_3floyd_warshall_parallelized, NULL, __pyx_n_s_floyd_warshall); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_floyd_warshall_parallelized, __pyx_t_1) < 0) __PYX_ERR(0, 57, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "floyd_warshall.pyx":109
+ * @cython.boundscheck(False)  # Deactivate bounds checking
+ * @cython.wraparound(False)   # Deactivate negative indexing.
+ * def floyd_warshall_parallelized_nbc(adjacency_matrix):             # <<<<<<<<<<<<<<
+ *     '''floyd_warshall_parallelized(adjacency_matrix) -> shortest_path_distance_matrix
+ * 
+ */
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_14floyd_warshall_5floyd_warshall_parallelized_nbc, NULL, __pyx_n_s_floyd_warshall); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_floyd_warshall_parallelized_nbc, __pyx_t_1) < 0) __PYX_ERR(0, 109, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "floyd_warshall.pyx":1

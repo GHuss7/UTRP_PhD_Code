@@ -16,7 +16,7 @@ pyximport.install(reload_support=True)
 #%% Import all the packages as usual to test with
 
 # imports from current directory
-from shortest_paths_matrix_master import shortest_paths_matrix
+from expand_travel_matrix_master import expandTravelMatrix, shortest_paths_matrix
 
 
 import os
@@ -505,5 +505,21 @@ def test_spm_speed():
         else:
             assert (prev_res == result).all()
 
-test_spm_speed()
+# test_spm_speed()
 
+def test_etm_speed():
+    
+    prev_res = None
+    print('')
+    for (name, func) in [('Python+NumPy', ev.expandTravelMatrix), 
+                         ('Cython', expandTravelMatrix)]:
+        print ('%20s: ' % name),
+        with Timer():
+            result = func(routeset, travelTimes,n,tp,wt)
+        # if not (prev_res == result).all():
+        if prev_res == None:
+            prev_res = result
+        # else:
+        #     assert (prev_res == result).all()
+            
+test_etm_speed()

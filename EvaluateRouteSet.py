@@ -42,7 +42,7 @@ import numpy as np
 
 from floyd_warshall_cython_master_mp import floyd_warshall
 from c_shortest_paths_matrix.shortest_paths_matrix_master import shortest_paths_matrix
-
+from c_expand_travel_matrix.expand_travel_matrix_master import expandTravelMatrix
 
 def main():
 
@@ -245,7 +245,7 @@ def MinimumSpanningTree(G):
 
 
                 
-def expandTravelMatrix(routes, travelTimes,n,tp,wt):
+def expandTravelMatrix_naive(routes, travelTimes,n,tp,wt):
     set_printoptions(threshold= 200)
     t = int(0); # t give the sum of the number of nodes in all the routes
     r = len(routes) # Number of routes
@@ -373,7 +373,7 @@ def evalATT(routeset,travelTimes,DemandMat,parameters_input):
     # Cython floyd_warshall:
     np.fill_diagonal(routeadj, 0)
     #D = floyd_warshall.floyd_warshall_single_core(routeadj)
-    D = floyd_warshall.floyd_warshall_parallelized(routeadj) # fastest
+    D = floyd_warshall.floyd_warshall_parallelized_nbc(routeadj) # fastest
     
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)

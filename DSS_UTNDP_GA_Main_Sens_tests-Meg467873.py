@@ -30,8 +30,7 @@ import concurrent.futures
 
 # %% Import personal functions
 import DSS_Admin as ga
-import DSS_UTNDP_Functions as gf_p
-import DSS_UTNDP_Functions_c as gf
+import DSS_UTNDP_Functions as gf
 import DSS_UTNDP_Classes as gc
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
@@ -67,13 +66,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][3]   # set the name of the input data
+                   "Mandl_UTRP_dis"][4]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
-load_sup = False #TODO Remove later
+load_sup = True #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -85,9 +84,8 @@ else:
     "Choice_import_dictionaries" : True,
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
-    "Additional_text" : "Tests",
-    "Pop_size_to_create" : 2000,
-    } 
+    "Additional_text" : "Tests"
+    }
     
 #%% Set functions to use
     route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
@@ -114,17 +112,17 @@ else:
                     #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
-                    #"Repl_subsets" : gf.mut_replace_path_subsets,
+                    "Repl_subsets" : gf.mut_replace_path_subsets,
                     #"Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
-                    #"Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
-                    #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                    "Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
+                    "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
                     #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
                     #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
-                    #"Add_largest_dem_per_cost" : gf.mut_add_terminal_highest_demand_per_cost,
-                    #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                    "Add_largest_dem_per_cost" : gf.mut_add_terminal_highest_demand_per_cost,
+                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                     #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
@@ -161,9 +159,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1500, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "population_size" : 100, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 10, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 2, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -395,7 +393,7 @@ if True:
     '''Load validation data'''
     if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
         validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
-        stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
+        stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
                                                                UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
     else:
         validation_data = False
@@ -458,10 +456,10 @@ if True:
                            
         # Load and save initial population
         directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
+        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=10000)
         
         if load_sup:
-            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
+            pop_sup_loaded = gf.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
             pop_1 = pop_sup_loaded
         
         else:
@@ -506,7 +504,7 @@ if True:
         
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
-        HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
+        HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
         APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
         
         df_data_generations = pd.DataFrame(columns = ["Generation","HV","APD"]) # create a df to keep data
@@ -598,7 +596,7 @@ if True:
             ld_pop_generations = ga.add_UTRP_pop_generations_data_ld(pop_1, UTNDP_problem_1, i_gen, ld_pop_generations)
 
             # Calculate the HV and APD Quality Measure
-            HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
+            HV = gf.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
             APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
             df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
@@ -740,7 +738,7 @@ if True:
             stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
             stats_overall['start_time_formatted'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
             stats_overall['end_time_formatted'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-            stats_overall['HV obtained'] = gf_p.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+            stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set[["f_1","f_2"]], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
             df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean(), df_durations["HV Obtained"].mean()]
             df_durations.to_csv(path_results / "Run_durations.csv")
@@ -830,7 +828,7 @@ if __name__ == "__main__":
                 UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
                 
                 # Run model
-                #main(UTNDP_problem_1)
+                main(UTNDP_problem_1)
                 
                 # Reset the original parameters
                 parameter_dict[dict_entry] = temp_storage
@@ -840,5 +838,4 @@ if __name__ == "__main__":
         print(f'Finished in {round(finish-start, 6)} second(s)')
         
     else:
-        pass
-        #main(UTNDP_problem_1) 
+        main(UTNDP_problem_1) 

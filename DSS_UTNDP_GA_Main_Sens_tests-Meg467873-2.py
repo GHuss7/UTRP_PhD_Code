@@ -67,7 +67,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][3]   # set the name of the input data
+                   "Mandl_UTRP_dis"][4]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -86,7 +86,7 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
-    "Pop_size_to_create" : 2000,
+    "Pop_size_to_create" : 200,
     } 
     
 #%% Set functions to use
@@ -161,8 +161,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1500, # STANDARD: 200 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 400, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

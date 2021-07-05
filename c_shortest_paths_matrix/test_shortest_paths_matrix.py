@@ -58,7 +58,8 @@ if True:
     
     # %% Import personal functions
     import DSS_Admin as ga
-    import DSS_UTNDP_Functions as gf
+    import DSS_UTNDP_Functions as gf_p
+    import DSS_UTNDP_Functions_c as gf
     import DSS_UTNDP_Classes as gc
     import DSS_UTFSP_Functions as gf2
     import DSS_Visualisation as gv
@@ -94,7 +95,7 @@ if True:
                        "Mumford2_UTRP", #3
                        "Mumford3_UTRP", #4
                        "Mandl_UTRP_testing", #5
-                       "Mandl_UTRP_dis"][2]   # set the name of the input data
+                       "Mandl_UTRP_dis"][4]   # set the name of the input data
     
     # %% Set input parameters
     sens_from = 0
@@ -112,7 +113,8 @@ if True:
         "Choice_import_dictionaries" : True,
         "Choice_print_full_data_for_analysis" : True,
         "Choice_relative_results_referencing" : False,
-        "Additional_text" : "Tests"
+        "Additional_text" : "Tests",
+        "Pop_size_to_create" : 2000,
         }
         
     #%% Set functions to use
@@ -357,13 +359,13 @@ if True:
         if not os.path.isdir(path_parent_folder):
             path_parent_folder = Path(os.path.dirname(os.getcwd()))
     
-
+                           
     # Load and save initial population
     directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-    pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=10000)
+    pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
     
     if load_sup:
-        pop_sup_loaded = gf.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name, directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
+        pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
         pop_1 = pop_sup_loaded
     
     else:
@@ -377,7 +379,9 @@ print (os.path.abspath(os.curdir))
 # %% Function experiments
 
 if True:
-    routeset=pop_1.variables[2]
+    routeset_as_is = pop_1.variables[0]
+    routeset = gf.mut_grow_full_overall_cb(routes_R=routeset_as_is, main_problem=UTNDP_problem_1)
+    assert routeset != pop_1.variables[2]
     travelTimes=mx_dist
     DemandMat=mx_demand
 

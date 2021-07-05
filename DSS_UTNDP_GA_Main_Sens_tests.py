@@ -162,7 +162,7 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_GA={
     "method" : "GA",
     "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1000, # STANDARD: 200 (John 2016)
+    "generations" : 1500, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

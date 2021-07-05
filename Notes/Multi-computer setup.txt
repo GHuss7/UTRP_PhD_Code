@@ -32,6 +32,8 @@ Multi-computer setup:
 	
 	6.1) pip install pymoo
 
+	6.2) pip install multiset
+
 BEFORE RUNS:
 
 7.) Pull Request from GitHub to get most current DSS-Main folder

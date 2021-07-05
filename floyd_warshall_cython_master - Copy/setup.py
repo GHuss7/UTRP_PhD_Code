@@ -56,13 +56,14 @@ ext_modules = [
     Extension(
         "floyd_warshall",
         ["floyd_warshall.pyx"],
-        extra_compile_args=['/fopenmp'],
-        extra_link_args=['/fopenmp'],
+        extra_compile_args=['/openmp'],
+        extra_link_args=['/openmp'],
         include_dirs=[numpy.get_include()],
     )
 ]
 
 setup(
-    name='floyd_warshall_parallel',
+    name='floyd_warshall',
     ext_modules=cythonize(ext_modules),
 )
+

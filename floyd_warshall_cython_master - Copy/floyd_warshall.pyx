@@ -73,7 +73,7 @@ def floyd_warshall_parallelized(adjacency_matrix):
     '''
     (nrows, ncols) = adjacency_matrix.shape
     assert nrows == ncols
-    cdef unsigned int n = nrows
+    cdef int n = nrows # removed unsigned here too
 
     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)
     assert adj_mat_copy.flags['C_CONTIGUOUS']
@@ -81,7 +81,9 @@ def floyd_warshall_parallelized(adjacency_matrix):
     assert (numpy.diagonal(M) == 0.0).all()
 
     cdef double cost_ik, cost_ikkj
-    cdef unsigned int i, j, k, w
+    #cdef unsigned int i, j, k, w # remove w as its not used
+    cdef int i, j, k
+
 
     cdef double* M_ptr = &M[0,0]
     cdef double* M_i_ptr

@@ -8,10 +8,10 @@
             "C:\\Users\\gunth\\anaconda3\\lib\\site-packages\\numpy\\core\\include\\numpy\\ufuncobject.h"
         ],
         "extra_compile_args": [
-            "/fopenmp"
+            "/openmp"
         ],
         "extra_link_args": [
-            "/fopenmp"
+            "/openmp"
         ],
         "include_dirs": [
             "C:\\Users\\gunth\\anaconda3\\lib\\site-packages\\numpy\\core\\include"
@@ -1546,6 +1546,9 @@ typedef struct {
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_unsigned_int(unsigned int value);
 
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
+
 /* RealImag.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1645,9 +1648,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_unsigned_int(unsigned int value)
 #endif
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
-
-/* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_enum__NPY_TYPES(enum NPY_TYPES value);
 
 /* CIntFromPy.proto */
@@ -1730,7 +1730,6 @@ static const char __pyx_k_i[] = "i";
 static const char __pyx_k_j[] = "j";
 static const char __pyx_k_k[] = "k";
 static const char __pyx_k_n[] = "n";
-static const char __pyx_k_w[] = "w";
 static const char __pyx_k_all[] = "all";
 static const char __pyx_k_M_ij[] = "M_ij";
 static const char __pyx_k_M_ik[] = "M_ik";
@@ -1822,7 +1821,6 @@ static PyObject *__pyx_n_s_safe;
 static PyObject *__pyx_n_s_shape;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
-static PyObject *__pyx_n_s_w;
 static PyObject *__pyx_pf_14floyd_warshall_floyd_warshall_single_core(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix); /* proto */
 static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix); /* proto */
 static PyObject *__pyx_float_0_0;
@@ -2339,14 +2337,14 @@ static PyObject *__pyx_pw_14floyd_warshall_3floyd_warshall_parallelized(PyObject
 static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_adjacency_matrix) {
   PyObject *__pyx_v_nrows = NULL;
   PyObject *__pyx_v_ncols = NULL;
-  unsigned int __pyx_v_n;
+  int __pyx_v_n;
   PyObject *__pyx_v_adj_mat_copy = NULL;
   PyArrayObject *__pyx_v_M = 0;
   double __pyx_v_cost_ik;
   double __pyx_v_cost_ikkj;
-  unsigned int __pyx_v_i;
-  unsigned int __pyx_v_j;
-  unsigned int __pyx_v_k;
+  int __pyx_v_i;
+  int __pyx_v_j;
+  int __pyx_v_k;
   double *__pyx_v_M_ptr;
   double *__pyx_v_M_i_ptr;
   double *__pyx_v_M_k_ptr;
@@ -2361,18 +2359,17 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
   PyObject *__pyx_t_4 = NULL;
   PyObject *(*__pyx_t_5)(PyObject *);
   int __pyx_t_6;
-  unsigned int __pyx_t_7;
+  int __pyx_t_7;
   Py_ssize_t __pyx_t_8;
   Py_ssize_t __pyx_t_9;
   int __pyx_t_10;
-  unsigned int __pyx_t_11;
-  unsigned int __pyx_t_12;
-  unsigned int __pyx_t_13;
-  unsigned int __pyx_t_14;
-  unsigned int __pyx_t_15;
-  unsigned int __pyx_t_16;
-  unsigned int __pyx_t_17;
-  unsigned int __pyx_t_18;
+  int __pyx_t_11;
+  int __pyx_t_12;
+  int __pyx_t_13;
+  int __pyx_t_14;
+  int __pyx_t_15;
+  int __pyx_t_16;
+  int __pyx_t_17;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -2387,7 +2384,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  *     '''
  *     (nrows, ncols) = adjacency_matrix.shape             # <<<<<<<<<<<<<<
  *     assert nrows == ncols
- *     cdef unsigned int n = nrows
+ *     cdef int n = nrows # removed unsigned here too
  */
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_adjacency_matrix, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -2446,7 +2443,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  *     '''
  *     (nrows, ncols) = adjacency_matrix.shape
  *     assert nrows == ncols             # <<<<<<<<<<<<<<
- *     cdef unsigned int n = nrows
+ *     cdef int n = nrows # removed unsigned here too
  * 
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
@@ -2464,15 +2461,15 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
   /* "floyd_warshall.pyx":76
  *     (nrows, ncols) = adjacency_matrix.shape
  *     assert nrows == ncols
- *     cdef unsigned int n = nrows             # <<<<<<<<<<<<<<
+ *     cdef int n = nrows # removed unsigned here too             # <<<<<<<<<<<<<<
  * 
  *     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)
  */
-  __pyx_t_7 = __Pyx_PyInt_As_unsigned_int(__pyx_v_nrows); if (unlikely((__pyx_t_7 == (unsigned int)-1) && PyErr_Occurred())) __PYX_ERR(0, 76, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyInt_As_int(__pyx_v_nrows); if (unlikely((__pyx_t_7 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 76, __pyx_L1_error)
   __pyx_v_n = __pyx_t_7;
 
   /* "floyd_warshall.pyx":78
- *     cdef unsigned int n = nrows
+ *     cdef int n = nrows # removed unsigned here too
  * 
  *     adj_mat_copy = adjacency_matrix.astype(numpy.double, order='C', casting='safe', copy=True)             # <<<<<<<<<<<<<<
  *     assert adj_mat_copy.flags['C_CONTIGUOUS']
@@ -2606,8 +2603,8 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
   }
   #endif
 
-  /* "floyd_warshall.pyx":86
- *     cdef unsigned int i, j, k, w
+  /* "floyd_warshall.pyx":88
+ * 
  * 
  *     cdef double* M_ptr = &M[0,0]             # <<<<<<<<<<<<<<
  *     cdef double* M_i_ptr
@@ -2615,22 +2612,22 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
   __pyx_t_8 = 0;
   __pyx_t_9 = 0;
-  __pyx_t_10 = -1;
+  __pyx_t_7 = -1;
   if (__pyx_t_8 < 0) {
     __pyx_t_8 += __pyx_pybuffernd_M.diminfo[0].shape;
-    if (unlikely(__pyx_t_8 < 0)) __pyx_t_10 = 0;
-  } else if (unlikely(__pyx_t_8 >= __pyx_pybuffernd_M.diminfo[0].shape)) __pyx_t_10 = 0;
+    if (unlikely(__pyx_t_8 < 0)) __pyx_t_7 = 0;
+  } else if (unlikely(__pyx_t_8 >= __pyx_pybuffernd_M.diminfo[0].shape)) __pyx_t_7 = 0;
   if (__pyx_t_9 < 0) {
     __pyx_t_9 += __pyx_pybuffernd_M.diminfo[1].shape;
-    if (unlikely(__pyx_t_9 < 0)) __pyx_t_10 = 1;
-  } else if (unlikely(__pyx_t_9 >= __pyx_pybuffernd_M.diminfo[1].shape)) __pyx_t_10 = 1;
-  if (unlikely(__pyx_t_10 != -1)) {
-    __Pyx_RaiseBufferIndexError(__pyx_t_10);
-    __PYX_ERR(0, 86, __pyx_L1_error)
+    if (unlikely(__pyx_t_9 < 0)) __pyx_t_7 = 1;
+  } else if (unlikely(__pyx_t_9 >= __pyx_pybuffernd_M.diminfo[1].shape)) __pyx_t_7 = 1;
+  if (unlikely(__pyx_t_7 != -1)) {
+    __Pyx_RaiseBufferIndexError(__pyx_t_7);
+    __PYX_ERR(0, 88, __pyx_L1_error)
   }
   __pyx_v_M_ptr = (&(*__Pyx_BufPtrCContig2d(__pyx_t_5numpy_double_t *, __pyx_pybuffernd_M.rcbuffer->pybuffer.buf, __pyx_t_8, __pyx_pybuffernd_M.diminfo[0].strides, __pyx_t_9, __pyx_pybuffernd_M.diminfo[1].strides)));
 
-  /* "floyd_warshall.pyx":91
+  /* "floyd_warshall.pyx":93
  *     cdef double M_ij
  * 
  *     with nogil, parallel():             # <<<<<<<<<<<<<<
@@ -2652,14 +2649,14 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
                 #define unlikely(x) (x)
             #endif
             #ifdef _OPENMP
-            #pragma omp parallel private(__pyx_v_M_k_ptr, __pyx_v_k) private(__pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_t_17, __pyx_t_18, __pyx_t_6, __pyx_t_7)
+            #pragma omp parallel private(__pyx_v_M_k_ptr, __pyx_v_k) private(__pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_t_17, __pyx_t_6, __pyx_t_7)
             #endif /* _OPENMP */
             {
                 /* Initialize private variables to invalid values */
                 __pyx_v_M_k_ptr = ((double *)1);
-                __pyx_v_k = ((unsigned int)0xbad0bad0);
+                __pyx_v_k = ((int)0xbad0bad0);
 
-                /* "floyd_warshall.pyx":92
+                /* "floyd_warshall.pyx":94
  * 
  *     with nogil, parallel():
  *         for k in range(n):             # <<<<<<<<<<<<<<
@@ -2667,11 +2664,11 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  *             for i in prange(n):
  */
                 __pyx_t_7 = __pyx_v_n;
-                __pyx_t_11 = __pyx_t_7;
-                for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
-                  __pyx_v_k = __pyx_t_12;
+                __pyx_t_10 = __pyx_t_7;
+                for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
+                  __pyx_v_k = __pyx_t_11;
 
-                  /* "floyd_warshall.pyx":93
+                  /* "floyd_warshall.pyx":95
  *     with nogil, parallel():
  *         for k in range(n):
  *             M_k_ptr = M_ptr + n*k             # <<<<<<<<<<<<<<
@@ -2680,33 +2677,33 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
                   __pyx_v_M_k_ptr = (__pyx_v_M_ptr + (__pyx_v_n * __pyx_v_k));
 
-                  /* "floyd_warshall.pyx":94
+                  /* "floyd_warshall.pyx":96
  *         for k in range(n):
  *             M_k_ptr = M_ptr + n*k
  *             for i in prange(n):             # <<<<<<<<<<<<<<
  *                 M_i_ptr = M_ptr + n*i
  *                 cost_ik = M_i_ptr[k]
  */
-                  __pyx_t_13 = __pyx_v_n;
+                  __pyx_t_12 = __pyx_v_n;
                   if ((1 == 0)) abort();
                   {
-                      __pyx_t_15 = (__pyx_t_13 - 0 + 1 - 1/abs(1)) / 1;
-                      if (__pyx_t_15 > 0)
+                      __pyx_t_14 = (__pyx_t_12 - 0 + 1 - 1/abs(1)) / 1;
+                      if (__pyx_t_14 > 0)
                       {
                           #ifdef _OPENMP
                           #pragma omp for lastprivate(__pyx_v_M_i_ptr) lastprivate(__pyx_v_M_ij) lastprivate(__pyx_v_cost_ik) lastprivate(__pyx_v_cost_ikkj) firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_j)
                           #endif /* _OPENMP */
-                          for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_15; __pyx_t_14++){
+                          for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_14; __pyx_t_13++){
                               {
-                                  __pyx_v_i = (unsigned int)(0 + 1 * __pyx_t_14);
+                                  __pyx_v_i = (int)(0 + 1 * __pyx_t_13);
                                   /* Initialize private variables to invalid values */
                                   __pyx_v_M_i_ptr = ((double *)1);
                                   __pyx_v_M_ij = ((double)__PYX_NAN());
                                   __pyx_v_cost_ik = ((double)__PYX_NAN());
                                   __pyx_v_cost_ikkj = ((double)__PYX_NAN());
-                                  __pyx_v_j = ((unsigned int)0xbad0bad0);
+                                  __pyx_v_j = ((int)0xbad0bad0);
 
-                                  /* "floyd_warshall.pyx":95
+                                  /* "floyd_warshall.pyx":97
  *             M_k_ptr = M_ptr + n*k
  *             for i in prange(n):
  *                 M_i_ptr = M_ptr + n*i             # <<<<<<<<<<<<<<
@@ -2715,7 +2712,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
                                   __pyx_v_M_i_ptr = (__pyx_v_M_ptr + (__pyx_v_n * __pyx_v_i));
 
-                                  /* "floyd_warshall.pyx":96
+                                  /* "floyd_warshall.pyx":98
  *             for i in prange(n):
  *                 M_i_ptr = M_ptr + n*i
  *                 cost_ik = M_i_ptr[k]             # <<<<<<<<<<<<<<
@@ -2724,19 +2721,19 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
                                   __pyx_v_cost_ik = (__pyx_v_M_i_ptr[__pyx_v_k]);
 
-                                  /* "floyd_warshall.pyx":97
+                                  /* "floyd_warshall.pyx":99
  *                 M_i_ptr = M_ptr + n*i
  *                 cost_ik = M_i_ptr[k]
  *                 for j in range(n):             # <<<<<<<<<<<<<<
  *                     cost_ikkj = cost_ik + M_k_ptr[j]
  *                     M_ij = M_i_ptr[j]
  */
-                                  __pyx_t_16 = __pyx_v_n;
-                                  __pyx_t_17 = __pyx_t_16;
-                                  for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
-                                    __pyx_v_j = __pyx_t_18;
+                                  __pyx_t_15 = __pyx_v_n;
+                                  __pyx_t_16 = __pyx_t_15;
+                                  for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
+                                    __pyx_v_j = __pyx_t_17;
 
-                                    /* "floyd_warshall.pyx":98
+                                    /* "floyd_warshall.pyx":100
  *                 cost_ik = M_i_ptr[k]
  *                 for j in range(n):
  *                     cost_ikkj = cost_ik + M_k_ptr[j]             # <<<<<<<<<<<<<<
@@ -2745,7 +2742,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
                                     __pyx_v_cost_ikkj = (__pyx_v_cost_ik + (__pyx_v_M_k_ptr[__pyx_v_j]));
 
-                                    /* "floyd_warshall.pyx":99
+                                    /* "floyd_warshall.pyx":101
  *                 for j in range(n):
  *                     cost_ikkj = cost_ik + M_k_ptr[j]
  *                     M_ij = M_i_ptr[j]             # <<<<<<<<<<<<<<
@@ -2754,7 +2751,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
                                     __pyx_v_M_ij = (__pyx_v_M_i_ptr[__pyx_v_j]);
 
-                                    /* "floyd_warshall.pyx":100
+                                    /* "floyd_warshall.pyx":102
  *                     cost_ikkj = cost_ik + M_k_ptr[j]
  *                     M_ij = M_i_ptr[j]
  *                     if cost_ikkj < M_ij:             # <<<<<<<<<<<<<<
@@ -2764,7 +2761,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
                                     __pyx_t_6 = ((__pyx_v_cost_ikkj < __pyx_v_M_ij) != 0);
                                     if (__pyx_t_6) {
 
-                                      /* "floyd_warshall.pyx":101
+                                      /* "floyd_warshall.pyx":103
  *                     M_ij = M_i_ptr[j]
  *                     if cost_ikkj < M_ij:
  *                         M_i_ptr[j] = cost_ikkj             # <<<<<<<<<<<<<<
@@ -2773,7 +2770,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
  */
                                       (__pyx_v_M_i_ptr[__pyx_v_j]) = __pyx_v_cost_ikkj;
 
-                                      /* "floyd_warshall.pyx":100
+                                      /* "floyd_warshall.pyx":102
  *                     cost_ikkj = cost_ik + M_k_ptr[j]
  *                     M_ij = M_i_ptr[j]
  *                     if cost_ikkj < M_ij:             # <<<<<<<<<<<<<<
@@ -2797,7 +2794,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
         #endif
       }
 
-      /* "floyd_warshall.pyx":91
+      /* "floyd_warshall.pyx":93
  *     cdef double M_ij
  * 
  *     with nogil, parallel():             # <<<<<<<<<<<<<<
@@ -2816,7 +2813,7 @@ static PyObject *__pyx_pf_14floyd_warshall_2floyd_warshall_parallelized(CYTHON_U
       }
   }
 
-  /* "floyd_warshall.pyx":102
+  /* "floyd_warshall.pyx":104
  *                     if cost_ikkj < M_ij:
  *                         M_i_ptr[j] = cost_ikkj
  *     return M             # <<<<<<<<<<<<<<
@@ -4549,7 +4546,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_shape, __pyx_k_shape, sizeof(__pyx_k_shape), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_kp_u_unknown_dtype_code_in_numpy_pxd, __pyx_k_unknown_dtype_code_in_numpy_pxd, sizeof(__pyx_k_unknown_dtype_code_in_numpy_pxd), 0, 1, 0, 0},
-  {&__pyx_n_s_w, __pyx_k_w, sizeof(__pyx_k_w), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
@@ -4640,10 +4636,10 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  *     '''floyd_warshall_parallelized(adjacency_matrix) -> shortest_path_distance_matrix
  * 
  */
-  __pyx_tuple__8 = PyTuple_Pack(16, __pyx_n_s_adjacency_matrix, __pyx_n_s_nrows, __pyx_n_s_ncols, __pyx_n_s_n, __pyx_n_s_adj_mat_copy, __pyx_n_s_M, __pyx_n_s_cost_ik, __pyx_n_s_cost_ikkj, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_w, __pyx_n_s_M_ptr, __pyx_n_s_M_i_ptr, __pyx_n_s_M_k_ptr, __pyx_n_s_M_ij); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_tuple__8 = PyTuple_Pack(15, __pyx_n_s_adjacency_matrix, __pyx_n_s_nrows, __pyx_n_s_ncols, __pyx_n_s_n, __pyx_n_s_adj_mat_copy, __pyx_n_s_M, __pyx_n_s_cost_ik, __pyx_n_s_cost_ikkj, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_M_ptr, __pyx_n_s_M_i_ptr, __pyx_n_s_M_k_ptr, __pyx_n_s_M_ij); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
-  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(1, 0, 16, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_floyd_warshall_pyx, __pyx_n_s_floyd_warshall_parallelized, 57, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_codeobj__9 = (PyObject*)__Pyx_PyCode_New(1, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__8, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_floyd_warshall_pyx, __pyx_n_s_floyd_warshall_parallelized, 57, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__9)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -6914,6 +6910,37 @@ static void __Pyx_ReleaseBuffer(Py_buffer *view) {
     }
 }
 
+/* CIntToPy */
+    static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
+    const int neg_one = (int) ((int) 0 - (int) 1), const_zero = (int) 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(int) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(int) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(int) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(int),
+                                     little, !is_unsigned);
+    }
+}
+
 /* Declarations */
     #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -7221,37 +7248,6 @@ static void __Pyx_ReleaseBuffer(Py_buffer *view) {
         }
     #endif
 #endif
-
-/* CIntToPy */
-    static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
-    const int neg_one = (int) ((int) 0 - (int) 1), const_zero = (int) 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(int) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(int) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(int) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-#endif
-        }
-    } else {
-        if (sizeof(int) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(int) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-#endif
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(int),
-                                     little, !is_unsigned);
-    }
-}
 
 /* CIntToPy */
     static CYTHON_INLINE PyObject* __Pyx_PyInt_From_enum__NPY_TYPES(enum NPY_TYPES value) {

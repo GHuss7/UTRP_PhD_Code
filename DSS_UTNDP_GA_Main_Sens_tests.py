@@ -160,8 +160,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 100, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 20, # STANDARD: 200 (John 2016)
+    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 1000, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

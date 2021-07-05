@@ -40,7 +40,7 @@ from tkinter import simpledialog
 from numpy import array,loadtxt,isfinite,set_printoptions,zeros,ones,int,empty,inf,asarray,minimum,newaxis
 import numpy as np
 
-from floyd_warshall_cython_master import floyd_warshall
+from floyd_warshall_cython_master_mp import floyd_warshall
 from c_shortest_paths_matrix.shortest_paths_matrix_master import shortest_paths_matrix
 
 

@@ -93,12 +93,14 @@ class Timer(object):
         self.stop()
 
 def test_floyd_warshall_speed():
-    M = random((2000, 2000))
+    M = random((1200, 1200))
     fill_diagonal(M, 0)
 
     prev_res = None
     print('')
-    for (name, func) in [('Python+NumPy', floyd_warshall_numpy), ('Cython', floyd_warshall.floyd_warshall_single_core), ('Cython multicore', floyd_warshall.floyd_warshall_parallelized)]:
+    for (name, func) in [#('Python+NumPy', floyd_warshall_numpy), 
+                         ('Cython', floyd_warshall.floyd_warshall_single_core), 
+                         ('Cython multicore', floyd_warshall.floyd_warshall_parallelized)]:
         print ('%20s: ' % name),
         with Timer():
             result = func(M)

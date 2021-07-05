@@ -372,7 +372,8 @@ def evalATT(routeset,travelTimes,DemandMat,parameters_input):
     
     # Cython floyd_warshall:
     np.fill_diagonal(routeadj, 0)
-    D = floyd_warshall.floyd_warshall_single_core(routeadj)
+    #D = floyd_warshall.floyd_warshall_single_core(routeadj)
+    D = floyd_warshall.floyd_warshall_parallelized(routeadj) # fastest
     
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)

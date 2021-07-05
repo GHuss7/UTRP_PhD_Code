@@ -73,7 +73,7 @@ name_input_data = ["Mandl_UTRP", #0
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
-load_sup = True #TODO Remove later
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -86,7 +86,7 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
-    "Pop_size_to_create" : 200,
+    "Pop_size_to_create" : 2000,
     } 
     
 #%% Set functions to use

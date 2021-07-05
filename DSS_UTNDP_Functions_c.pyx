@@ -1817,7 +1817,7 @@ def calc_crowding_distance(F, filter_out_duplicates=True):
 
 def rank_from_fronts(fronts, n):
     # create the rank array and set values
-    rank = np.full(n, 1e16, dtype=np.int)
+    rank = np.full(n, 1e16, dtype=np.int64)
     for i, front in enumerate(fronts):
         rank[front] = i
 
@@ -1865,7 +1865,7 @@ def binary_tournament_g2(pop, P, tournament_type='comp_by_dom_and_crowding', **k
                 S[i] = compare(a, pop.crowding_dist[a,0], b, pop.crowding_dist[b,0],
                                method='larger_is_better', return_random_if_equal=True)
 
-    return S[:, None].astype(np.int, copy=False)
+    return S[:, None].astype(np.int64, copy=False)
 
 def get_survivors(pop, n_survive, D=None, **kwargs):
 

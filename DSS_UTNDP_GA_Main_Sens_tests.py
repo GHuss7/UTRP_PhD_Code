@@ -87,7 +87,8 @@ else:
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
     "Pop_size_to_create" : 2000,
-    } 
+    "Measure_APD" : False, # measure Average Population Diversity
+    }
     
 #%% Set functions to use
     route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
@@ -507,10 +508,15 @@ if True:
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
         HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
-        APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
         
+        if Decisions['Measure_APD']: 
+            APD = gf_p.calc_avg_route_set_diversity(pop_1.variables) # average population similarity  
+        else: 
+            APD = 0
+            
         df_data_generations = pd.DataFrame(columns = ["Generation","HV","APD"]) # create a df to keep data
         df_data_generations.loc[0] = [0, HV, APD]
+        
         
         stats['end_time'] = datetime.datetime.now() # enter the begin time
         
@@ -599,7 +605,10 @@ if True:
 
             # Calculate the HV and APD Quality Measure
             HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
-            APD = gf.calc_avg_route_set_diversity(pop_1.variables) # average population similarity
+            if Decisions['Measure_APD']: 
+                APD = gf_p.calc_avg_route_set_diversity(pop_1.variables) # average population similarity  
+            else: 
+                APD = 0
             df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
             # Intermediate print-outs for observance 

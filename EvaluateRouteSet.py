@@ -335,7 +335,7 @@ def evaluateObjectives(routeset,travelTimes,DemandMat,total_demand,n,r,wt,tp):
     
     # Cython floyd_warshall:
     np.fill_diagonal(routeadj, 0)
-    D = floyd_warshall.floyd_warshall_single_core(routeadj)
+    D = floyd_warshall.floyd_warshall_parallelized_nbc(routeadj)
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)
     return(ATT,RL)
@@ -355,7 +355,7 @@ def evalObjs(routeset,travelTimes,DemandMat,parameters_input):
     
     # Cython floyd_warshall:
     np.fill_diagonal(routeadj, 0)
-    D = floyd_warshall.floyd_warshall_single_core(routeadj)
+    D = floyd_warshall.floyd_warshall_parallelized_nbc(routeadj)
     
     SPMatrix = shortest_paths_matrix(D, inv_map, t, n)
     ATT = EvaluateATT(SPMatrix, DemandMat, total_demand, wt)

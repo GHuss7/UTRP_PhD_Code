@@ -40,6 +40,8 @@ from tkinter import simpledialog
 from numpy import array,loadtxt,isfinite,set_printoptions,zeros,ones,int,empty,inf,asarray,minimum,newaxis
 import numpy as np
 
+import pyximport # from https://stackoverflow.com/questions/55056563/reload-module-with-pyximport
+pyximport.install(reload_support=True)
 from floyd_warshall_cython_master_mp import floyd_warshall
 from c_shortest_paths_matrix.shortest_paths_matrix_master import shortest_paths_matrix
 from c_expand_travel_matrix.expand_travel_matrix_master import expandTravelMatrix

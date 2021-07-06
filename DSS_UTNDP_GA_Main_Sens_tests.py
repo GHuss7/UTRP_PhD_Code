@@ -67,7 +67,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][2]   # set the name of the input data
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -86,7 +86,7 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
-    "Pop_size_to_create" : 1,
+    "Pop_size_to_create" : 2000,
     "Measure_APD" : False, # measure Average Population Diversity
     }
     
@@ -118,14 +118,14 @@ else:
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
-                    #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
-                    #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                    "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
+                    "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
                     #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
                     #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
-                    #"Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
-                    #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                    "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
+                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb, #TODO: Error of divide by zero
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                     #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
@@ -162,8 +162,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 2, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1, # STANDARD: 200 (John 2016)
+    "population_size" : 50, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 4, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

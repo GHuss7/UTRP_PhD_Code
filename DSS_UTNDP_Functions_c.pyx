@@ -3437,7 +3437,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
         d = calc_cum_demand_route_set(route_to_mutate, mx_demand)
         d_cont = d_init - d # calc direct demand contribution
         if d_cont==0: d_cont = 0.001
-        c = mx_dist[route_to_mutate[i][0], route_to_mutate[i][0]] # get edge cost
+        c = mx_dist[r_i[0], route_to_mutate[i][0]] # get edge cost
         candidates.append({'route_nr': i, 'front':True, 
                            'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
     
@@ -3451,7 +3451,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
         d = calc_cum_demand_route_set(route_to_mutate, mx_demand)
         d_cont = d_init - d # calc direct demand contribution
         if d_cont==0: d_cont = 0.001
-        c = mx_dist[route_to_mutate[i][-1], route_to_mutate[i][-1]] # get edge cost
+        c = mx_dist[r_i[-1], route_to_mutate[i][-1]] # get edge cost
         candidates.append({'route_nr': i, 'front':False, 
                            'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
     
@@ -3797,7 +3797,7 @@ def mut_grow_one_path_random_cb(routes_R, main_problem):
                 if test_all_four_constraints(route_copy, main_problem):
                     d = calc_cum_demand_route_set(route_copy, mx_demand)
                     d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[route_copy[i][0], route_copy[i][0]] # get edge cost
+                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
                     candidates.append({'route_nr': i, 'front':True, 'adj':adj,
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
                 
@@ -3814,7 +3814,7 @@ def mut_grow_one_path_random_cb(routes_R, main_problem):
                 if test_all_four_constraints(route_copy, main_problem):
                     d = calc_cum_demand_route_set(route_copy, mx_demand)
                     d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[route_copy[i][-1], route_copy[i][-1]] # get edge cost
+                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
                     candidates.append({'route_nr': i, 'front':False, 'adj':adj,
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
                 
@@ -3891,7 +3891,7 @@ def mut_grow_routes_random_cb(routes_R, main_problem):
                 if test_all_four_constraints(route_copy, main_problem):
                     d = calc_cum_demand_route_set(route_copy, mx_demand)
                     d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[route_copy[i][0], route_copy[i][0]] # get edge cost
+                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
                     candidates.append({'route_nr': i, 'front':True, 'adj':adj,
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
                                 
@@ -3908,7 +3908,7 @@ def mut_grow_routes_random_cb(routes_R, main_problem):
                 if test_all_four_constraints(route_copy, main_problem):
                     d = calc_cum_demand_route_set(route_copy, mx_demand)
                     d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[route_copy[i][-1], route_copy[i][-1]] # get edge cost
+                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
                     candidates.append({'route_nr': i, 'front':False, 'adj':adj,
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
                 
@@ -3986,7 +3986,7 @@ def mut_grow_all_paths_random_cb(routes_R, main_problem):
                 if test_all_four_constraints(route_copy, main_problem):
                     d = calc_cum_demand_route_set(route_copy, mx_demand)
                     d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[route_copy[i][0], route_copy[i][0]] # get edge cost
+                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
                     candidates.append({'route_nr': i, 'front':True, 'adj':adj,
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
                 
@@ -4003,7 +4003,7 @@ def mut_grow_all_paths_random_cb(routes_R, main_problem):
                 if test_all_four_constraints(route_copy, main_problem):
                     d = calc_cum_demand_route_set(route_copy, mx_demand)
                     d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[route_copy[i][-1], route_copy[i][-1]] # get edge cost
+                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
                     candidates.append({'route_nr': i, 'front':False, 'adj':adj,
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
                 

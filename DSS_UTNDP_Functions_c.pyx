@@ -3441,7 +3441,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
         candidates.append({'route_nr': i, 'front':True, 
                            'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
     
-    route_to_mutate[i] = r_i # reset the route set
+    route_to_mutate[i] = r_i.copy() # reset the route set
     
     # end terminal vertex eval
     route_to_mutate[i] = route_to_mutate[i][:-1]
@@ -3455,7 +3455,7 @@ def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_pro
         candidates.append({'route_nr': i, 'front':False, 
                            'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
     
-    route_to_mutate[i] = r_i # reset the route set
+    route_to_mutate[i] = r_i.copy() # reset the route set
     
     # if no candidates, return initial route
     if len(candidates) == 0: 
@@ -3512,7 +3512,7 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
             candidates.append({'route_nr': i, 'front':True, 
                                'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont}) 
         
-        route_c[i] = r_i # reset the route set
+        route_c[i] = r_i.copy() # reset the route set
         
         # end terminal vertex eval
         route_c[i] = route_c[i][:-1]
@@ -3526,7 +3526,7 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
             candidates.append({'route_nr': i, 'front':False, 
                                'dem_contribution':d_cont, 'cost':c, 'cost_per_dem':c/d_cont})
             
-        route_c[i] = r_i # reset the route set
+        route_c[i] = r_i.copy() # reset the route set
     
     # if no candidates, return initial route
     if len(candidates) == 0: 
@@ -3693,7 +3693,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
             # Evaluate the front of the route set first
             adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
             for adj in adjs_front:
-                route_copy[i] = r_i.copy() # replace the route in index i
+                route_copy[i] = r_i.copy()  # replace the route in index i
                 
                 # front terminal vertex eval
                 route_copy[i].insert(0,adj)
@@ -3710,7 +3710,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
             # Evaluate the end of the route set second
             adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
             for adj in adjs_end:   
-                route_copy[i] = r_i.copy() # replace the route in index i
+                route_copy[i] = r_i.copy()  # replace the route in index i
 
                 # end terminal vertex eval
                 route_copy[i].append(adj)
@@ -3724,7 +3724,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
                                        'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
         
         # Replace the route in index i to reset route
-        route_copy[i] = r_i.copy() 
+        route_copy[i] = r_i.copy()  
 
     # if no candidates, return initial route
     if len(candidates) == 0: 
@@ -3788,37 +3788,39 @@ def mut_grow_one_path_random_cb(routes_R, main_problem):
 
             # Evaluate the front of the route set first
             adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
-            for adj in adjs_front:
+            if len(adjs_front) != 0:
+                for adj in adjs_front:
                 
-                # front terminal vertex eval
-                route_copy[i].insert(0,adj)
-                
-                # test feasibility
-                if test_all_four_constraints(route_copy, main_problem):
-                    d = calc_cum_demand_route_set(route_copy, mx_demand)
-                    d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
-                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
-                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
-                
-                route_copy[i] = r_i # reset the route set
+                    # front terminal vertex eval
+                    route_copy[i].insert(0,adj)
+                    
+                    # test feasibility
+                    if test_all_four_constraints(route_copy, main_problem):
+                        d = calc_cum_demand_route_set(route_copy, mx_demand)
+                        d_cont = d - d_init # calc direct demand contribution
+                        c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
+                        candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                    
+                    route_copy[i] = r_i.copy() # reset the route set
 
             # Evaluate the end of the route set second
             adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
-            for adj in adjs_end:   
-                
-                # end terminal vertex eval
-                route_copy[i].append(adj)
-             
-                # test feasibility
-                if test_all_four_constraints(route_copy, main_problem):
-                    d = calc_cum_demand_route_set(route_copy, mx_demand)
-                    d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
-                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
-                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
-                
-                route_copy[i] = r_i # reset the route set
+            if len(adjs_end) != 0:
+                for adj in adjs_end:   
+                    
+                    # end terminal vertex eval
+                    route_copy[i].append(adj)
+                 
+                    # test feasibility
+                    if test_all_four_constraints(route_copy, main_problem):
+                        d = calc_cum_demand_route_set(route_copy, mx_demand)
+                        d_cont = d - d_init # calc direct demand contribution
+                        c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
+                        candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                    
+                    route_copy[i] = r_i.copy() # reset the route set
 
             # if no candidates, return initial route
             if len(candidates) == 0: 
@@ -3882,37 +3884,39 @@ def mut_grow_routes_random_cb(routes_R, main_problem):
 
             # Evaluate the front of the route set first
             adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
-            for adj in adjs_front:
-                
-                # front terminal vertex eval
-                route_copy[i].insert(0,adj)
-                
-                # test feasibility
-                if test_all_four_constraints(route_copy, main_problem):
-                    d = calc_cum_demand_route_set(route_copy, mx_demand)
-                    d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
-                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
-                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
-                                
-                route_copy[i] = r_i # reset the route set
+            if len(adjs_front) != 0:
+                for adj in adjs_front:
+                    
+                    # front terminal vertex eval
+                    route_copy[i].insert(0,adj)
+                    
+                    # test feasibility
+                    if test_all_four_constraints(route_copy, main_problem):
+                        d = calc_cum_demand_route_set(route_copy, mx_demand)
+                        d_cont = d - d_init # calc direct demand contribution
+                        c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
+                        candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                                    
+                    route_copy[i] = r_i.copy() # reset the route set
 
             # Evaluate the end of the route set second
-            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
-            for adj in adjs_end:   
-                
-            # end terminal vertex eval
-                route_copy[i].append(adj)
-             
-                # test feasibility
-                if test_all_four_constraints(route_copy, main_problem):
-                    d = calc_cum_demand_route_set(route_copy, mx_demand)
-                    d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
-                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
-                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
-                
-                route_copy[i] = r_i # reset the route set
+            adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))  
+            if len(adjs_end) != 0:
+                for adj in adjs_end:   
+                    
+                # end terminal vertex eval
+                    route_copy[i].append(adj)
+                 
+                    # test feasibility
+                    if test_all_four_constraints(route_copy, main_problem):
+                        d = calc_cum_demand_route_set(route_copy, mx_demand)
+                        d_cont = d - d_init # calc direct demand contribution
+                        c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
+                        candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                    
+                    route_copy[i] = r_i.copy() # reset the route set
     
             # if no candidates, return initial route
             if len(candidates) == 0: 
@@ -3977,37 +3981,39 @@ def mut_grow_all_paths_random_cb(routes_R, main_problem):
 
             # Evaluate the front of the route set first
             adjs_front = list(set(mapping_adjacent[r_i[0]]).difference(set(r_i)))                
-            for adj in adjs_front:
-                
-                # front terminal vertex eval
-                route_copy[i].insert(0,adj)
-                
-                # test feasibility
-                if test_all_four_constraints(route_copy, main_problem):
-                    d = calc_cum_demand_route_set(route_copy, mx_demand)
-                    d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
-                    candidates.append({'route_nr': i, 'front':True, 'adj':adj,
-                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
-                
-                route_copy[i] = r_i # reset the route set
+            if len(adjs_front) != 0:
+                for adj in adjs_front:
+                    
+                    # front terminal vertex eval
+                    route_copy[i].insert(0,adj)
+                    
+                    # test feasibility
+                    if test_all_four_constraints(route_copy, main_problem):
+                        d = calc_cum_demand_route_set(route_copy, mx_demand)
+                        d_cont = d - d_init # calc direct demand contribution
+                        c = mx_dist[r_i[0], route_copy[i][0]] # get edge cost
+                        candidates.append({'route_nr': i, 'front':True, 'adj':adj,
+                                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c}) 
+                    
+                    route_copy[i] = r_i.copy() # reset the route set
                 
             # Evaluate the end of the route set second
             adjs_end = list(set(mapping_adjacent[r_i[-1]]).difference(set(r_i)))    
-            for adj in adjs_end:   
-                
-            # end terminal vertex eval
-                route_copy[i].append(adj)
-             
-                # test feasibility
-                if test_all_four_constraints(route_copy, main_problem):
-                    d = calc_cum_demand_route_set(route_copy, mx_demand)
-                    d_cont = d - d_init # calc direct demand contribution
-                    c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
-                    candidates.append({'route_nr': i, 'front':False, 'adj':adj,
-                                       'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
-                
-                route_copy[i] = r_i # reset the route set
+            if len(adjs_end) != 0:
+                for adj in adjs_end:   
+                    
+                # end terminal vertex eval
+                    route_copy[i].append(adj)
+                 
+                    # test feasibility
+                    if test_all_four_constraints(route_copy, main_problem):
+                        d = calc_cum_demand_route_set(route_copy, mx_demand)
+                        d_cont = d - d_init # calc direct demand contribution
+                        c = mx_dist[r_i[-1], route_copy[i][-1]] # get edge cost
+                        candidates.append({'route_nr': i, 'front':False, 'adj':adj,
+                                           'dem_contribution':d_cont, 'cost':c, 'dem_per_cost':d_cont/c})
+                    
+                    route_copy[i] = r_i.copy() # reset the route set
                 
             # if no candidates, return initial route
             if len(candidates) == 0: 

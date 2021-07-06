@@ -59,6 +59,7 @@ Created on Fri Jul  2 12:25:14 2021
 import distutils.core
 import Cython.Build
 import numpy 
+import multiset
 distutils.core.setup(
     ext_modules = Cython.Build.cythonize("DSS_UTNDP_Functions_c.pyx"),
     include_dirs=[numpy.get_include()]

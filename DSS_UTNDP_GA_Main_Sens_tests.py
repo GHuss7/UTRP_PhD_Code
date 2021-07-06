@@ -67,13 +67,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][3]   # set the name of the input data
+                   "Mandl_UTRP_dis"][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
-load_sup = False #TODO Remove later
+load_sup = True #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -117,13 +117,13 @@ else:
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
                     #"Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
-                    #"Rem_largest_cost_per_dem" : gf.mut_remove_largest_cost_per_dem_terminal,
+                    #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                     #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
                     #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
                     #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
-                    #"Add_largest_dem_per_cost" : gf.mut_add_terminal_highest_demand_per_cost,
+                    #"Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
                     #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
@@ -161,8 +161,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 200, # STANDARD: 200 (John 2016)
+    "population_size" : 50, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 2, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

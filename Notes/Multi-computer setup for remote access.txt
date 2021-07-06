@@ -1,0 +1,43 @@
+Multi-computer setup for remote access:
+
+0.) Login to computer with the credentials:
+	Username: 17832020
+	PW: QWEqwe34
+
+1.) Make sure Spyder and Anaconda are installed
+	
+	1.1) Can download Anaconda by clicking:
+		https://repo.anaconda.com/archive/Anaconda3-2021.05-Windows-x86_64.exe
+
+2.) Make sure Anaconda is up to date:
+
+	2.1) If Anaconda was not installed and you downloaded it, it will be up to date
+
+	2.2) If there is a bit of an older version you can do:
+		With Anaconda Prompt: conda update --all
+
+3.) Download and Install Visual Studio Build tools:
+
+	3.1)  Download by clicking: 
+		https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16
+
+	3.2) Select the "Visual C++ Build Tools" options
+
+4.) Set up remote desktop access for PC:
+
+	4.1) In Start, search "Allow remote connectionsto this computer" (or something similar, feel free to update this document)
+
+	4.2) Change settings to allow remote connections to this computer
+
+5.) Download and set up AnyDesk:
+
+	5.1) Download by clicking:
+		https://download.anydesk.com/AnyDesk.exe?_ga=2.71072982.731962938.1625578358-554848214.1623830374
+
+	5.2) Open AnyDesk and set following settings:
+		- Set password for unattended access -> Enable unattended access -> Set password to "k6y31p9y"
+	
+	5.3) Take a photo of the AnyDesk address and send to Günther and type a message who's PC it is
+
+
+

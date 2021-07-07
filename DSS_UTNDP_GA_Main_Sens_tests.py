@@ -67,7 +67,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][2]   # set the name of the input data
+                   "Mandl_UTRP_dis"][1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -339,7 +339,21 @@ if True:
                 UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
     if dis_obj:
-        fn_obj_2 = gf.fn_obj_3 # returns (ATT, RD)
+        def fn_obj_ATT(routes, UTNDP_problem_input):           
+            ATT = ev.evalATT(routes, 
+                        UTNDP_problem_input.problem_data.mx_dist, 
+                        UTNDP_problem_input.problem_data.mx_demand, 
+                        UTNDP_problem_input.problem_inputs.__dict__)
+            return (ATT, 0) # returns (f1_ATT, 0)
+        
+        def fn_obj_TRT(routes, UTNDP_problem_input):
+            travelTimes = UTNDP_problem_input.problem_data.mx_dist
+            RL = ev.evaluateTotalRouteLength(routes,travelTimes)
+            return (0, RL) # returns (0, f2_TRT)
+        
+        #fn_obj_2 = fn_obj_ATT
+        #fn_obj_2 = fn_obj_TRT
+        fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
     
     # Add/Delete individuals to/from population
     def combine_offspring_with_pop_3(pop, offspring_variables, UTNDP_problem_input):

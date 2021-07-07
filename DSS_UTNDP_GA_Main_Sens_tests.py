@@ -67,13 +67,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][1]   # set the name of the input data
+                   "Mandl_UTRP_dis"][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
-dis_obj = False
-load_sup = True #TODO Remove later
+dis_obj = True
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -86,7 +86,7 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
-    "Pop_size_to_create" : 1000,
+    "Pop_size_to_create" : 2000,
     "Measure_APD" : False, # measure Average Population Diversity
     }
     
@@ -162,8 +162,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 4, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1, # STANDARD: 200 (John 2016)
+    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 2000, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -174,7 +174,7 @@ if Decisions["Choice_import_dictionaries"]:
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
-    "gen_compare_HV" : 20, # Compare generations for improvement in HV
+    "gen_compare_HV" : 2000, # Compare generations for improvement in HV
     "HV_improvement_th": 0.00005, # Treshold that terminates the search
      "number_of_variables" : parameters_constraints["con_r"],
     "number_of_objectives" : 2, # this could still be automated in the future
@@ -338,8 +338,25 @@ if True:
                 UTNDP_problem_input.problem_data.mx_demand, 
                 UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
+
+    
+    
+    
     if dis_obj:
-        fn_obj_2 = gf.fn_obj_3 # returns (ATT, RD)
+        def fn_obj_ATT(routes, UTNDP_problem_input):           
+            ATT = ev.evalATT(routes, 
+                        UTNDP_problem_input.problem_data.mx_dist, 
+                        UTNDP_problem_input.problem_data.mx_demand, 
+                        UTNDP_problem_input.problem_inputs.__dict__)
+            return (ATT, 0) # returns (f1_ATT, 0)
+        
+        def fn_obj_TRT(routes, UTNDP_problem_input):
+            travelTimes = UTNDP_problem_input.problem_data.mx_dist
+            RL = ev.evaluateTotalRouteLength(routes,travelTimes)
+            return (0, RL) # returns (0, f2_TRT)
+        
+        #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
+        fn_obj_2 = fn_obj_TRT
     
     # Add/Delete individuals to/from population
     def combine_offspring_with_pop_3(pop, offspring_variables, UTNDP_problem_input):

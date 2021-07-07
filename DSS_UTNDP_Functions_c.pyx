@@ -4643,6 +4643,13 @@ def create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='F_3', ob
     df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
     return df_non_dominated_set
 
+def create_non_dom_set_from_dataframe_fast(df_data_for_analysis, obj_1_name='F_3', obj_2_name='F_4'):
+    '''Does not do a deepcopy and so saves time, but be careful for alterations to df_data_for_analysis'''
+    df_non_dominated_set = df_data_for_analysis.loc[df_data_for_analysis['Rank'] == 0] # create df for non-dominated set
+    df_non_dominated_set = df_non_dominated_set[is_pareto_efficient(df_non_dominated_set[[obj_1_name,obj_2_name]].values, True)]
+    df_non_dominated_set = df_non_dominated_set.sort_values(by=obj_1_name, ascending=True) # sort
+    return df_non_dominated_set
+
 def determine_extreme_sols_and_objs_from_pareto_set(df_overall_pareto_set):
     routes_R_op_str = df_overall_pareto_set['R_x'].iloc[-1]
     routes_R_op = convert_routes_str2list(routes_R_op_str)
@@ -4734,6 +4741,21 @@ def get_equispaced_indices(n_solutions, objs_sorted):
     #seeding_route_choices = seeding_route_set.iloc[seed_indices,:]
     return seed_indices
 
+# %% Update mutation ratios
+
+# AMALGAM
+def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
+    nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+    mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+    success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
+    
+    # reset the success ratios if all have falied
+    if sum(success_ratio) == 0:
+        success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
+    
+    success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
+    updated_ratio = mutation_threshold + success_proportion
+    UTNDP_problem_1.mutation_ratio = updated_ratio
 
 
 

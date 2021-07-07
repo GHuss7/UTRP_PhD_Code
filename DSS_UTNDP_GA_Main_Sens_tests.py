@@ -67,7 +67,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][1]   # set the name of the input data
+                   "Mandl_UTRP_dis"][2]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -86,7 +86,7 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
-    "Pop_size_to_create" : 1000,
+    "Pop_size_to_create" : 100,
     "Measure_APD" : False, # measure Average Population Diversity
     }
     
@@ -496,12 +496,12 @@ if True:
         # Create data for analysis dataframe
         ld_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr_ld(pop_1, UTNDP_problem_1, generation_num=0)
         df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
-        df_overall_analysis = pd.DataFrame()
 
         # Create dataframe for mutations      
         ld_mut = [{"Mut_nr":0, "Mut_successful":0, "Mut_repaired":0, "Included_new_gen":1} for _ in range(pop_size)]
         
-        df_mut_summary = pd.DataFrame()
+        #df_mut_summary = pd.DataFrame()
+        ld_mut_summary = []
         df_mut_ratios = pd.DataFrame(columns=(["Generation"]+UTNDP_problem_1.mutation_names))
         df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio)
         
@@ -556,7 +556,9 @@ if True:
             df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
 
             # Determine non-dominated set
-            df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
+            df_non_dominated_set = pd.concat([df_data_for_analysis[df_data_for_analysis['Generation']==i_gen],
+                                             df_non_dominated_set]) # adds the new gen to non-dom set and sifts it
+            df_non_dominated_set = gf.create_non_dom_set_from_dataframe_fast(df_non_dominated_set, obj_1_name='f_1', obj_2_name='f_2')
                 
             # Get new generation
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
@@ -576,25 +578,16 @@ if True:
             df_mut_temp.drop(['Route'], axis='columns', inplace=True)
                         
             # Update mutation summary and overall analysis
-            df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
+            #df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
+            ld_mut_summary_temp = ga.get_mutations_summary_ld(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen)
+            ld_mut_summary.extend(ld_mut_summary_temp)
+            df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary)
+
             df_mut = pd.DataFrame.from_dict(ld_mut)
             df_mut.reset_index(drop=True, inplace=True)
             
-            # Update the mutation ratios
-            def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
-                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
-                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
-                success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
-                
-                # reset the success ratios if all have falied
-                if sum(success_ratio) == 0:
-                    success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
-                
-                success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
-                updated_ratio = mutation_threshold + success_proportion
-                UTNDP_problem_1.mutation_ratio = updated_ratio
-                
-            update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
+            # Update the mutation ratios               
+            gf.update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
             df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
             
             # Remove old generation
@@ -612,7 +605,7 @@ if True:
             df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
             # Intermediate print-outs for observance 
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % 100 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
                     df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
                     df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
@@ -621,11 +614,13 @@ if True:
                     df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
                     df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
 
-                    # gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, 
-                    #                                           validation_data, df_data_generations, 
-                    #                                           name_input_data, path_results_per_run,
-                    #                                           stats_overall['HV Benchmark']) 
+                except PermissionError: pass
+
                     
+            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+                try: 
+                    
+                    df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)
                     # Compute means for generations
                     df_gen_temp = copy.deepcopy(df_data_generations)
                     df_gen_temp = df_gen_temp.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
@@ -638,8 +633,6 @@ if True:
                     
                     gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
 
-                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, 
-                    #                                              df_data_generations, name_input_data, path_results_per_run, add_text=i_gen, labels)
                 except PermissionError: pass
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run

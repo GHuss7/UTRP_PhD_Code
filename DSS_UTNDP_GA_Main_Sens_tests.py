@@ -71,7 +71,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][1]   # set the name of the input data
+                   "Mandl8_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -123,7 +123,7 @@ else:
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
-                    "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    #"Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
                     "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                     "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -169,8 +169,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 400, # STANDARD: 200 (John 2016)
+    "population_size" : 50, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 5, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,

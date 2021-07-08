@@ -3414,16 +3414,20 @@ def mut_invert_route_vertices(routes_R, main_problem):
                 R_mut[i] = reversed_path
                     
                 
-                if False: # Debug
+                if True: # Debug
                     print(f'Start: {i_start} End:{i_end}')
                     x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
                     print(R_1[i])
                     print(R_mut[i])
                     print(len(R_mut[i]) - sum(x))
+                    print(fn_obj_2(R_mut,main_problem))
                 return R_mut
         
     return routes_R
 
+routes_R = offspring_variables[10]
+main_problem = UTNDP_problem_1
+mut_invert_route_vertices(routes_R, main_problem)
 
 def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_problem, path_index):
     '''Mutation function that removes a terminal vertex from a path that 

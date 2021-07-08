@@ -67,13 +67,17 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
                    "Mandl_UTRP_testing", #5
-                   "Mandl_UTRP_dis"][1]   # set the name of the input data
+                   "Mandl_UTRP_dis", #6
+                   "Mandl4_UTRP", #7
+                   "Mandl6_UTRP", #8
+                   "Mandl7_UTRP", #9
+                   "Mandl8_UTRP",][1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
-load_sup = True #TODO Remove later
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -86,8 +90,11 @@ else:
     "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
-    "Pop_size_to_create" : 100,
+    "Pop_size_to_create" : 2000,
     "Measure_APD" : False, # measure Average Population Diversity
+    "Log_prints_every" : 1, # every n generations a log should be printed
+    "CSV_prints_every" : 100, # every n generations a csv should be printed
+    "PDF_prints_every" : 20, # every n generations a csv should be printed
     }
     
 #%% Set functions to use
@@ -125,7 +132,7 @@ else:
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
                     "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
-                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb, #TODO: Error of divide by zero
+                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                     #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
@@ -162,8 +169,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 4, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1, # STANDARD: 200 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 400, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -455,7 +462,6 @@ if True:
                 os.makedirs(path_results_per_run)  
                 
         # Create the initial population
-        # TODO: Insert initial 10000 solutions generatations and NonDom Sort your initial population, ensuring diversity
         # TODO: Remove duplicate functions! (compare set similarity and obj function values)
         
         stats['begin_time'] = datetime.datetime.now() # enter the begin time
@@ -551,7 +557,7 @@ if True:
             stats['begin_time_gen'] = datetime.datetime.now() # enter the begin time
             stats['generation'] = i_gen
             
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["Log_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 print("Generation " + str(int(i_gen)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
             # Crossover
@@ -619,7 +625,7 @@ if True:
             df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
             # Intermediate print-outs for observance 
-            if i_gen % 100 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["CSV_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
                     df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
                     df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
@@ -631,7 +637,7 @@ if True:
                 except PermissionError: pass
 
                     
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["PDF_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
                     
                     df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)
@@ -651,7 +657,7 @@ if True:
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
             
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["Log_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 print("Dur: {0} [HV:{1} | BM:{2}] APD:{3}".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                                 round(HV, 4),
                                                                 round(stats_overall['HV Benchmark'],4),

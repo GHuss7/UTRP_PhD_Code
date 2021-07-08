@@ -3376,58 +3376,108 @@ def is_route_sublist_in_set(routes_R, index_i):
             return True   
     return False
 
+def test_adj_feasible(P_x, v_i, main_problem):
+    """A function to check if the two vertices adjacent to vertex v_i has an 
+    edge connecting them in path P_x"""
+    i = P_x.index(v_i) # index of vertex v_i
+    
+    if i == 0:
+        if not set(main_problem.mapping_adjacent[v_i]).intersection(set([P_x[i+1]])):
+            return False
+    elif i == len(P_x)-1:
+        if not set(main_problem.mapping_adjacent[v_i]).intersection(set([P_x[i-1]])):
+            return False
+    else:
+        if len(set(main_problem.mapping_adjacent[v_i]).intersection(set([P_x[i-1], P_x[i+1]]))) != 2:
+            return False
+    
+    return True
+
+def test_two_adj_feasible(P_x, v_i, v_j, main_problem):
+    if not test_adj_feasible(P_x, v_i, main_problem):   
+        return False
+    if not test_adj_feasible(P_x, v_j, main_problem):   
+        return False
+    return True
+
 def mut_invert_route_vertices(routes_R, main_problem):
     '''A mutation function for inverting a randomly selected vertex and a 
-    potential inversion counter-part'''
-    R_1 = routes_R   
-    search_order = random.sample(range(len(R_1)), k=len(R_1))
+    potential inversion counter-part'''   
+    debug = False
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
     
     for i in search_order:
-        if len(R_1[i]) > 2:
-            i_start = random.randint(0, len(R_1[i])-1)
-            vertex_start = R_1[i][i_start]
-            
-            # Find potential inversions
-            vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
-            potential_inverts = list(set(vertex_neighbours) & set(R_1[i]))
-            
-            if len(potential_inverts) != 0:
-                vertex_end = random.choice(potential_inverts)
-                i_end = R_1[i].index(vertex_end)       
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) > 2:
+            shuffled_vertices = random.sample(range(len(P_i)), k=len(P_i))
+            for i_start in shuffled_vertices:
+                vertex_start = P_i[i_start]
+                if debug: print(f"Vertex START: {vertex_start} \t(loc: {i_start})")
+                # Find potential inversions
+                vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
+                potential_inverts = list(set(vertex_neighbours) & set(P_i)) # ensures the end node is adjacent to at least one other vertex after replaced
+                len_pot = len(potential_inverts)
                 
-                # i_start must be smaller than i_end
-                if i_start > i_end:
-                    temp = i_start
-                    i_start = i_end
-                    i_end = temp
-                    
-                R_mut = copy.deepcopy(R_1)
-                
-                # Reverse the part of route list from index i_start to i_end
-                if i_start == 0:
-                    reversed_path = R_mut[i][i_end:i_start:-1] + R_mut[i][0:i_start+1] + R_mut[i][i_end+1:]
-                elif i_end == (len(R_1[i])-1):
-                    reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1]
+                if len_pot != 0:
+                    potential_inverts = random.sample(potential_inverts, k=len_pot)
                 else:
-                    reversed_path = R_mut[i][0:i_start] + R_mut[i][i_end:i_start-1:-1] + R_mut[i][i_end+1:]
+                    continue
                 
-                R_mut[i] = reversed_path
+                for vertex_end in potential_inverts:
+                    i_end = P_i.index(vertex_end) 
+                    i_start_temp = i_start
                     
-                
-                if True: # Debug
-                    print(f'Start: {i_start} End:{i_end}')
-                    x = [ a==b for a,b in zip(R_1[i],R_mut[i])]
-                    print(R_1[i])
-                    print(R_mut[i])
-                    print(len(R_mut[i]) - sum(x))
-                    print(fn_obj_2(R_mut,main_problem))
-                return R_mut
-        
+                    if debug: print(f"Vertex END: {vertex_end} \t(loc: {i_end})")
+    
+                    # i_start_temp must be smaller than i_end
+                    if i_start_temp > i_end:
+                        temp = i_start_temp
+                        i_start_temp = i_end
+                        i_end = temp
+                    
+                        
+                    # Reverse the part of route list from index i_start_temp to i_end
+                    if i_start_temp == 0:
+                        if i_end != (len(P_i)-1):
+                            inverted_path = P_i[i_end:i_start_temp:-1] + P_i[0:i_start_temp+1] + P_i[i_end+1:]
+                        else:
+                            continue
+    
+                    elif i_end == (len(P_i)-1):
+                        if i_start_temp != 0:
+                            inverted_path = P_i[0:i_start_temp] + P_i[i_end:i_start_temp-1:-1]
+                        else:
+                            continue
+       
+                    else:
+                        inverted_path = P_i[0:i_start_temp] + P_i[i_end:i_start_temp-1:-1] + P_i[i_end+1:]
+    
+                    
+                    if test_two_adj_feasible(inverted_path, vertex_start, vertex_end, main_problem):
+                        
+                        mut_R = copy.deepcopy(routes_R)
+                        mut_R[i] = inverted_path
+                        if ev.evaluateTotalRouteLength(mut_R,main_problem.problem_data.mx_dist)>10000:   
+                            debug = True
+                        
+                        if debug:
+                            print(f'Start: {i_start_temp} End:{i_end}')
+                            x = [ a==b for a,b in zip(routes_R[i],inverted_path)]
+                            print(routes_R[i])
+                            print(inverted_path)
+                            print(len(inverted_path) - sum(x))
+                            #print(fn_obj_2(R_mut,main_problem))
+                            
+                        return mut_R
+                        
     return routes_R
 
-routes_R = offspring_variables[10]
-main_problem = UTNDP_problem_1
-mut_invert_route_vertices(routes_R, main_problem)
+#routes_R = offspring_variables[10]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_invert_route_vertices(routes_R, main_problem)
+#assert routes_R!=mut_R
 
 def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_problem, path_index):
     '''Mutation function that removes a terminal vertex from a path that 

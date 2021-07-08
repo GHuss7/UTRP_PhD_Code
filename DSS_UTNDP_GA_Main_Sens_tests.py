@@ -123,7 +123,7 @@ else:
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
-                    #"Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    "Invert_path_vertices" : gf.mut_invert_route_vertices,
                     
                     "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                     "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,

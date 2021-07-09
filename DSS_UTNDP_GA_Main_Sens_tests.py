@@ -71,13 +71,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][3]   # set the name of the input data
+                   "Mandl8_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
-dis_obj = True
-load_sup = True #TODO Remove later
+dis_obj = False
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -92,6 +92,9 @@ else:
     "Additional_text" : "Tests",
     "Pop_size_to_create" : 2000,
     "Measure_APD" : False, # measure Average Population Diversity
+    "Log_prints_every" : 1, # every n generations a log should be printed
+    "CSV_prints_every" : 100, # every n generations a csv should be printed
+    "PDF_prints_every" : 20, # every n generations a csv should be printed
     }
     
 #%% Set functions to use
@@ -121,8 +124,6 @@ else:
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices,
-                    "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
-                    "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                     
                     "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                     "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -131,7 +132,7 @@ else:
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
                     "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
-                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb, #TODO: Error of divide by zero
+                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                     #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
@@ -169,7 +170,7 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_GA={
     "method" : "GA",
     "population_size" : 50, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 2, # STANDARD: 200 (John 2016)
+    "generations" : 5, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -180,7 +181,7 @@ if Decisions["Choice_import_dictionaries"]:
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,
-    "gen_compare_HV" : 2000, # Compare generations for improvement in HV
+    "gen_compare_HV" : 20, # Compare generations for improvement in HV
     "HV_improvement_th": 0.00005, # Treshold that terminates the search
      "number_of_variables" : parameters_constraints["con_r"],
     "number_of_objectives" : 2, # this could still be automated in the future
@@ -344,10 +345,6 @@ if True:
                 UTNDP_problem_input.problem_data.mx_demand, 
                 UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
-
-    
-    
-    
     if dis_obj:
         def fn_obj_ATT(routes, UTNDP_problem_input):           
             ATT = ev.evalATT(routes, 
@@ -361,8 +358,9 @@ if True:
             RL = ev.evaluateTotalRouteLength(routes,travelTimes)
             return (0, RL) # returns (0, f2_TRT)
         
-        #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
-        fn_obj_2 = fn_obj_TRT
+        #fn_obj_2 = fn_obj_ATT
+        #fn_obj_2 = fn_obj_TRT
+        fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
     
     # Add/Delete individuals to/from population
     def combine_offspring_with_pop_3(pop, offspring_variables, UTNDP_problem_input):
@@ -464,7 +462,6 @@ if True:
                 os.makedirs(path_results_per_run)  
                 
         # Create the initial population
-        # TODO: Insert initial 10000 solutions generatations and NonDom Sort your initial population, ensuring diversity
         # TODO: Remove duplicate functions! (compare set similarity and obj function values)
         
         stats['begin_time'] = datetime.datetime.now() # enter the begin time
@@ -519,12 +516,12 @@ if True:
         # Create data for analysis dataframe
         ld_data_for_analysis = ga.add_UTRP_analysis_data_with_generation_nr_ld(pop_1, UTNDP_problem_1, generation_num=0)
         df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
-        df_overall_analysis = pd.DataFrame()
 
         # Create dataframe for mutations      
         ld_mut = [{"Mut_nr":0, "Mut_successful":0, "Mut_repaired":0, "Included_new_gen":1} for _ in range(pop_size)]
         
-        df_mut_summary = pd.DataFrame()
+        #df_mut_summary = pd.DataFrame()
+        ld_mut_summary = []
         df_mut_ratios = pd.DataFrame(columns=(["Generation"]+UTNDP_problem_1.mutation_names))
         df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio)
         
@@ -560,7 +557,7 @@ if True:
             stats['begin_time_gen'] = datetime.datetime.now() # enter the begin time
             stats['generation'] = i_gen
             
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["Log_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 print("Generation " + str(int(i_gen)) + " Init: ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")",end=" ")
             
             # Crossover
@@ -579,7 +576,9 @@ if True:
             df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
 
             # Determine non-dominated set
-            df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
+            df_non_dominated_set = pd.concat([df_data_for_analysis[df_data_for_analysis['Generation']==i_gen],
+                                             df_non_dominated_set]) # adds the new gen to non-dom set and sifts it
+            df_non_dominated_set = gf.create_non_dom_set_from_dataframe_fast(df_non_dominated_set, obj_1_name='f_1', obj_2_name='f_2')
                 
             # Get new generation
             pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
@@ -599,25 +598,16 @@ if True:
             df_mut_temp.drop(['Route'], axis='columns', inplace=True)
                         
             # Update mutation summary and overall analysis
-            df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
+            #df_mut_summary = df_mut_summary.append(ga.get_mutations_summary(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen))
+            ld_mut_summary_temp = ga.get_mutations_summary_ld(df_mut_temp, len(UTNDP_problem_1.mutation_functions), i_gen)
+            ld_mut_summary.extend(ld_mut_summary_temp)
+            df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary)
+
             df_mut = pd.DataFrame.from_dict(ld_mut)
             df_mut.reset_index(drop=True, inplace=True)
             
-            # Update the mutation ratios
-            def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
-                nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
-                mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
-                success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
-                
-                # reset the success ratios if all have falied
-                if sum(success_ratio) == 0:
-                    success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
-                
-                success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
-                updated_ratio = mutation_threshold + success_proportion
-                UTNDP_problem_1.mutation_ratio = updated_ratio
-                
-            update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
+            # Update the mutation ratios               
+            gf.update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
             df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
             
             # Remove old generation
@@ -635,7 +625,7 @@ if True:
             df_data_generations.loc[i_gen] = [i_gen, HV, APD]
             
             # Intermediate print-outs for observance 
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["CSV_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 try: 
                     df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
                     df_data_for_analysis.to_csv(path_results_per_run / "Data_for_analysis.csv")
@@ -644,11 +634,13 @@ if True:
                     df_non_dominated_set.to_csv(path_results_per_run / "Non_dominated_set.csv")
                     df_data_generations.to_csv(path_results_per_run / "Data_generations.csv")
 
-                    # gv.save_results_analysis_fig_interim_UTRP(initial_set, df_non_dominated_set, 
-                    #                                           validation_data, df_data_generations, 
-                    #                                           name_input_data, path_results_per_run,
-                    #                                           stats_overall['HV Benchmark']) 
+                except PermissionError: pass
+
                     
+            if i_gen % Decisions["PDF_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+                try: 
+                    
+                    df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)
                     # Compute means for generations
                     df_gen_temp = copy.deepcopy(df_data_generations)
                     df_gen_temp = df_gen_temp.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
@@ -661,13 +653,11 @@ if True:
                     
                     gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
 
-                    #gv.save_results_analysis_fig_interim_save_all(initial_set, df_non_dominated_set, validation_data, 
-                    #                                              df_data_generations, name_input_data, path_results_per_run, add_text=i_gen, labels)
                 except PermissionError: pass
             
             stats['end_time_gen'] = datetime.datetime.now() # save the end time of the run
             
-            if i_gen % 20 == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
+            if i_gen % Decisions["Log_prints_every"] == 0 or i_gen == UTNDP_problem_1.problem_GA_parameters.generations:
                 print("Dur: {0} [HV:{1} | BM:{2}] APD:{3}".format(ga.print_timedelta_duration(stats['end_time_gen'] - stats['begin_time_gen']),
                                                                 round(HV, 4),
                                                                 round(stats_overall['HV Benchmark'],4),

@@ -77,7 +77,7 @@ name_input_data = ["Mandl_UTRP", #0
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 dis_obj = False
-load_sup = False #TODO Remove later
+load_sup = True #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -123,18 +123,18 @@ else:
                     #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
-                    "Invert_path_vertices" : gf.mut_invert_route_vertices,
-                    "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                    # "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    # "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
                     "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                     
                     "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
-                    "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                    #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
                     #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
                     #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
                     #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                     
                     "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
-                    "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                    #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                     #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                     #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                     #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
@@ -179,7 +179,7 @@ if Decisions["Choice_import_dictionaries"]:
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
     "mutation_distribution_index" : 10,
     "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
-    "mutation_threshold" : 0.05, # Minimum threshold that mutation probabilities can reach
+    "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
     "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
     "max_evaluations" : 25000,

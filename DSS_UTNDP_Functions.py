@@ -3551,7 +3551,7 @@ def mut_invert_route_vertices(routes_R, main_problem):
 #mut_R = mut_invert_route_vertices(routes_R, main_problem)
 #assert routes_R!=mut_R
 
-def mut_add_vertex_inside_route(routes_R, main_problem):
+def mut_add_vertex_inside_route_not_working(routes_R, main_problem):
     '''A mutation function for adding a randomly selected vertex into a randomly
     selected route in a route set if feasible.'''   
     debug = False
@@ -3593,9 +3593,38 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
                     
                         if debug: print(f"Added {v_pot} between {v_s} and {v_add} at index position {max(P_i.index(v_s), P_i.index(v_add))}")
                         P_i.insert(max(P_i.index(v_s), P_i.index(v_add)), v_pot)
-                        mut_R = routes_R # NB, changes the input route
+                        mut_R = copy.deepcopy(routes_R)
                         mut_R[i] = P_i
                         return mut_R
+                    
+    return routes_R
+
+def mut_add_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for adding a randomly selected vertex into a randomly
+    selected route in a route set if feasible.'''   
+    debug = False
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) < con_max_v:
+            shuffled_vertices = random.sample(range(len(P_i))[:-1], k=len(P_i)-1) # ensures the last position not chosen
+            for s in shuffled_vertices:
+                v_s = P_i[s] # select a random vertex
+                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+                
+                                # Find all the selected vertex's neighbours
+                e_pot_add = [P_i[s], P_i[s+1]] # potential edge to add when v_s removed
+                
+                if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])).difference(set(P_i)):
+                    mut_R = copy.deepcopy(routes_R)
+                    del mut_R[i][s]
+                    if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
+                    return mut_R
                     
     return routes_R
 
@@ -3607,7 +3636,7 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
 def mut_delete_vertex_inside_route(routes_R, main_problem):
     '''A mutation function for deleting a randomly selected vertex from a randomly
     selected route in a route set if feasible.'''   
-    debug = False
+    debug = True
     con_min_v = main_problem.problem_constraints.con_minNodes
     neigh = main_problem.mapping_adjacent
     search_order = random.sample(range(len(routes_R)), k=len(routes_R))
@@ -3626,14 +3655,14 @@ def mut_delete_vertex_inside_route(routes_R, main_problem):
                 # Find all the selected vertex's neighbours
                 e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
                 if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
-                    mut_R = routes_R # NB, changes the input route
+                    mut_R = copy.deepcopy(routes_R)
                     del mut_R[i][s]
                     if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
                     return mut_R
                 
     return routes_R
 
-#routes_R = offspring_variables[10]
+#routes_R = offspring_variables[11]
 #main_problem = UTNDP_problem_1
 #mut_R = mut_delete_vertex_inside_route(routes_R, main_problem)
 #assert routes_R!=mut_R
@@ -4727,7 +4756,7 @@ def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
     success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
     
     # reset the success ratios if all have falied
-    if sum(success_ratio) == 0:
+    if sum(success_ratio[1:]) == 0:
         success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
     
     success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      

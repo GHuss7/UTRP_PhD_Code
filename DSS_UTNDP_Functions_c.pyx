@@ -3457,7 +3457,7 @@ def mut_invert_route_vertices(routes_R, main_problem):
                     
                     if test_two_adj_feasible(inverted_path, vertex_start, vertex_end, main_problem):
                         
-                        mut_R = copy.deepcopy(routes_R)
+                        mut_R = routes_R # NB, changes the input route
                         mut_R[i] = inverted_path
                         # if ev.evaluateTotalRouteLength(mut_R,main_problem.problem_data.mx_dist)>10000:   
                         #     debug = True
@@ -3521,7 +3521,7 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
                     
                         if debug: print(f"Added {v_pot} between {v_s} and {v_add} at index position {max(P_i.index(v_s), P_i.index(v_add))}")
                         P_i.insert(max(P_i.index(v_s), P_i.index(v_add)), v_pot)
-                        mut_R = copy.deepcopy(routes_R)
+                        mut_R = routes_R # NB, changes the input route
                         mut_R[i] = P_i
                         return mut_R
                     
@@ -3554,7 +3554,7 @@ def mut_delete_vertex_inside_route(routes_R, main_problem):
                 # Find all the selected vertex's neighbours
                 e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
                 if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
-                    mut_R = copy.deepcopy(routes_R)
+                    mut_R = routes_R # NB, changes the input route
                     del mut_R[i][s]
                     if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
                     return mut_R
@@ -4590,7 +4590,7 @@ def mutate_overall_routes_all_smart_debug(routes_R, main_problem):
     
 def mutate_route_population(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
-    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    pop_mutated_variables = copy.deepcopy(pop_variables_routes) # NB deepcopy breaks link to variables
     for i in range(len(pop_mutated_variables)):
         mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
         pop_mutated_variables[i] = mut_output["Route"]

@@ -3394,7 +3394,37 @@ def is_route_sublist_in_set(routes_R, index_i):
             return True   
     return False
 
-def mut_invert_route_vertices(routes_R, main_problem):
+def test_adj_feasible(P_x, v_i, main_problem):
+    """A function to check if the two vertices adjacent to vertex v_i has an 
+    edge connecting them in path P_x"""
+    i = P_x.index(v_i) # index of vertex v_i
+    
+    if i == 0:
+        if not set(main_problem.mapping_adjacent[v_i]).intersection(set([P_x[i+1]])):
+            return False
+    elif i == len(P_x)-1:
+        if not set(main_problem.mapping_adjacent[v_i]).intersection(set([P_x[i-1]])):
+            return False
+    else:
+        if len(set(main_problem.mapping_adjacent[v_i]).intersection(set([P_x[i-1], P_x[i+1]]))) != 2:
+            return False
+    
+    return True
+
+# P_x = [5, 7, 9, 2, 1, 3, 11]
+# v_i = 9
+# v_j = 5
+# main_problem = UTNDP_problem_1
+# test_adj_feasible(P_x, v_i, main_problem)
+
+def test_two_adj_feasible(P_x, v_i, v_j, main_problem):
+    if not test_adj_feasible(P_x, v_i, main_problem):   
+        return False
+    if not test_adj_feasible(P_x, v_j, main_problem):   
+        return False
+    return True
+
+def mut_invert_route_vertices_old(routes_R, main_problem):
     '''A mutation function for inverting a randomly selected vertex and a 
     potential inversion counter-part'''
     R_1 = routes_R   
@@ -3402,8 +3432,8 @@ def mut_invert_route_vertices(routes_R, main_problem):
     
     for i in search_order:
         if len(R_1[i]) > 2:
-            i_start = random.randint(0, len(R_1[i])-1)
-            vertex_start = R_1[i][i_start]
+            i_start_overall = random.randint(0, len(R_1[i])-1)
+            vertex_start = R_1[i][i_start_overall]
             
             # Find potential inversions
             vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
@@ -3412,7 +3442,7 @@ def mut_invert_route_vertices(routes_R, main_problem):
             if len(potential_inverts) != 0:
                 vertex_end = random.choice(potential_inverts)
                 i_end = R_1[i].index(vertex_end)       
-                
+                i_start = i_start_overall
                 # i_start must be smaller than i_end
                 if i_start > i_end:
                     temp = i_start
@@ -3440,6 +3470,157 @@ def mut_invert_route_vertices(routes_R, main_problem):
                     print(len(R_mut[i]) - sum(x))
                 return R_mut
         
+    return routes_R
+
+def mut_invert_route_vertices(routes_R, main_problem):
+    '''A mutation function for inverting a randomly selected vertex and a 
+    potential inversion counter-part'''   
+    debug = False
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) > 2:
+            shuffled_vertices = random.sample(range(len(P_i)), k=len(P_i))
+            for i_start in shuffled_vertices:
+                vertex_start = P_i[i_start]
+                if debug: print(f"Vertex START: {vertex_start} \t(loc: {i_start})")
+                # Find potential inversions
+                vertex_neighbours = main_problem.mapping_adjacent[vertex_start]
+                potential_inverts = list(set(vertex_neighbours) & set(P_i)) # ensures the end node is adjacent to at least one other vertex after replaced
+                len_pot = len(potential_inverts)
+                
+                if len_pot != 0:
+                    potential_inverts = random.sample(potential_inverts, k=len_pot)
+                else:
+                    continue
+                
+                for vertex_end in potential_inverts:
+                    i_end = P_i.index(vertex_end) 
+                    i_start_temp = i_start
+                    
+                    if debug: print(f"Vertex END: {vertex_end} \t(loc: {i_end})")
+    
+                    # i_start_temp must be smaller than i_end
+                    if i_start_temp > i_end:
+                        temp = i_start_temp
+                        i_start_temp = i_end
+                        i_end = temp
+                    
+                        
+                    # Reverse the part of route list from index i_start_temp to i_end
+                    if i_start_temp == 0:
+                        if i_end != (len(P_i)-1):
+                            inverted_path = P_i[i_end:i_start_temp:-1] + P_i[0:i_start_temp+1] + P_i[i_end+1:]
+                        else:
+                            continue
+    
+                    elif i_end == (len(P_i)-1):
+                        if i_start_temp != 0:
+                            inverted_path = P_i[0:i_start_temp] + P_i[i_end:i_start_temp-1:-1]
+                        else:
+                            continue
+       
+                    else:
+                        inverted_path = P_i[0:i_start_temp] + P_i[i_end:i_start_temp-1:-1] + P_i[i_end+1:]
+    
+                    
+                    if test_two_adj_feasible(inverted_path, vertex_start, vertex_end, main_problem):
+                        
+                        mut_R = copy.deepcopy(routes_R)
+                        mut_R[i] = inverted_path
+                        if ev.evaluateTotalRouteLength(mut_R,main_problem.problem_data.mx_dist)>10000:   
+                            debug = True
+                        
+                        if debug:
+                            print(f'Start: {i_start_temp} End:{i_end}')
+                            x = [ a==b for a,b in zip(routes_R[i],inverted_path)]
+                            print(routes_R[i])
+                            print(inverted_path)
+                            print(len(inverted_path) - sum(x))
+                            #print(fn_obj_2(R_mut,main_problem))
+                            
+                        return mut_R
+                        
+    return routes_R
+
+def mut_add_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for adding a randomly selected vertex into a randomly
+    selected route in a route set if feasible.'''   
+    debug = False
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) < con_max_v:
+            shuffled_vertices = random.sample(range(len(P_i)), k=len(P_i))
+            for s in shuffled_vertices:
+                v_s = P_i[s] # select a random vertex
+                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+                
+                # Find all the selected vertex's neighbours
+                neigh_v_s = neigh[v_s]                
+                
+                # Find potential inserts
+                v_potentials = list(set(neigh_v_s).difference(set(P_i)))
+                if len(v_potentials) != 0:
+                    if debug: print(f"Potential inserts: {v_potentials}")
+                    v_potentials = random.sample(v_potentials, k=len(v_potentials)) # Shuffle potentials
+                else:
+                    continue
+                
+                # Search through potential vertices to add
+                for v_pot in v_potentials:
+                    if debug: print(f"Eval insert: {v_pot} with Neigh: {neigh[v_pot]}")
+                    neigh_v_pot = neigh[v_pot] 
+                    
+                    v_add_feasibles = list(set(neigh_v_pot).intersection(set(neigh_v_s), set(P_i)))                 
+                    if len(v_add_feasibles) != 0:
+                        #v_add_feasibles = random.sample(v_add_feasibles, k=len(v_add_feasibles)) # Shuffle potentials 
+                        v_add = random.choice(v_add_feasibles)
+                        if debug: print(f"Eval to add vertex: {v_add}")
+                    
+                        if debug: print(f"Added {v_pot} between {v_s} and {v_add} at index position {max(P_i.index(v_s), P_i.index(v_add))}")
+                        P_i.insert(max(P_i.index(v_s), P_i.index(v_add)), v_pot)
+                        mut_R = copy.deepcopy(routes_R)
+                        mut_R[i] = P_i
+                        return mut_R
+                    
+    return routes_R
+
+def mut_delete_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for deleting a randomly selected vertex from a randomly
+    selected route in a route set if feasible.'''   
+    debug = False
+    con_min_v = main_problem.problem_constraints.con_minNodes
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) > con_min_v:
+            # ensures that no terminals may be selected
+            shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+            for s in shuffled_vertex_indices:
+                v_s = P_i[s] # select a random vertex
+                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+                
+                # Find all the selected vertex's neighbours
+                e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
+                if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
+                    mut_R = copy.deepcopy(routes_R)
+                    del mut_R[i][s]
+                    if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
+                    return mut_R
+                
     return routes_R
 
 
@@ -4522,5 +4703,19 @@ def get_equispaced_indices(n_solutions, objs_sorted):
     return seed_indices
 
 
+# %% Update mutation ratios
 
+# AMALGAM
+def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
+    nr_of_mutations = len(UTNDP_problem_1.mutation_functions)
+    mutation_threshold = UTNDP_problem_1.problem_GA_parameters.mutation_threshold
+    success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
+    
+    # reset the success ratios if all have falied
+    if sum(success_ratio) == 0:
+        success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
+    
+    success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
+    updated_ratio = mutation_threshold + success_proportion
+    UTNDP_problem_1.mutation_ratio = updated_ratio
 

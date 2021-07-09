@@ -30,7 +30,9 @@ import networkx as nx
 # %% Import personal functions
 import DSS_Admin as ga
 import DSS_UTNDP_Classes as gc
-import DSS_UTNDP_Functions as gf
+#import DSS_UTNDP_Functions as gf
+import DSS_UTNDP_Functions as gf_p
+import DSS_UTNDP_Functions_c as gf
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
@@ -40,14 +42,14 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
-                   "Mandl_UTRP_dis"][2]   # set the name of the input data
+                   "Mandl_UTRP_dis"][0]   # set the name of the input data
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set variables
 Decisions = {
 "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
 "Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : True,
+"Choice_conduct_sensitivity_analysis" : False,
 "Choice_import_dictionaries" : True,
 "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
 "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis

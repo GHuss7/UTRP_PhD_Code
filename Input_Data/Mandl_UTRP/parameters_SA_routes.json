@@ -1,7 +1,7 @@
 {"Problem_name": "Mandl_UTRP_DBMOSA", 
 "method": "SA", 
 "max_iterations_t": 250, 
-"max_total_iterations": 25000, 
+"max_total_iterations": 40000, 
 "max_epochs": 1500, 
 "min_accepts": 25, 
 "max_attempts": 50, 
@@ -13,6 +13,6 @@
 "Reheating_rate": 1.05, 
 "number_of_initial_solutions": 1, 
 "Feasibility_repair_attempts": 3, 
-"number_of_runs": 20,
+"number_of_runs": 1,
 "iter_compare_HV" : 4000,
 "HV_improvement_th": 0.0001}

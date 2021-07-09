@@ -92,7 +92,7 @@ else:
     "Additional_text" : "Tests",
     "Pop_size_to_create" : 2000,
     "Measure_APD" : False, # measure Average Population Diversity
-    "Log_prints_every" : 1, # every n generations a log should be printed
+    "Log_prints_every" : 20, # every n generations a log should be printed
     "CSV_prints_every" : 100, # every n generations a csv should be printed
     "PDF_prints_every" : 20, # every n generations a csv should be printed
     }
@@ -124,6 +124,8 @@ else:
                     #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                    "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                    "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                     
                     "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                     "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -169,8 +171,8 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 50, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 5, # STANDARD: 200 (John 2016)
+    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 1500, # STANDARD: 200 (John 2016)
     "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
@@ -359,8 +361,8 @@ if True:
             return (0, RL) # returns (0, f2_TRT)
         
         #fn_obj_2 = fn_obj_ATT
-        #fn_obj_2 = fn_obj_TRT
-        fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
+        fn_obj_2 = fn_obj_TRT
+        #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
     
     # Add/Delete individuals to/from population
     def combine_offspring_with_pop_3(pop, offspring_variables, UTNDP_problem_input):

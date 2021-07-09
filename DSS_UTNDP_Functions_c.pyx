@@ -3459,8 +3459,8 @@ def mut_invert_route_vertices(routes_R, main_problem):
                         
                         mut_R = copy.deepcopy(routes_R)
                         mut_R[i] = inverted_path
-                        if ev.evaluateTotalRouteLength(mut_R,main_problem.problem_data.mx_dist)>10000:   
-                            debug = True
+                        # if ev.evaluateTotalRouteLength(mut_R,main_problem.problem_data.mx_dist)>10000:   
+                        #     debug = True
                         
                         if debug:
                             print(f'Start: {i_start_temp} End:{i_end}')
@@ -3478,6 +3478,61 @@ def mut_invert_route_vertices(routes_R, main_problem):
 #main_problem = UTNDP_problem_1
 #mut_R = mut_invert_route_vertices(routes_R, main_problem)
 #assert routes_R!=mut_R
+
+def mut_add_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for inverting a randomly selected vertex and a 
+    potential inversion counter-part'''   
+    debug = False
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) > 2:
+            shuffled_vertices = random.sample(range(len(P_i)), k=len(P_i))
+            for s in shuffled_vertices:
+                v_s = P_i[s] # select a random vertex
+                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+                
+                # Find all the selected vertex's neighbours
+                neigh_v_s = neigh[v_s]                
+                
+                # Find potential inserts
+                v_potentials = list(set(neigh_v_s).difference(set(P_i)))
+                if len(v_potentials) != 0:
+                    if debug: print(f"Potential inserts: {v_potentials}")
+                    v_potentials = random.sample(v_potentials, k=len(v_potentials)) # Shuffle potentials
+                else:
+                    continue
+                
+                # Search through potential vertices to add
+                for v_pot in v_potentials:
+                    if debug: print(f"Eval insert: {v_pot} with Neigh: {neigh[v_pot]}")
+                    neigh_v_pot = neigh[v_pot] 
+                    
+                    v_add_feasibles = list(set(neigh_v_pot).intersection(set(neigh_v_s), set(P_i)))                 
+                    if len(v_add_feasibles) != 0:
+                        #v_add_feasibles = random.sample(v_add_feasibles, k=len(v_add_feasibles)) # Shuffle potentials 
+                        v_add = random.choice(v_add_feasibles)
+                        if debug: print(f"Eval to add vertex: {v_add}")
+                    
+                        if debug: print(f"Added {v_pot} between {v_s} and {v_add} at index position {max(P_i.index(v_s), P_i.index(v_add))}")
+                        P_i.insert(max(P_i.index(v_s), P_i.index(v_add)), v_pot)
+                        mut_R = copy.deepcopy(routes_R)
+                        mut_R[i] = P_i
+                        return mut_R
+                    
+    return routes_R
+
+#routes_R = offspring_variables[10]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_add_vertex_inside_route(routes_R, main_problem)
+#assert routes_R!=mut_R
+
+
+
 
 def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_problem, path_index):
     '''Mutation function that removes a terminal vertex from a path that 

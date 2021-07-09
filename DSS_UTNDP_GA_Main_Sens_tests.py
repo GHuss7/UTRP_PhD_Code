@@ -125,6 +125,7 @@ else:
                     #"Repl_subsets" : gf.mut_replace_path_subsets,
                     "Invert_path_vertices" : gf.mut_invert_route_vertices,
                     "Insert_inside_vertex" : gf_p.mut_add_vertex_inside_route,
+                    "Delete_inside_vertex" : gf_p.mut_delete_vertex_inside_route,
                     
                     "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                     #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -170,9 +171,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1000, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 5, # STANDARD: 20 (John 2016)
+    "population_size" : 50, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 5, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later

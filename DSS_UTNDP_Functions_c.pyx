@@ -3480,9 +3480,10 @@ def mut_invert_route_vertices(routes_R, main_problem):
 #assert routes_R!=mut_R
 
 def mut_add_vertex_inside_route(routes_R, main_problem):
-    '''A mutation function for inverting a randomly selected vertex and a 
-    potential inversion counter-part'''   
+    '''A mutation function for adding a randomly selected vertex into a randomly
+    selected route in a route set if feasible.'''   
     debug = False
+    con_max_v = main_problem.problem_constraints.con_maxNodes
     neigh = main_problem.mapping_adjacent
     search_order = random.sample(range(len(routes_R)), k=len(routes_R))
     if debug: print(f"Search order: {search_order}")
@@ -3490,7 +3491,7 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
     for i in search_order:
         P_i = routes_R[i].copy()
         if debug: print(f"\n\nP_i: {P_i}")
-        if len(P_i) > 2:
+        if len(P_i) < con_max_v:
             shuffled_vertices = random.sample(range(len(P_i)), k=len(P_i))
             for s in shuffled_vertices:
                 v_s = P_i[s] # select a random vertex
@@ -3529,6 +3530,40 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
 #routes_R = offspring_variables[10]
 #main_problem = UTNDP_problem_1
 #mut_R = mut_add_vertex_inside_route(routes_R, main_problem)
+#assert routes_R!=mut_R
+
+def mut_delete_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for deleting a randomly selected vertex from a randomly
+    selected route in a route set if feasible.'''   
+    debug = False
+    con_min_v = main_problem.problem_constraints.con_minNodes
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) > con_min_v:
+            # ensures that no terminals may be selected
+            shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+            for s in shuffled_vertex_indices:
+                v_s = P_i[s] # select a random vertex
+                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+                
+                # Find all the selected vertex's neighbours
+                e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
+                if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
+                    mut_R = copy.deepcopy(routes_R)
+                    del mut_R[i][s]
+                    if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
+                    return mut_R
+                
+    return routes_R
+
+#routes_R = offspring_variables[10]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_delete_vertex_inside_route(routes_R, main_problem)
 #assert routes_R!=mut_R
 
 

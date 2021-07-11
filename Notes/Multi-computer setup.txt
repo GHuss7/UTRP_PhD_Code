@@ -12,7 +12,10 @@ Multi-computer setup:
 
 2.) Install and setup GitHub Desktop with ghuss7
 
-	2.1) Clone DSS-Main repository to default documents
+	2.1) Click to download: 
+		https://central.github.com/deployments/desktop/desktop/latest/win32
+						
+	2.2) Clone DSS-Main repository to default documents
 
 3.) Make sure Spyder and Anaconda are installed
 
@@ -27,6 +30,7 @@ Multi-computer setup:
 	5.1) Download wheel: https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-igraph
 	
 	5.2) pip install path/to/wheel.whl
+		pip install C:\Users\17832020\Documents\GitHub\DSS_Main\Notes\python_igraph-0.9.6-cp38-cp38-win_amd64.whl
 
 6.) Pip installs:
 	

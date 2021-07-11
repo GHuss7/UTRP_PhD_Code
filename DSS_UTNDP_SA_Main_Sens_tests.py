@@ -78,7 +78,7 @@ else:
 # %% Set functions to use
 
 mutations = {#"No_mutation" : gf.no_mutation,
-                #"Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
                 "Delete_vertex" : gf.remove_vertex_from_terminal,
                 #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
@@ -102,6 +102,10 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                 #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
                 #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
+                
+                #"MSC_add_terminal" : gf.perturb_make_small_add_terminal,
+                #"MSC_del_terminal" : gf.perturb_make_small_del_terminal,
+
                 }
 
 all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
@@ -138,16 +142,16 @@ if Decisions["Choice_import_dictionaries"]:
     "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
     "max_total_iterations" : 60000, # the total number of accepts that are allowed
     "max_epochs" : 2000, # the maximum number of epochs that are allowed
-    "min_accepts" : 50, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+    "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
     "max_reheating_times" : 5, # the maximum number of times that reheating can take place
     "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
-    "Temp" : 1000,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
     "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
     "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
     "Reheating_rate" : 1.05, # the geometric reheating rate
     "number_of_initial_solutions" : 1, # sets the number of initial solutions to generate as starting position
-    "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    "Feasibility_repair_attempts" : 10, # the max number of edges that will be added and/or removed to try and repair the route feasibility
     "number_of_runs" : 20, # number of runs to complete John 2016 set 20
     "iter_compare_HV" : 4000, # Compare generations for improvement in HV
     "HV_improvement_th": 0.0001, # Treshold that terminates the search
@@ -385,20 +389,20 @@ if True:
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
                     #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
-                    output_list = gf.mutate_overall_routes_all_smart(routes_R, UTNDP_problem_1)
+                    output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
                     routes_R_new = output_list['Route']
                     
                     while not gf.test_route_feasibility(routes_R_new, UTNDP_problem_1.problem_constraints.__dict__):    # tests whether the new route is feasible
                         for i in range(UTNDP_problem_1.problem_SA_parameters.Feasibility_repair_attempts): # this tries to fix the feasibility, but can be time consuming, 
                                                 # could also include a "connectivity" characteristic to help repair graph
                             #routes_R_new = gf.perturb_make_small_change(routes_R_new, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
-                            output_list = gf.mutate_overall_routes_all_smart(routes_R_new, UTNDP_problem_1)
+                            output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R_new, UTNDP_problem_1)
                             routes_R_new = output_list['Route']
                             
                             if gf.test_route_feasibility(routes_R_new, UTNDP_problem_1.problem_constraints.__dict__):
                                 break
                         #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent) # if unsuccesful, start over
-                        output_list = gf.mutate_overall_routes_all_smart(routes_R, UTNDP_problem_1)
+                        output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
                         routes_R_new = output_list['Route']
                 
                     f_new = fn_obj(routes_R_new, UTNDP_problem_1)

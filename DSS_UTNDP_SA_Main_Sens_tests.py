@@ -49,7 +49,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][0]   # set the name of the input data
+                   "Mandl8_UTRP",][1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -64,8 +64,9 @@ else:
     Decisions = {
     "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : False,
+    "Choice_conduct_sensitivity_analysis" : True,
     "Choice_import_dictionaries" : True,
+    "Choice_relative_results_referencing" : False,
     "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
     "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
     "Choice_import_saved_set" : False, # import the prespecified set
@@ -78,7 +79,7 @@ else:
 # %% Set functions to use
 
 mutations = {#"No_mutation" : gf.no_mutation,
-                "Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                # "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
                 "Delete_vertex" : gf.remove_vertex_from_terminal,
                 #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
@@ -87,9 +88,9 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                 #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                 #"Repl_subsets" : gf.mut_replace_path_subsets,
-                #"Invert_path_vertices" : gf.mut_invert_route_vertices,
-                #"Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
-                #"Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
+                # "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                 
                 #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                 #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -136,11 +137,10 @@ if Decisions["Choice_import_dictionaries"]:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
    
     parameters_SA_routes={
-    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 60000, # the total number of accepts that are allowed
+    "max_total_iterations" : 30000, # the total number of accepts that are allowed
     "max_epochs" : 2000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
@@ -149,12 +149,12 @@ if Decisions["Choice_import_dictionaries"]:
     "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
     "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
     "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-    "Reheating_rate" : 1.05, # the geometric reheating rate
-    "number_of_initial_solutions" : 1, # sets the number of initial solutions to generate as starting position
-    "Feasibility_repair_attempts" : 10, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-    "number_of_runs" : 20, # number of runs to complete John 2016 set 20
-    "iter_compare_HV" : 4000, # Compare generations for improvement in HV
-    "HV_improvement_th": 0.0001, # Treshold that terminates the search
+    "Reheating_rate" : 1.10, # the geometric reheating rate
+    "number_of_initial_solutions" : 10, # sets the number of initial solutions to generate as starting position
+    "Feasibility_repair_attempts" : 5, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    "number_of_runs" : 10, # number of runs to complete John 2016 set 20
+    "iter_compare_HV" : 8000, # Compare iterations for improvement in HV
+    "HV_improvement_th": 0.00005, # Treshold that terminates the search
     "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
     } 
    
@@ -180,7 +180,6 @@ else:
     }
     
     parameters_SA_routes={
-    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
@@ -250,8 +249,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-if True:
-#def main(UTNDP_problem_1):
+# if True:
+def main(UTNDP_problem_1):
     
     """ Keep track of the stats """
     stats_overall = {
@@ -458,7 +457,7 @@ if True:
                 # Test whether HV is still improving
                 iter_compare = UTNDP_problem_1.problem_SA_parameters.iter_compare_HV
                 HV_improvement_th = UTNDP_problem_1.problem_SA_parameters.HV_improvement_th
-                if iteration_t > iter_compare:
+                if total_iterations > iter_compare:
                     HV_diff = ld_SA_analysis[-1]['HV'] - ld_SA_analysis[-iter_compare-1]['HV']
                     if HV_diff < HV_improvement_th:
                         stats['Termination'] = 'Non-improving_HV'
@@ -481,13 +480,20 @@ if True:
                 
                 
                 '''Write all results and parameters to files'''
+               
                 '''Main folder path'''
-                path_parent_folder = Path(os.path.dirname(os.getcwd()))
-                path_results = path_parent_folder / ("Results/Results_"+UTNDP_problem_1.problem_SA_parameters.Problem_name+"/"+UTNDP_problem_1.problem_SA_parameters.Problem_name+"_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+" "+UTNDP_problem_1.problem_SA_parameters.method)
+                if Decisions["Choice_relative_results_referencing"]:
+                    path_parent_folder = Path(os.path.dirname(os.getcwd()))
+                else:
+                    path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+                    if not os.path.isdir(path_parent_folder):
+                        path_parent_folder = Path("C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+                    if not os.path.isdir(path_parent_folder):
+                        path_parent_folder = Path(os.path.dirname(os.getcwd()))
                 
                 path_results = path_parent_folder / ("Results/Results_"+
-                                                     parameters_SA_routes['Problem_name']+
-                                                     "/"+parameters_SA_routes['Problem_name']+
+                                                     name_input_data+"_SA"+
+                                                     "/"+name_input_data+
                                                      "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                                      " "+parameters_SA_routes['method']+
                                                      f"_{UTNDP_problem_1.add_text}")
@@ -565,12 +571,16 @@ if True:
                     axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
                     axs[1, 1].legend(loc="upper right")
                     
-                    manager = plt.get_current_fig_manager()
-                    manager.window.showMaximized()
-                    plt.show()
-                    plt.savefig(path_results_per_run / "Results_objectives.pdf", bbox_inches='tight')
+                    plt.ioff()
+                    plt.savefig(path_results / "Results_objectives.pdf", bbox_inches='tight')
+                    plt.close()
+                    
+                    # manager = plt.get_current_fig_manager()
+                    # manager.window.showMaximized()
+                    # plt.show()
+                    # plt.savefig(path_results_per_run / "Results_objectives.pdf", bbox_inches='tight')
             
-                    manager.window.close()
+                    # manager.window.close()
                     
                     
                     '''Print parameters over time, all solutions and pareto set obtained'''
@@ -602,12 +612,17 @@ if True:
                     axs[1, 1].set(xlabel='Iterations', ylabel='Num_epochs_without_accepting_solution')
                     axs[1, 1].legend(loc="upper left") 
                     
-                    manager = plt.get_current_fig_manager()
-                    manager.window.showMaximized()
-                    plt.show()
-                    plt.savefig(path_results_per_run / "Results_parameters.pdf", bbox_inches='tight')
+                    
+                    plt.ioff()
+                    plt.savefig(path_results / "Results_parameters.pdf", bbox_inches='tight')
+                    plt.close()
+                    
+                    # manager = plt.get_current_fig_manager()
+                    # manager.window.showMaximized()
+                    # plt.show()
+                    # plt.savefig(path_results_per_run / "Results_parameters.pdf", bbox_inches='tight')
             
-                    manager.window.close()
+                    # manager.window.close()
                     
             
     # %% Save results after all runs
@@ -634,7 +649,7 @@ if True:
         #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
         stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
             
-        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
+        # df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")
         del df_durations
         
@@ -693,17 +708,17 @@ if __name__ == "__main__":
         #                     ]
         
         """Quick tests with main parameters only"""
-        sensitivity_list = [#[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+        sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
                             
-                            #[parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
+                            [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
                             
-                            #[parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+                            [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
                             
-                            #[parameters_SA_routes, "Temp", 1, 5, 10, 25, 50, 100, 150, 200],
+                            [parameters_SA_routes, "Temp", 1, 5, 10, 50, 200, 500, 1000, 5000, 10000],
                             
-                            #[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
+                            [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
                             
-                            [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6],
+                            [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6, 10],
                             ]
         
         """Sensitivity analysis with highs and lows"""

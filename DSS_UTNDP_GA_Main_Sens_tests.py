@@ -98,54 +98,54 @@ else:
     }
     
 #%% Set functions to use
-    route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
-                       "KSP_unseen_robust_prob_10000" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
-                       "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
-                        "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
-                        "Unseen_robust" : gc.Routes.return_feasible_route_robust}
-    route_gen_func_name = list(route_gen_funcs.keys())[2]
+route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
+                   "KSP_unseen_robust_prob_10000" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                   "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                    "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
+                    "Unseen_robust" : gc.Routes.return_feasible_route_robust}
+route_gen_func_name = list(route_gen_funcs.keys())[2]
+
+crossover_funcs = {"Mumford" : gf.crossover_mumford,
+                   "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
+                   "Mumford_replace_subsets_ksp" : gf.crossover_mumford_rem_subsets_ksp,
+                   "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
+                   "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
+                   "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
+crossover_func_name = list(crossover_funcs.keys())[5]
+
+mutations = {#"No_mutation" : gf.no_mutation,
+                "Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                "Add_vertex" : gf.add_vertex_to_terminal,
+                "Delete_vertex" : gf.remove_vertex_from_terminal,
+                #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                #"Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
+                #"Repl_subsets" : gf.mut_replace_path_subsets,
+                # "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                # "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
+                
+                "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
+                #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
+                #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
+                #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
+                
+                "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
+                #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
+                #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
+                #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
+                }
+
+all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
+all_functions_dict = {'Route_gen':route_gen_func_name,**all_functions_dict, 'Crossover':crossover_func_name}
     
-    crossover_funcs = {"Mumford" : gf.crossover_mumford,
-                       "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
-                       "Mumford_replace_subsets_ksp" : gf.crossover_mumford_rem_subsets_ksp,
-                       "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
-                       "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
-                       "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
-    crossover_func_name = list(crossover_funcs.keys())[5]
-    
-    mutations = {#"No_mutation" : gf.no_mutation,
-                    "Intertwine_two" : gf.mutate_routes_two_intertwine, 
-                    "Add_vertex" : gf.add_vertex_to_terminal,
-                    "Delete_vertex" : gf.remove_vertex_from_terminal,
-                    #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                    #"Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                    #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
-                    #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
-                    #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
-                    #"Repl_subsets" : gf.mut_replace_path_subsets,
-                    # "Invert_path_vertices" : gf.mut_invert_route_vertices,
-                    # "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
-                    "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
-                    
-                    "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
-                    #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
-                    #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
-                    #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
-                    #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
-                    
-                    "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
-                    #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
-                    #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
-                    #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
-                    #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
-                    }
-    
-    all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
-    all_functions_dict = {'Route_gen':route_gen_func_name,**all_functions_dict, 'Crossover':crossover_func_name}
-        
-    mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
-    mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
-    mut_names = [v['name'] for (k,v) in mutations_dict.items()]
+mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
+mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
+mut_names = [v['name'] for (k,v) in mutations_dict.items()]
 
 # %% Load the respective files
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
@@ -195,7 +195,7 @@ else:
     parameters_constraints = {
     'con_r' : 6,               # number of allowed routes (aim for > [numNodes N ]/[maxNodes in route])
     'con_minNodes' : 2,                        # minimum nodes in a route
-    'con_maxNodes' : 10,                       # maximum nodes in a route
+    'con_maxNodes' : 8,                       # maximum nodes in a route
     'con_N_nodes' : len(mx_dist),              # number of nodes in the network
     'con_fleet_size' : 40,                     # number of vehicles that are allowed
     'con_vehicle_capacity' : 20,               # the max carrying capacity of a vehicle
@@ -290,15 +290,18 @@ else:
 max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
 min_objs = np.array([parameters_input['ref_point_min_f1_ATT'],parameters_input['ref_point_min_f2_TRT']])
 
-            
+        
+# %% Define the adjacent mapping of each node
+mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
+    
 #%% Input parameter tests
 
-'''Test the inputs for feasibility'''
+# '''Test the inputs for feasibility'''
 # Test feasibility if there are enough buses to cover each route once
-if parameters_constraints["con_r"] > parameters_constraints["con_fleet_size"]:
-    print("Warning: Number of available vehicles are less than the number of routes.\n"\
-          "Number of routes allowed set to "+ str(parameters_constraints["con_r"]))
-    parameters_constraints["con_r"] = parameters_constraints["con_fleet_size"]
+# if parameters_constraints["con_r"] > parameters_constraints["con_fleet_size"]:
+#     print("Warning: Number of available vehicles are less than the number of routes.\n"\
+#           "Number of routes allowed set to "+ str(parameters_constraints["con_r"]))
+#     parameters_constraints["con_r"] = parameters_constraints["con_fleet_size"]
 
 
 #%% Define the UTNDP Problem      

@@ -35,6 +35,8 @@ import DSS_UTNDP_Functions as gf_p
 import DSS_UTNDP_Functions_c as gf
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
+import DSS_K_Shortest_Paths as ksp
+
 
 # %% Load the respective instances
 name_input_data = ["Mandl_UTRP", #0
@@ -49,29 +51,109 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl7_UTRP", #9
                    "Mandl8_UTRP",][0]   # set the name of the input data
 
+# %% Set input parameters
+sens_from = 0
+sens_to = (sens_from + 1) if False else -1
+dis_obj = False
+load_sup = True #TODO Remove later
+
+if False:
+    Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
+
+else:
+    Decisions = {
+    "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
+    "Choice_print_results" : True, 
+    "Choice_conduct_sensitivity_analysis" : False,
+    "Choice_import_dictionaries" : True,
+    "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
+    "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
+    "Choice_import_saved_set" : False, # import the prespecified set
+    "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
+    "Additional_text" : "Tests",
+    "Pop_size_to_create" : 2000,
+    }
+
+
+# %% Set functions to use
+
+mutations = {#"No_mutation" : gf.no_mutation,
+                "Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                "Add_vertex" : gf.add_vertex_to_terminal,
+                "Delete_vertex" : gf.remove_vertex_from_terminal,
+                #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                #"Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
+                #"Repl_subsets" : gf.mut_replace_path_subsets,
+                "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
+                
+                #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
+                #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
+                #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
+                #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
+                
+                # "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
+                #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
+                #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
+                #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
+                }
+
+all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
+
+mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
+mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
+mut_names = [v['name'] for (k,v) in mutations_dict.items()]
 
 # %% Load the respective files
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
-# %% Set variables
-Decisions = {
-"Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
-"Choice_print_results" : True, 
-"Choice_conduct_sensitivity_analysis" : False,
-"Choice_import_dictionaries" : True,
-"Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-"Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
-"Choice_import_saved_set" : False, # import the prespecified set
-#"Set_name" : "Overall_Pareto_test_set_for_GA.csv" # the name of the set in the main working folder
-"Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
-}
-
-
-# Load the respective input data (dictionaries) for the instance
+#%% Load and set problem parameters #######################################
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
-    parameters_SA_routes = json.load(open("./Input_Data/"+name_input_data+"/parameters_SA_routes.json"))
+    #parameters_SA_routes = json.load(open("./Input_Data/"+name_input_data+"/parameters_SA_routes.json"))
+
+    file_name_ksp = "K_shortest_paths_50_shortened_5_demand"
+    if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv"): 
+        file_to_find = "./Input_Data/"+name_input_data+"/K_Shortest_Paths/"+file_name_ksp+".csv"
+        if os.path.exists(file_to_find):
+            print(f"Move file {file_name_ksp} to Saved folder")
+        print("Creating k_shortest paths and saving csv file...")
+        df_k_shortest_paths = ksp.create_polished_ksp(mx_dist, mx_demand, k_cutoff=50, save_csv=True)
+        df_k_shortest_paths = pd.read_csv(file_to_find)
+
+    else:
+        df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
+   
+    parameters_SA_routes={
+    'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
+    "method" : "SA",
+    # ALSO: t_max > A_min (max_iterations_t > min_accepts)
+    "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+    "max_total_iterations" : 25000, # the total number of accepts that are allowed
+    "max_epochs" : 2000, # the maximum number of epochs that are allowed
+    "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+    "max_attempts" : 50, # maximum number of attempted moves per epoch
+    "max_reheating_times" : 5, # the maximum number of times that reheating can take place
+    "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
+    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
+    "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+    "Reheating_rate" : 1.05, # the geometric reheating rate
+    "number_of_initial_solutions" : 1, # sets the number of initial solutions to generate as starting position
+    "Feasibility_repair_attempts" : 3, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    "number_of_runs" : 20, # number of runs to complete John 2016 set 20
+    "iter_compare_HV" : 4000, # Compare generations for improvement in HV
+    "HV_improvement_th": 0.0001, # Treshold that terminates the search
+    "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
+    } 
+   
 
 else:
     '''Enter the number of allowed routes''' 
@@ -114,6 +196,12 @@ else:
     "iter_compare_HV" : 4000, # Compare generations for improvement in HV
     "HV_improvement_th": 0.0001, # Treshold that terminates the search
     }
+    
+    # Sensitivity analysis lists    
+    #TODO: Add here
+
+    
+    #TODO: sensitivity_list = sensitivity_list[sens_from:sens_to] # truncates the sensitivity list
 
 '''Set the reference point for the Hypervolume calculations'''
 max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
@@ -129,11 +217,28 @@ UTNDP_problem_1.problem_data = gc.Problem_data(mx_dist, mx_demand, mx_coords)
 UTNDP_problem_1.problem_constraints = gc.Problem_constraints(parameters_constraints)
 UTNDP_problem_1.problem_inputs = gc.Problem_inputs(parameters_input)
 UTNDP_problem_1.problem_SA_parameters = gc.Problem_metaheuristic_inputs(parameters_SA_routes)
+UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
 UTNDP_problem_1.min_objs = min_objs
-UTNDP_problem_1.add_text = "" # define the additional text for the file name
+UTNDP_problem_1.add_text = f"T{parameters_SA_routes['max_total_iterations']}_E{parameters_SA_routes['max_epochs']}_R{parameters_SA_routes['number_of_runs']}" # define the additional text for the file name
+UTNDP_problem_1.mutation_functions = mut_functions
+UTNDP_problem_1.mutation_names = mut_names
+UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 # UTNDP_problem_1.R_routes = R_routes
+
+# Add route compare component
+if os.path.exists("./Input_Data/"+name_input_data+"/Route_compare.txt"):
+    route_file = open("./Input_Data/"+name_input_data+"/Route_compare.txt","r")
+    route_compare = route_file.read()
+    UTNDP_problem_1.route_compare = gf.convert_routes_str2list(route_compare)
+else:
+    route_compare = gc.Routes.return_feasible_route_robust(UTNDP_problem_1)
+    route_file = open("./Input_Data/"+name_input_data+"/Route_compare.txt","w")
+    route_file.write(gf.convert_routes_list2str(route_compare))
+    route_file.close()
+    UTNDP_problem_1.route_compare = route_compare
+del route_file, route_compare
 
 if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
@@ -210,7 +315,7 @@ if True:
                 f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
                 df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
             
-    # %% Simulated Annealing Algorithm for each of the initial route sets
+    # %% Simulated Annealing Algorithm for each of the initial route sets #########################
     '''Simulated Annealing Algorithm for each of the initial route sets'''
     run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # default values
     
@@ -273,15 +378,22 @@ if True:
                 prob_acceptance_list = []
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
-                    routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
+                    #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
+                    output_list = gf.mutate_overall_routes_all_smart(routes_R, UTNDP_problem_1)
+                    routes_R_new = output_list['Route']
                     
                     while not gf.test_route_feasibility(routes_R_new, UTNDP_problem_1.problem_constraints.__dict__):    # tests whether the new route is feasible
                         for i in range(UTNDP_problem_1.problem_SA_parameters.Feasibility_repair_attempts): # this tries to fix the feasibility, but can be time consuming, 
                                                 # could also include a "connectivity" characteristic to help repair graph
-                            routes_R_new = gf.perturb_make_small_change(routes_R_new, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
+                            #routes_R_new = gf.perturb_make_small_change(routes_R_new, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
+                            output_list = gf.mutate_overall_routes_all_smart(routes_R_new, UTNDP_problem_1)
+                            routes_R_new = output_list['Route']
+                            
                             if gf.test_route_feasibility(routes_R_new, UTNDP_problem_1.problem_constraints.__dict__):
                                 break
-                        routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent) # if unsuccesful, start over
+                        #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent) # if unsuccesful, start over
+                        output_list = gf.mutate_overall_routes_all_smart(routes_R, UTNDP_problem_1)
+                        routes_R_new = output_list['Route']
                 
                     f_new = fn_obj(routes_R_new, UTNDP_problem_1)
                     HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)

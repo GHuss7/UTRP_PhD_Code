@@ -1310,6 +1310,32 @@ def perturb_make_small_change(routes_R, r, mapping_adjacent):
         change_delete_node_from_back(R, r)
     return R    
 
+def perturb_make_small_add_terminal(routes_R, main_problem):
+    # makes a small change to the route set by adding terminal vertex
+    r = main_problem.problem_constraints.con_r
+    mapping_adjacent = main_problem.mapping_adjacent
+    
+    R = copy.deepcopy(routes_R)
+    p = random.uniform(0,1)
+    if p < 0.50:
+        change_add_node_to_first_node(R, r, mapping_adjacent)
+    else:
+        change_add_node_to_last_node(R, r, mapping_adjacent)
+    return R 
+
+def perturb_make_small_del_terminal(routes_R, main_problem):
+    # makes a small change to the route set by deleting terminal vertex
+    r = main_problem.problem_constraints.con_r
+    
+    R = copy.deepcopy(routes_R)
+    p = random.uniform(0,1)
+    if p < 0.50:
+        change_delete_node_from_front(R, r)
+    else:
+        change_delete_node_from_back(R, r)
+        
+    return R 
+
 def test_connectedness_nx(routes_R):
     route_links = convert_paths_to_links(routes_R)
     G = nx.Graph()

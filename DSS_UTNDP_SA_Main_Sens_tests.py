@@ -78,7 +78,7 @@ else:
 # %% Set functions to use
 
 mutations = {#"No_mutation" : gf.no_mutation,
-                "Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                #"Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
                 "Delete_vertex" : gf.remove_vertex_from_terminal,
                 #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
@@ -87,9 +87,9 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                 #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                 #"Repl_subsets" : gf.mut_replace_path_subsets,
-                "Invert_path_vertices" : gf.mut_invert_route_vertices,
-                "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
-                "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
+                #"Invert_path_vertices" : gf.mut_invert_route_vertices,
+                #"Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                #"Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                 
                 #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                 #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -135,14 +135,14 @@ if Decisions["Choice_import_dictionaries"]:
     'Problem_name' : f"{name_input_data}_UTRP_DBMOSA", # Specify the name of the problem currently being addresses
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-    "max_iterations_t" : 250, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 25000, # the total number of accepts that are allowed
+    "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+    "max_total_iterations" : 60000, # the total number of accepts that are allowed
     "max_epochs" : 2000, # the maximum number of epochs that are allowed
-    "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+    "min_accepts" : 50, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
     "max_reheating_times" : 5, # the maximum number of times that reheating can take place
     "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
-    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    "Temp" : 1000,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
     "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
     "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
     "Reheating_rate" : 1.05, # the geometric reheating rate
@@ -336,7 +336,11 @@ if True:
             stats['begin_time'] = datetime.datetime.now() # enter the begin time
             stats['run_number'] = f"{run_nr + 1}.{route_set_nr}"
         
-            routes_R = routes_R_initial_set[route_set_nr] # Choose the initial route set to begin with
+            if route_set_nr < len(routes_R_initial_set): 
+                routes_R = routes_R_initial_set[route_set_nr] # Choose the initial route set to begin with
+            else: # if route_ser_number is more than entries in the route set
+                routes_R = random.choice(routes_R_initial_set)
+            
             '''Initiate algorithm'''
             epoch = 1 # Initialise the epoch counter
             total_iterations = 0 
@@ -457,7 +461,7 @@ if True:
                         print(f'Run terminated by non-improving HV after Iter {total_iterations} [Iter comp:{iter_compare} | HV diff: {HV_diff}')
                         break
                 
-            del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, i, iteration_t, counter_archive
+            del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, iteration_t, counter_archive
         
             
          # %% Saving Results per run

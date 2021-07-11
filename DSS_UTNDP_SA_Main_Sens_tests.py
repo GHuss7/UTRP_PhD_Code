@@ -36,13 +36,21 @@ import DSS_UTNDP_Functions_c as gf
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
 
-# %% Load the respective files
+# %% Load the respective instances
 name_input_data = ["Mandl_UTRP", #0
                    "Mumford0_UTRP", #1
                    "Mumford1_UTRP", #2
                    "Mumford2_UTRP", #3
                    "Mumford3_UTRP", #4
-                   "Mandl_UTRP_dis"][0]   # set the name of the input data
+                   "Mandl_UTRP_testing", #5
+                   "Mandl_UTRP_dis", #6
+                   "Mandl4_UTRP", #7
+                   "Mandl6_UTRP", #8
+                   "Mandl7_UTRP", #9
+                   "Mandl8_UTRP",][0]   # set the name of the input data
+
+
+# %% Load the respective files
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 
 # %% Set variables
@@ -148,11 +156,22 @@ if True:
                 UTNDP_problem_input.problem_data.mx_demand, 
                 UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
-    def fn_obj_row(routes):
-        return (ev.evalObjs(routes, 
-                UTNDP_problem_1.problem_data.mx_dist, 
-                UTNDP_problem_1.problem_data.mx_demand, 
-                UTNDP_problem_1.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
+    if dis_obj:
+        def fn_obj_ATT(routes, UTNDP_problem_input):           
+            ATT = ev.evalATT(routes, 
+                        UTNDP_problem_input.problem_data.mx_dist, 
+                        UTNDP_problem_input.problem_data.mx_demand, 
+                        UTNDP_problem_input.problem_inputs.__dict__)
+            return (ATT, 0) # returns (f1_ATT, 0)
+        
+        def fn_obj_TRT(routes, UTNDP_problem_input):
+            travelTimes = UTNDP_problem_input.problem_data.mx_dist
+            RL = ev.evaluateTotalRouteLength(routes,travelTimes)
+            return (0, RL) # returns (0, f2_TRT)
+        
+        #fn_obj_2 = fn_obj_ATT
+        fn_obj_2 = fn_obj_TRT
+        #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
     
     # %% Generate an initial feasible solution
     #routes_R = gf.generate_initial_feasible_route_set(mx_dist, UTNDP_problem_1.problem_constraints.__dict__)

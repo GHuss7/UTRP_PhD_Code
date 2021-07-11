@@ -4499,7 +4499,10 @@ def mutate_overall_routes_all(routes_R, main_problem):
 def mutate_overall_routes_all_smart(routes_R, main_problem):
     """This is a function that helps with the overall random choosing of any of 
     the predefined mutations, and can be appended easily"""
-    mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
+    try:
+        mut_prob = main_problem.problem_GA_parameters.mutation_probability # mutation probability
+    except:
+        mut_prob = 1
     mut_ratio = main_problem.mutation_ratio
     #mut_ratio = [0.2, 0.4, 0.2, 0.2] # mutation ratio list
     mut_functions = main_problem.mutation_functions

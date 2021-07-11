@@ -225,6 +225,8 @@ UTNDP_problem_1.add_text = f"T{parameters_SA_routes['max_total_iterations']}_E{p
 UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
+UTNDP_problem_1.problem_GA_parameters = {'mutation_probability' : 1} # setting for mutations
+
 # UTNDP_problem_1.R_routes = R_routes
 
 # Add route compare component

@@ -46,26 +46,33 @@ for results_folder_name in result_entries:
 
         """Capture all the results into dataframes"""
         if parameter_name in parameters_list:
-            df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV_with_outliers.csv")
-            df_results_read["parameter"] = parameter_name
-            df_results_read["value"] = value
-            #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
-
-            df_index = parameters_list.index(parameter_name)
-            df_list_of_ST_results_HV[df_index] = df_list_of_ST_results_HV[df_index].append(df_results_read)
+            try:
+                df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV.csv")
+                df_results_read["parameter"] = parameter_name
+                df_results_read["value"] = value
+                #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
+    
+                df_index = parameters_list.index(parameter_name)
+                df_list_of_ST_results_HV[df_index] = df_list_of_ST_results_HV[df_index].append(df_results_read)
+            except:
+                print(f"FILE NOT FOUND: {path_to_main_folder / results_folder_name}/Results_description_HV.csv")
         
         else:
             # Creates the new dataframe
-            parameters_list.append(parameter_name)
-            df_list_of_ST_results_HV.append(pd.DataFrame())
+            try:
+                df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV.csv")
+                df_results_read["parameter"] = parameter_name
+                df_results_read["value"] = value
+                #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
             
-            df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV_with_outliers.csv")
-            df_results_read["parameter"] = parameter_name
-            df_results_read["value"] = value
-            #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
+                parameters_list.append(parameter_name)
+                df_list_of_ST_results_HV.append(pd.DataFrame())
+                
+                df_index = parameters_list.index(parameter_name)
+                df_list_of_ST_results_HV[df_index] = df_results_read
             
-            df_index = parameters_list.index(parameter_name)
-            df_list_of_ST_results_HV[df_index] = df_results_read
+            except:
+                print(f"FILE NOT FOUND: {path_to_main_folder / results_folder_name}/Results_description_HV.csv")
 
 
 """Print dataframes as .csv files"""

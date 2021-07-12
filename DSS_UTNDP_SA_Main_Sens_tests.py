@@ -363,7 +363,7 @@ if True:
         routes_R_initial_set = pop_1.variables # create the list
         
         # create the dataframe
-        df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","Routes"])   
+        df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","R_x"])   
         for i in range(len(routes_R_initial_set)):
             f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
             df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
@@ -421,7 +421,7 @@ if True:
             reheated = 0 # Initialise the number of times reheated
             SA_Temp = UTNDP_problem_1.problem_SA_parameters.Temp # initialise the starting temperature
             
-            df_archive = pd.DataFrame(columns=["f_1","f_2","Routes"]) # create an archive in the correct format
+            df_archive = pd.DataFrame(columns=["f_1","f_2","R_x"]) # create an archive in the correct format
             counter_archive = 1
             # df_SA_analysis = pd.DataFrame(columns = ["f_1",\
             #                                          "f_2",\

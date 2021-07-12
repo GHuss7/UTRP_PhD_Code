@@ -530,7 +530,7 @@ if True:
         #df_mut_summary = pd.DataFrame()
         ld_mut_summary = []
         df_mut_ratios = pd.DataFrame(columns=(["Generation"]+UTNDP_problem_1.mutation_names))
-        df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio)
+        df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio) #TODO: Convert to list of dictionaries
         
         # Determine non-dominated set
         df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
@@ -614,7 +614,7 @@ if True:
             df_mut.reset_index(drop=True, inplace=True)
             
             # Update the mutation ratios               
-            gf.update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
+            gf_p.update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
             df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
             
             # Remove old generation
@@ -806,7 +806,7 @@ if True:
                                                   path_results, labels,
                                                   stats_overall['HV Benchmark'])
             
-                gf.print_extreme_solutions(df_overall_pareto_set, HV, stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
+                gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
                 # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
             
             except PermissionError: pass

@@ -682,6 +682,68 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
         plt.close()
     except:
         pass
+    
+def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, validation_data, df_data, df_mut_ratios, name_input_data, path_results_per_run, labels, validation_line=False):
+    '''Print Objective functions over time, all solutions and pareto set obtained'''
+    '''labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations format
+    If the value of the validation HV line is given, it is printed'''
+    fig, axs = plt.subplots(2, 2)
+    fig.set_figheight(15)
+    fig.set_figwidth(20)
+    
+    if len(df_data) < 1000:
+        n_th = 1
+    elif len(df_data) < 10000:
+        n_th = 10
+    else:
+        n_th = 100 
+    
+    axs[0, 0].set_title(f'Objectives for every {n_th}_th iteration')
+    axs[0, 0].plot(range(len(df_data))[::n_th], df_data[labels[0]][::n_th], c='r', label=labels[2])
+    axs[0, 0].set(xlabel='Iteration', ylabel=labels[2])
+    axs[0, 0].legend(loc=0) 
+    ax_twin = axs[0, 0].twinx()
+    ax_twin.plot(range(len(df_data))[::n_th], df_data[labels[1]][::n_th], c='b', label=labels[3])
+    ax_twin.set(ylabel=labels[3])
+    ax_twin.legend(loc=0) 
+    
+    
+    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+    for mut_nr in range(1,len(df_mut_smooth.columns)):
+        axs[1, 0].plot(range(len(df_data))[::n_th], df_mut_smooth[df_mut_smooth.columns[mut_nr]][::n_th], label=df_mut_smooth.columns[mut_nr])
+    axs[1, 0].set_title('Mutation ratios over all iterations')
+    axs[1, 0].set(xlabel='Iteration', ylabel='Mutation ratio')
+    axs[1, 0].legend(loc=0) 
+    
+    axs[0, 1].plot(range(len(df_data))[::n_th], df_data["HV"][::n_th], c='r', label='HV obtained')
+    axs[0, 1].set_title(f'HV for every {n_th}_th iteration')
+    axs[0, 1].set(xlabel='Iteration', ylabel='HV [%]')
+    axs[0, 1].legend(loc=0)
+    if validation_line:
+        axs[0, 1].plot(range(len(df_data))[::n_th], np.ones(len(df_data))[::n_th]*validation_line,\
+                        c='black', label='Benchmark')
+    ax_twin = axs[0, 1].twinx()
+    ax_twin.plot(range(len(df_data))[::n_th], df_data["Temperature"][::n_th], c='b', label='Temperature')
+    ax_twin.set(ylabel='Temperature for search')
+    ax_twin.legend(loc=0)
+            
+    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Initial set')
+    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, marker="o", label='Non-dom set obtained')
+
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1, 1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
+    axs[1, 1].set_title('Non-dominated set obtained vs benchmark results')
+    axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
+    axs[1, 1].legend(loc=0)
+    try:
+        plt.ioff()
+        plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+        plt.close()
+    except:
+        pass
 
 def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results, labels, validation_line=False):
     '''Print Objective functions over time, all solutions and pareto set obtained'''

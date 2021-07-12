@@ -49,7 +49,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][1]   # set the name of the input data
+                   "Mandl8_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -69,7 +69,7 @@ else:
     "Choice_relative_results_referencing" : False,
     "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
     "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
-    "Choice_import_saved_set" : False, # import the prespecified set
+    "Choice_import_saved_set" : True, # import the prespecified set
     "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
     "Additional_text" : "Tests",
     "Pop_size_to_create" : 2000,
@@ -77,6 +77,12 @@ else:
 
 
 # %% Set functions to use
+route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_k_shortest,
+                   "KSP_unseen_robust_prob_10000" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                   "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
+                    "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
+                    "Unseen_robust" : gc.Routes.return_feasible_route_robust}
+route_gen_func_name = list(route_gen_funcs.keys())[2]
 
 mutations = {#"No_mutation" : gf.no_mutation,
                 "Intertwine_two" : gf.mutate_routes_two_intertwine, 
@@ -140,7 +146,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 30000, # the total number of accepts that are allowed
+    "max_total_iterations" : 200, # the total number of accepts that are allowed
     "max_epochs" : 4000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
@@ -228,6 +234,7 @@ UTNDP_problem_1.add_text = f"T{parameters_SA_routes['max_total_iterations']}_E{p
 UTNDP_problem_1.mutation_functions = mut_functions
 UTNDP_problem_1.mutation_names = mut_names
 UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
+UTNDP_problem_1.mutation_ratio_counts = [round(x*100,0) for  x in UTNDP_problem_1.mutation_ratio]
 UTNDP_problem_1.problem_GA_parameters = {'mutation_probability' : 1} # setting for mutations
 
 # UTNDP_problem_1.R_routes = R_routes
@@ -249,8 +256,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-# if True:
-def main(UTNDP_problem_1):
+if True:
+# def main(UTNDP_problem_1):
     
     """ Keep track of the stats """
     stats_overall = {
@@ -282,6 +289,34 @@ def main(UTNDP_problem_1):
         #fn_obj_2 = fn_obj_ATT
         fn_obj_2 = fn_obj_TRT
         #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
+        
+    # %% Load files and set folder paths    
+    '''Load validation data'''
+    if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
+        validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
+        stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
+                                                               UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+    else:
+        validation_data = False
+        stats_overall['HV Benchmark'] = 0
+
+    
+    '''Main folder path'''
+    if Decisions["Choice_relative_results_referencing"]:
+        path_parent_folder = Path(os.path.dirname(os.getcwd()))
+    else:
+        path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+        if not os.path.isdir(path_parent_folder):
+            path_parent_folder = Path("C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
+        if not os.path.isdir(path_parent_folder):
+            path_parent_folder = Path(os.path.dirname(os.getcwd()))
+    
+    path_results = path_parent_folder / ("Results/Results_"+
+                                         name_input_data+"_SA"+
+                                         "/"+name_input_data+
+                                         "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
+                                         " "+parameters_SA_routes['method']+
+                                         f"_{UTNDP_problem_1.add_text}")
     
     # %% Generate an initial feasible solution
     #routes_R = gf.generate_initial_feasible_route_set(mx_dist, UTNDP_problem_1.problem_constraints.__dict__)
@@ -295,15 +330,46 @@ def main(UTNDP_problem_1):
     '''Initial solutions'''
     
     if Decisions["Choice_import_saved_set"]: # Make true to import a set that is saved
-        df_routes_R_initial_set = pd.read_csv(Decisions["Set_name"]) 
-        df_routes_R_initial_set = df_routes_R_initial_set.drop(df_routes_R_initial_set.columns[0], axis=1)
+        # df_routes_R_initial_set = pd.read_csv(Decisions["Set_name"]) 
+        # df_routes_R_initial_set = df_routes_R_initial_set.drop(df_routes_R_initial_set.columns[0], axis=1)
     
-        routes_R_initial_set = list()
-        for i in range(len(df_routes_R_initial_set)):
-            routes_R_initial_set.append(gf.convert_routes_str2list(df_routes_R_initial_set.iloc[i,2]))
+        # routes_R_initial_set = list()
+        # for i in range(len(df_routes_R_initial_set)):
+        #     routes_R_initial_set.append(gf.convert_routes_str2list(df_routes_R_initial_set.iloc[i,2]))
         
-        print("Initial route set imported with size: "+str(len(routes_R_initial_set)))
+        
+        '''Load initial solutions from populations'''
+        
+        directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
+        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj, pop_size_to_create=Decisions["Pop_size_to_create"])
+        
+        if load_sup:
+            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj, pop_loaded)
+            pop_1 = pop_sup_loaded
+        
+        else:
+            pop_1 = pop_loaded
+            
+        #pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
+        #pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_sup_loaded)
+        
+        # Get non-dominated initial population
+        pop_size = UTNDP_problem_1.problem_SA_parameters.number_of_initial_solutions
+        pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
+        survivor_indices = gf.get_survivors_norm(pop_1, pop_size)
+        gf.keep_individuals(pop_1, survivor_indices)
+        pop_1.population_size = pop_size
+        
+        routes_R_initial_set = pop_1.variables # create the list
+        
+        # create the dataframe
+        df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","Routes"])   
+        for i in range(len(routes_R_initial_set)):
+            f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+            df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
     
+        print("Initial route set imported with size: "+str(len(routes_R_initial_set)))
+        
     else:        
         if Decisions["Choice_generate_initial_set"]:
             '''Generate initial route sets for input as initial solutions'''
@@ -315,11 +381,13 @@ def main(UTNDP_problem_1):
             routes_R_initial_set.append(gf.convert_routes_str2list("5-7-9-12*9-7-5-3-4*0-1-2-5-14-6*13-9-6-14-8*1-2-5-14*9-10-11-3*"))
           
             
-            df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
+            df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","Routes"])   
             for i in range(len(routes_R_initial_set)):
                 f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
                 df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
             
+            
+        
     # %% Simulated Annealing Algorithm for each of the initial route sets #########################
     '''Simulated Annealing Algorithm for each of the initial route sets'''
     run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # default values
@@ -353,10 +421,10 @@ def main(UTNDP_problem_1):
             reheated = 0 # Initialise the number of times reheated
             SA_Temp = UTNDP_problem_1.problem_SA_parameters.Temp # initialise the starting temperature
             
-            df_archive = pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"]) # create an archive in the correct format
+            df_archive = pd.DataFrame(columns=["f_1","f_2","Routes"]) # create an archive in the correct format
             counter_archive = 1
-            # df_SA_analysis = pd.DataFrame(columns = ["f1_ATT",\
-            #                                          "f2_TRT",\
+            # df_SA_analysis = pd.DataFrame(columns = ["f_1",\
+            #                                          "f_2",\
             #                                          "HV",\
             #                                          "Temperature",\
             #                                          "C_epoch_number",\
@@ -375,10 +443,16 @@ def main(UTNDP_problem_1):
             # Initial list of dictionaries to contain the SA analysis   
             ld_SA_analysis = ga.add_UTRP_SA_data_ld(f_cur[0], f_cur[1], HV, SA_Temp, epoch, 
                                                             0, 0, 0, gf.convert_routes_list2str(routes_R), 0)
-                        
+              
+            # Create dataframe for mutations      
+            ld_mut = [{"Mut_nr":0, "Mut_successful":0, "Mut_repaired":0, "Route":gf.convert_routes_list2str(routes_R), "Acceptance":-1}]
+            
+            df_mut_ratios = pd.DataFrame(columns=(["Total_iterations"]+UTNDP_problem_1.mutation_names)) # dataframe to print mutation ratios
+            df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio) #TODO: Convert to list of dictionaries
+
+            
             print(f'Epoch:{epoch-1} \tHV:{round(HV, 4)}')
              
-            
             
             while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
                 accepts = 0 # Initialise the accepts
@@ -388,26 +462,33 @@ def main(UTNDP_problem_1):
                 while (iteration_t <= UTNDP_problem_1.problem_SA_parameters.max_iterations_t) and (accepts < UTNDP_problem_1.problem_SA_parameters.min_accepts):
                     '''Generate neighbouring solution'''
                     #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
-                    output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
-                    routes_R_new = output_list['Route']
+                    mut_output = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
+                    routes_R_new = mut_output['Route']
                     
                     while not gf.test_all_four_constraints(routes_R_new, UTNDP_problem_1): # tests whether the new route is feasible
                         for i in range(UTNDP_problem_1.problem_SA_parameters.Feasibility_repair_attempts): # this tries to fix the feasibility, but can be time consuming, 
                                                 # could also include a "connectivity" characteristic to help repair graph
                             #routes_R_new = gf.perturb_make_small_change(routes_R_new, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
-                            output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R_new, UTNDP_problem_1)
-                            routes_R_new = output_list['Route']
+                            # mut_output = gf_p.mutate_overall_routes_all_smart_SA(routes_R_new, UTNDP_problem_1)
+                            # mut_output['Mut_repaired'] = 1
+                            # routes_R_new = mut_output['Route']
+                            
+                            routes_R_new = gf.repair_add_missing_from_terminal_multiple(routes_R_new, UTNDP_problem_1)
+                            mut_output['Route'] = routes_R_new
+                            mut_output['Mut_repaired'] = 1
                             
                             if gf.test_all_four_constraints(routes_R_new, UTNDP_problem_1):
                                 break
                         #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent) # if unsuccesful, start over
-                        output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
-                        routes_R_new = output_list['Route']
-                
+                        mut_output = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
+                        routes_R_new = mut_output['Route']
+                    
+
+                    
+
+                    # Evaluate objective function of new solution
                     f_new = fn_obj(routes_R_new, UTNDP_problem_1)
                     HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
-                    # df_SA_analysis.loc[len(df_SA_analysis)] = [f_new[0], f_new[1], HV,\
-                    #                                            SA_Temp, epoch, iteration_t, accepts, poor_epoch, gf.convert_routes_list2str(routes_R), attempts]
                     
                     ld_SA_analysis = ga.add_UTRP_SA_data_ld(f_new[0], f_new[1], HV, SA_Temp, epoch, 
                                                             iteration_t, accepts, poor_epoch, gf.convert_routes_list2str(routes_R), 
@@ -416,12 +497,14 @@ def main(UTNDP_problem_1):
                     total_iterations = total_iterations + 1 # increments the total iterations for stopping criteria
                 
                     '''Test solution acceptance and add to archive if accepted and non-dominated'''
+                    mut_output['Acceptance'] = -1 # set default acceptance value
                     prob_to_accept = gf.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp)
                     prob_acceptance_list.append(prob_to_accept)
                     if random.uniform(0,1) < prob_to_accept: # probability to accept neighbour solution as current solution
                         routes_R = routes_R_new
                         f_cur = f_new
                         accepts = accepts + 1 
+                        mut_output['Acceptance']=0
                         
                         if gf.test_min_min_non_dominated(df_archive, f_cur[0], f_cur[1]): # means solution is undominated
                             df_archive.loc[counter_archive] = [f_cur[0], f_cur[1], gf.convert_routes_list2str(routes_R)] # adds the new solution
@@ -430,6 +513,7 @@ def main(UTNDP_problem_1):
                             accepts = accepts - 1 # updates the number of solutions accepted in the epoch
                             poor_epoch_flag = False # lowers flag when a solution is added to the archive
                             poor_epoch = 0 # resets the number of epochs without acceptance
+                            mut_output['Acceptance']=1
                     
                     else:
                         if reheated < UTNDP_problem_1.problem_SA_parameters.max_reheating_times: #determines if the max number of reheats have occured
@@ -442,6 +526,27 @@ def main(UTNDP_problem_1):
                                 break # gets out of the inner while loop
                     
                     iteration_t = iteration_t + 1
+                    
+                    '''Mutation evaluation'''
+                    ld_mut.append(mut_output)
+                    if total_iterations>=100:
+                        ld_mut_temp = ld_mut[-100:]
+                        df_mut_temp = pd.DataFrame.from_dict(ld_mut_temp)
+                        df_mut_temp.drop(['Route'], axis='columns', inplace=True)
+                        
+                    # Update the mutation ratio counts
+                    if mut_output['Acceptance'] == -1:
+                        if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] > 1:
+                            UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] -= 1
+                    elif mut_output['Acceptance'] == 1:
+                        if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] < 100:
+                            UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] += 1
+                            
+                    # Update mutation ratios
+                    UTNDP_problem_1.mutation_ratio = UTNDP_problem_1.mutation_ratio_counts / np.sum(UTNDP_problem_1.mutation_ratio_counts)    
+                    df_mut_ratios.loc[total_iterations] = [total_iterations]+list(UTNDP_problem_1.mutation_ratio)
+
+                
                 
                 '''Max accepts reached and continue''' # end of inner while loop
                 if poor_epoch_flag:
@@ -480,23 +585,6 @@ def main(UTNDP_problem_1):
                 
                 
                 '''Write all results and parameters to files'''
-               
-                '''Main folder path'''
-                if Decisions["Choice_relative_results_referencing"]:
-                    path_parent_folder = Path(os.path.dirname(os.getcwd()))
-                else:
-                    path_parent_folder = Path("C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
-                    if not os.path.isdir(path_parent_folder):
-                        path_parent_folder = Path("C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS")
-                    if not os.path.isdir(path_parent_folder):
-                        path_parent_folder = Path(os.path.dirname(os.getcwd()))
-                
-                path_results = path_parent_folder / ("Results/Results_"+
-                                                     name_input_data+"_SA"+
-                                                     "/"+name_input_data+
-                                                     "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
-                                                     " "+parameters_SA_routes['method']+
-                                                     f"_{UTNDP_problem_1.add_text}")
                 
                 '''Sub folder path'''
                 path_results_per_run = path_results / (f"Run_{run_nr + 1}")
@@ -540,31 +628,32 @@ def main(UTNDP_problem_1):
                     
             
                     '''Print Objective functions over time, all solutions and pareto set obtained'''
+                    n_th = 100 # plot every n_th item
                     fig, axs = plt.subplots(2, 2)
                     fig.set_figheight(15)
                     fig.set_figwidth(20)
-                    axs[0, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["f1_ATT"], s=1, c='r', marker="o", label='f1_ATT')
+                    axs[0, 0].scatter(range(len(df_SA_analysis))[::n_th], df_SA_analysis["f_1"][::n_th], s=1, c='r', marker="o", label='f_1')
                     axs[0, 0].set_title('ATT over all iterations')
                     axs[0, 0].set(xlabel='Iterations', ylabel='f1_ATT')
                     axs[0, 0].legend(loc="upper right")
                     
-                    axs[1, 0].scatter(range(len(df_SA_analysis)), df_SA_analysis["f2_TRT"], s=1, c='b', marker="o", label='f2_TRT')
+                    axs[1, 0].scatter(range(len(df_SA_analysis))[::n_th], df_SA_analysis["f_2"][::n_th], s=1, c='b', marker="o", label='f2_TRT')
                     axs[1, 0].set_title('TRT over all iterations')
                     axs[1, 0].set(xlabel='Iterations', ylabel='f2_TRT')
                     axs[1, 0].legend(loc="upper right") 
                     
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
+                    axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], df_SA_analysis["HV"][::n_th], s=1, c='r', marker="o", label='HV obtained')
+                    axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], df_SA_analysis["Temperature"][::n_th]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
                     #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
                        #s=1, c='g', marker="o", label='HV Mumford (2013)')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
+                    axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], np.ones(len(df_SA_analysis))[::n_th]*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
                        s=1, c='black', marker="o", label='HV John (2016)')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
                     
                     axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='orange', marker="o", label='Initial route sets')
-                    axs[1, 1].scatter(df_archive["f2_TRT"], df_archive["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained')
+                    axs[1, 1].scatter(df_archive["f_2"], df_archive["f_1"], s=10, c='r', marker="o", label='Pareto front obtained')
                     #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
                     axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
                     axs[1, 1].set_title('Pareto front obtained vs Mumford Results')
@@ -577,6 +666,8 @@ def main(UTNDP_problem_1):
                                         
                     
                     '''Print parameters over time, all solutions and pareto set obtained'''
+                    n_th = 100 # plot every n_th item
+                    
                     fig, axs = plt.subplots(2, 2)
                     fig.set_figheight(15)
                     fig.set_figwidth(20)
@@ -609,14 +700,25 @@ def main(UTNDP_problem_1):
                     plt.ioff()
                     plt.savefig(path_results_per_run / "Results_parameters.pdf", bbox_inches='tight')
                     plt.close()
-                                        
+                    
+                    
+                                
+            
+                    try:
+                        gv.save_results_analysis_mut_fig_UTRP_SA(df_routes_R_initial_set, df_archive, validation_data, 
+                         df_SA_analysis, df_mut_ratios, name_input_data, 
+                         path_results_per_run, 
+                         ["f_1", "f_2", "f1_ATT", "f2_TRT"],
+                         stats_overall['HV Benchmark'])
+                                             
+                    except PermissionError: pass
             
     # %% Save results after all runs
     if Decisions["Choice_print_results"]:
         '''Save the summarised results'''
         df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs(path_results, UTNDP_problem_1.problem_inputs.__dict__).iloc[:,1:]
         df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
-        df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f1_ATT', ascending=True) # sort
+        df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
         df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
         
         '''Save the stats for all the runs'''
@@ -648,6 +750,10 @@ def main(UTNDP_problem_1):
         ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
         ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
         
+        
+        gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
+
+        
         # %% Plot summary graph
         '''Plot the summarised graph'''
         fig, axs = plt.subplots(1,1)
@@ -655,7 +761,7 @@ def main(UTNDP_problem_1):
         fig.set_figwidth(20)
         
         axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='orange', marker="o", label='Initial route sets')
-        axs.scatter(df_overall_pareto_set["f2_TRT"], df_overall_pareto_set["f1_ATT"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
+        axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
         #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
         axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
         axs.set_title('Pareto front obtained vs Mumford Results')

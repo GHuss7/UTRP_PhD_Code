@@ -809,8 +809,8 @@ def add_UTRP_SA_data_ld(f_new_0, f_new_1, HV, SA_Temp, epoch, iteration_t, accep
     
     if isinstance(ld_data, list):
         ld_data.extend(
-        [{"f1_ATT":f_new_0,
-        "f2_TRT": f_new_1,
+        [{"f_1":f_new_0,
+        "f_2": f_new_1,
         "HV": HV,
         "Temperature": SA_Temp,
         "C_epoch_number": epoch,
@@ -821,8 +821,8 @@ def add_UTRP_SA_data_ld(f_new_0, f_new_1, HV, SA_Temp, epoch, iteration_t, accep
         "Attempts": attempts}])
         
     else:
-        ld_data = [{"f1_ATT": f_new_0,
-        "f2_TRT": f_new_1,
+        ld_data = [{"f_1": f_new_0,
+        "f_2": f_new_1,
         "HV": HV,
         "Temperature": SA_Temp,
         "C_epoch_number": epoch,

@@ -88,7 +88,6 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                 #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                 #"Repl_subsets" : gf.mut_replace_path_subsets,
-                # "Invert_path_vertices" : gf.mut_invert_route_vertices,
                 "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
                 "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                 
@@ -391,14 +390,14 @@ def main(UTNDP_problem_1):
                     output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)
                     routes_R_new = output_list['Route']
                     
-                    while not gf.test_route_feasibility(routes_R_new, UTNDP_problem_1.problem_constraints.__dict__):    # tests whether the new route is feasible
+                    while not gf.test_all_four_constraints(routes_R_new, UTNDP_problem_1): # tests whether the new route is feasible
                         for i in range(UTNDP_problem_1.problem_SA_parameters.Feasibility_repair_attempts): # this tries to fix the feasibility, but can be time consuming, 
                                                 # could also include a "connectivity" characteristic to help repair graph
                             #routes_R_new = gf.perturb_make_small_change(routes_R_new, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent)
                             output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R_new, UTNDP_problem_1)
                             routes_R_new = output_list['Route']
                             
-                            if gf.test_route_feasibility(routes_R_new, UTNDP_problem_1.problem_constraints.__dict__):
+                            if gf.test_all_four_constraints(routes_R_new, UTNDP_problem_1):
                                 break
                         #routes_R_new = gf.perturb_make_small_change(routes_R, UTNDP_problem_1.problem_constraints.con_r, UTNDP_problem_1.mapping_adjacent) # if unsuccesful, start over
                         output_list = gf_p.mutate_overall_routes_all_smart_SA(routes_R, UTNDP_problem_1)

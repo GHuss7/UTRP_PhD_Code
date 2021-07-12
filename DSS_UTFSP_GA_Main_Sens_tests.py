@@ -24,13 +24,14 @@ import datetime
 import time
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
-import igraph as ig
+#import igraph as ig
 import networkx as nx
 import concurrent.futures
 
 # %% Import personal functions
 import DSS_Admin as ga
-import DSS_UTNDP_Functions as gf
+import DSS_UTNDP_Functions_c as gf
+import DSS_UTNDP_Functions as gf_p
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
@@ -60,11 +61,18 @@ from pymoo.util.randomized_argsort import randomized_argsort
 
 from pymoo.model.selection import Selection
 from pymoo.util.misc import random_permuations
+
+np.warnings.filterwarnings('error', category=np.VisibleDeprecationWarning) # find VisibleDeprecationWarning
+
     
 # %% Load the respective files
-#name_input_data = "SSML_STB_1700_UTFSP"      # set the name of the input data
-name_input_data = ["Mandl_Data_John_UTFSP_Best_operator", "SSML_STB_1700_UTFSP"][0]      # set the name of the input data
+name_input_data = ["Mandl_UTFSP",
+                   "Mandl_Data_John_UTFSP_Best_operator", 
+                   "SSML_STB_1700_UTFSP"][1]   # set the name of the input data
+
+# %% Load the respective files
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
+
 if os.path.exists("./Input_Data/"+name_input_data+"/Walk_Matrix.csv"):
     mx_walk = pd.read_csv("./Input_Data/"+name_input_data+"/Walk_Matrix.csv") 
     mx_walk = gf.format_mx_dist(mx_walk)
@@ -78,7 +86,7 @@ Decisions = {
 "Choice_print_results" : True, 
 "Choice_conduct_sensitivity_analysis" : False,
 "Choice_consider_walk_links" : False,
-"Choice_import_dictionaries" : False,
+"Choice_import_dictionaries" : True,
 "Choice_print_full_data_for_analysis" : True,
 "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv" # the name of the set in the main working folder
 }
@@ -91,7 +99,12 @@ if not(Decisions["Choice_consider_walk_links"]):
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
-    parameters_GA_frequencies = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA_frequencies.json"))
+    parameters_GA_frequencies = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
+
+    parameters_GA_frequencies["population_size"] = 20
+    parameters_GA_frequencies["generations"] = 10
+    parameters_GA_frequencies["number_of_runs"] = 1
+
 
 else:
     '''State the various parameter constraints''' 
@@ -749,11 +762,11 @@ def main(UTFSP_problem_1):
         if Decisions["Choice_print_full_data_for_analysis"]:
             data_for_analysis = np.hstack([pop_1.objectives, pop_1.variables]) # create an object to contain all the data for analysis
         df_data_generations = pd.DataFrame(columns = ["Generation","HV"]) # create a df to keep data for SA Analysis
-        df_data_generations.loc[0] = [0, gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)]
+        df_data_generations.loc[0] = [0, gf_p.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)]
             
         
         stats['end_time'] = datetime.datetime.now() # enter the begin time
-        HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
+        HV = gf_p.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
         print("Generation {0} duration: {1} [HV:{2}]".format(str(0),
                                                         ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
                                                         round(HV, 4)))
@@ -784,7 +797,7 @@ def main(UTFSP_problem_1):
             keep_individuals(pop_1, survivor_indices)
         
             # Calculate the HV Quality Measure
-            HV = gf.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
+            HV = gf_p.norm_and_calc_2d_hv_np(pop_1.objectives, UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
             df_data_generations.loc[i_generation+1] = [i_generation+1, HV]
         
             pop_generations = np.vstack([pop_generations, np.hstack([pop_1.objectives, np.full((len(pop_1.objectives),1),i_generation+1)])]) # add the population to the generations
@@ -900,7 +913,7 @@ def main(UTFSP_problem_1):
                     axs[1, 0].legend(loc="upper right") 
                     
                     axs[0, 1].scatter(df_data_generations["Generation"], df_data_generations["HV"], s=1, c='r', marker="o", label='HV obtained')
-                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs),\
+                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf_p.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs),\
                     #   s=1, c='g', marker="o", label='HV Mumford (2013)')
                     axs[0, 1].set_title('HV over all generations')
                     axs[0, 1].set(xlabel='Generations', ylabel='%')
@@ -943,9 +956,9 @@ def main(UTFSP_problem_1):
         stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
         stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        #stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-        stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
-        #stats_overall['HV Benchmark'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
+        #stats_overall['HV initial set'] = gf_p.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
+        stats_overall['HV obtained'] = gf_p.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
+        #stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
         
         df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")

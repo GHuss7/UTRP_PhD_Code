@@ -1,0 +1,1 @@
+{"method": "GA", "population_size": 200, "generations": 60, "number_of_runs": 1, "crossover_probability": 0.7, "crossover_distribution_index": 5, "mutation_probability": 0.16666666666666666, "mutation_distribution_index": 10, "tournament_size": 2, "termination_criterion": "StoppingByEvaluations", "max_evaluations": 40000, "number_of_variables": 6, "number_of_objectives": 2}

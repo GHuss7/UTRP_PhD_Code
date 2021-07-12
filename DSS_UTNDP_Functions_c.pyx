@@ -3571,13 +3571,20 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
                 v_s = P_i[s] # select a random vertex
                 if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
                 
-                                # Find all the selected vertex's neighbours
-                e_pot_add = [P_i[s], P_i[s+1]] # potential edge to add when v_s removed
-                
-                if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])).difference(set(P_i)):
+                # Find all the selected vertex's neighbours
+                e_pot_rep = [P_i[s], P_i[s+1]] # potential edge to replace when vertex is added
+                print(f"Potential edge replacement: \n{e_pot_rep}")
+                pot_adds = set(neigh[e_pot_rep[0]]).intersection(set(neigh[e_pot_rep[1]])).difference(set(P_i))
+                if pot_adds:
+                    print(f"Potential additions: \n{pot_adds}")
+                    v_pot = random.choice(list(pot_adds))
+                    P_i.insert(s+1, v_pot)
+
                     mut_R = copy.deepcopy(routes_R)
-                    del mut_R[i][s]
-                    if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
+                    mut_R[i] = P_i
+
+
+                    if debug: print(f"Adding vertex {v_pot} at position {s}\nP_i: {mut_R[i]} [NEW]")
                     return mut_R
                     
     return routes_R
@@ -4946,7 +4953,6 @@ def get_equispaced_indices(n_solutions, objs_sorted):
 # AMALGAM
 def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
     cdef int nr_of_mutations
-    cdef double mutation_threshold
     cdef double[:] success_ratio, success_proportion, updated_ratio
     
     nr_of_mutations = len(UTNDP_problem_1.mutation_functions)

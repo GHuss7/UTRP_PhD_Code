@@ -4846,8 +4846,10 @@ def update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1):
     success_ratio = df_mut_summary["Inc_over_Tot"].iloc[-nr_of_mutations:].values
     
     # reset the success ratios if all have falied
-    if sum(success_ratio[1:]) == 0:
+    if sum(success_ratio) == 0:
         success_ratio = np.array([1/len(success_ratio) for _ in success_ratio])
+        print("Mutation ratios reset")
+
     
     success_proportion = (success_ratio / sum(success_ratio))*(1-nr_of_mutations*mutation_threshold)      
     updated_ratio = mutation_threshold + success_proportion

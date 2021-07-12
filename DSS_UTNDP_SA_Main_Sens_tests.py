@@ -146,7 +146,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 200, # the total number of accepts that are allowed
+    "max_total_iterations" : 30000, # the total number of accepts that are allowed
     "max_epochs" : 4000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch

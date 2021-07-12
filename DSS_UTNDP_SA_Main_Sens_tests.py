@@ -79,7 +79,7 @@ else:
 # %% Set functions to use
 
 mutations = {#"No_mutation" : gf.no_mutation,
-                # "Intertwine_two" : gf.mutate_routes_two_intertwine, 
+                "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
                 "Delete_vertex" : gf.remove_vertex_from_terminal,
                 #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
@@ -88,7 +88,8 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
                 #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
                 #"Repl_subsets" : gf.mut_replace_path_subsets,
-                "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
+                "Invert_path_vertices" : gf.mut_invert_route_vertices,
+                "Insert_inside_vertex" : gf_p.mut_add_vertex_inside_route,
                 "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                 
                 #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,

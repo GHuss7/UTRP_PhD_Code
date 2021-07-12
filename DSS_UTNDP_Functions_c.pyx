@@ -3556,35 +3556,26 @@ def mut_add_vertex_inside_route_not_working(routes_R, main_problem):
 def mut_add_vertex_inside_route(routes_R, main_problem):
     '''A mutation function for adding a randomly selected vertex into a randomly
     selected route in a route set if feasible.'''   
-    debug = False
     con_max_v = main_problem.problem_constraints.con_maxNodes
     neigh = main_problem.mapping_adjacent
     search_order = random.sample(range(len(routes_R)), k=len(routes_R))
-    if debug: print(f"Search order: {search_order}")
     
     for i in search_order:
         P_i = routes_R[i].copy()
-        if debug: print(f"\n\nP_i: {P_i}")
         if len(P_i) < con_max_v:
             shuffled_vertices = random.sample(range(len(P_i))[:-1], k=len(P_i)-1) # ensures the last position not chosen
             for s in shuffled_vertices:
-                v_s = P_i[s] # select a random vertex
-                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
                 
                 # Find all the selected vertex's neighbours
                 e_pot_rep = [P_i[s], P_i[s+1]] # potential edge to replace when vertex is added
-                print(f"Potential edge replacement: \n{e_pot_rep}")
                 pot_adds = set(neigh[e_pot_rep[0]]).intersection(set(neigh[e_pot_rep[1]])).difference(set(P_i))
                 if pot_adds:
-                    print(f"Potential additions: \n{pot_adds}")
                     v_pot = random.choice(list(pot_adds))
                     P_i.insert(s+1, v_pot)
 
                     mut_R = copy.deepcopy(routes_R)
                     mut_R[i] = P_i
 
-
-                    if debug: print(f"Adding vertex {v_pot} at position {s}\nP_i: {mut_R[i]} [NEW]")
                     return mut_R
                     
     return routes_R

@@ -822,8 +822,8 @@ def main(UTFSP_problem_1):
             '''Main folder path'''
             path_parent_folder = Path(os.path.dirname(os.getcwd()))
             path_results = path_parent_folder / ("Results/Results_"+
-                                                 parameters_input['Problem_name']+
-                                                 "/"+parameters_input['Problem_name']+
+                                                 name_input_data+
+                                                 "/"+name_input_data+
                                                  "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                                  " "+parameters_GA_frequencies['method']+
                                                  f"_{UTFSP_problem_1.add_text}")

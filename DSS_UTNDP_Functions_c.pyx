@@ -3719,6 +3719,59 @@ def mut_replace_vertex_inside_route(routes_R, main_problem):
 #mut_R = mut_replace_vertex_inside_route(routes_R, main_problem)
 #assert routes_R!=mut_R
 
+def mut_swap_vertices_between_routes(routes_R, main_problem):
+    '''A mutation function for swaspping a randomly selected vertex with 
+    another random feasible vertex from a randomly selected route in a route 
+    set if feasible.'''   
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+
+        # ensures that no terminals may be selected
+        shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+        for s in shuffled_vertex_indices:
+            v_s = P_i[s] # select a random vertex
+            
+            # Find all the selected vertex's neighbours
+            e_pot_i = [P_i[s-1], P_i[s+1]] # two neighbours of v_s
+            
+            # see whether the two neighbours have another vertex in common that is not in the route set
+            pot_replace_i = list(set(neigh[e_pot_i[0]]).intersection(set(neigh[e_pot_i[1]])).difference(set(P_i))) 
+            
+            search_order_j = random.sample(range(len(routes_R)), k=len(routes_R))
+            for j in search_order_j:
+                P_j = routes_R[j].copy()
+                
+                # ensures that no terminals may be selected
+                shuffled_vertex_indices_t = random.sample(range(len(P_j))[1:-1], k=len(P_j)-2)
+                    
+                for t in shuffled_vertex_indices_t:
+                    v_t = P_j[t] # select a random vertex
+
+                    # Find all the selected vertex's neighbours
+                    e_pot_j = [P_j[t-1], P_j[t+1]] # two neighbours of v_t
+            
+                    # see whether the two neighbours have another vertex in common that is not in the route set
+                    pot_replace_j = list(set(neigh[e_pot_j[0]]).intersection(set(neigh[e_pot_j[1]])).difference(set(P_j))) 
+
+                    bool_v_s_into_P_j = (len(set([v_s]).intersection(set(pot_replace_j))) == 1) # test if v_s can go into P_j
+                    bool_v_t_into_P_i = (len(set([v_t]).intersection(set(pot_replace_i))) == 1) # test if v_t can go into P_i
+
+                    if bool_v_s_into_P_j & bool_v_t_into_P_i: # if both true, then swap  
+                        mut_R = copy.deepcopy(routes_R)
+                        mut_R[i][s] = v_t
+                        mut_R[j][t] = v_s
+                        return mut_R
+                
+    return routes_R
+
+#routes_R = offspring_variables[11]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_swap_vertices_between_routes(routes_R, main_problem)
+#assert routes_R!=mut_R
+
 def mut_donate_vertex_between_routes(routes_R, main_problem):
     '''A mutation function for donating a randomly selected vertex from a randomly
     selected route to another randomly selected route in a route set if feasible.'''   

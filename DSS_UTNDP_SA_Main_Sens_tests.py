@@ -97,6 +97,11 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 "Invert_path_vertices" : gf.mut_invert_route_vertices,
                 "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
                 "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
+                                
+                "Relocate_inside_vertex" : gf.mut_relocate_vertex_inside_route,
+                "Replace_inside_vertex" : gf.mut_replace_vertex_inside_route,
+                "Donate_between_routes" : gf.mut_donate_vertex_between_routes,
+                "Swap_between_routes" : gf.mut_swap_vertices_between_routes,
                 
                 #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                 #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
@@ -146,7 +151,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 30000, # the total number of accepts that are allowed
+    "max_total_iterations" : 2000, # the total number of accepts that are allowed
     "max_epochs" : 4000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
@@ -709,7 +714,19 @@ def main(UTNDP_problem_1):
                          df_SA_analysis, df_mut_ratios, name_input_data, 
                          path_results_per_run, 
                          ["f_1", "f_2", "f1_ATT", "f2_TRT"],
-                         stats_overall['HV Benchmark'])
+                         stats_overall['HV Benchmark'], type_mut='line')
+                        
+                        gv.save_results_analysis_mut_fig_UTRP_SA(df_routes_R_initial_set, df_archive, validation_data, 
+                         df_SA_analysis, df_mut_ratios, name_input_data, 
+                         path_results_per_run, 
+                         ["f_1", "f_2", "f1_ATT", "f2_TRT"],
+                         stats_overall['HV Benchmark'], type_mut='stacked')
+                                                
+                        gv.save_results_analysis_mut_fig_UTRP_SA(df_routes_R_initial_set, df_archive, validation_data, 
+                         df_SA_analysis, df_mut_ratios, name_input_data, 
+                         path_results_per_run, 
+                         ["f_1", "f_2", "f1_ATT", "f2_TRT"],
+                         stats_overall['HV Benchmark'], type_mut='stacked_smooth')
                                              
                     except PermissionError: pass
             

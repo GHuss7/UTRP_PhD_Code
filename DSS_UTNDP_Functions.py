@@ -3827,6 +3827,75 @@ def mut_replace_vertex_inside_route(routes_R, main_problem):
 #mut_R = mut_replace_vertex_inside_route(routes_R, main_problem)
 #assert routes_R!=mut_R
 
+def mut_swap_vertices_between_routes(routes_R, main_problem):
+    '''A mutation function for swaspping a randomly selected vertex with 
+    another random feasible vertex from a randomly selected route in a route 
+    set if feasible.'''   
+    debug = True
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+
+        # ensures that no terminals may be selected
+        shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+        for s in shuffled_vertex_indices:
+            v_s = P_i[s] # select a random vertex
+            if debug: print(f"Vertex START v_s: {v_s} \t(loc: {s})")
+            
+            # Find all the selected vertex's neighbours
+            e_pot_i = [P_i[s-1], P_i[s+1]] # two neighbours of v_s
+            if debug: print(f"Considering neighbours of v_s: {e_pot_i}")
+            
+            # see whether the two neighbours have another vertex in common that is not in the route set
+            pot_replace_i = list(set(neigh[e_pot_i[0]]).intersection(set(neigh[e_pot_i[1]])).difference(set(P_i))) 
+            if debug: print(f"Pot replace i: {pot_replace_i}")
+            
+            search_order_j = random.sample(range(len(routes_R)), k=len(routes_R))
+            for j in search_order_j:
+                P_j = routes_R[j].copy()
+                if debug: print(f"\n\nP_j: {P_j}")
+                
+                # ensures that no terminals may be selected
+                shuffled_vertex_indices_t = random.sample(range(len(P_j))[1:-1], k=len(P_j)-2)
+                    
+                for t in shuffled_vertex_indices_t:
+                    if debug: print(f"Vertex START v_s: {v_s} \t(loc: {s})")
+                    if debug: print(f"Considering neighbours of v_s: {e_pot_i}")
+                    if debug: print(f"Pot replace i: {pot_replace_i}")
+                    
+                    v_t = P_j[t] # select a random vertex
+                    if debug: print(f"Vertex START v_t: {v_t} \t(loc: {t})")
+                    # Find all the selected vertex's neighbours
+                    e_pot_j = [P_j[t-1], P_j[t+1]] # two neighbours of v_t
+                    if debug: print(f"Considering neighbours of v_t: {e_pot_j}")
+            
+                    # see whether the two neighbours have another vertex in common that is not in the route set
+                    pot_replace_j = list(set(neigh[e_pot_j[0]]).intersection(set(neigh[e_pot_j[1]])).difference(set(P_j))) 
+                    if debug: print(f"Pot replace j: {pot_replace_j}\n")
+
+                    bool_v_s_into_P_j = (len(set([v_s]).intersection(set(pot_replace_j))) == 1) # test if v_s can go into P_j
+                    bool_v_t_into_P_i = (len(set([v_t]).intersection(set(pot_replace_i))) == 1) # test if v_t can go into P_i
+
+
+                    if bool_v_s_into_P_j & bool_v_t_into_P_i: # if both true, then swap
+                        if debug: print(f"P_i: {routes_R[i]} [OLD]\nP_j: {routes_R[j]} [OLD]")
+                        mut_R = copy.deepcopy(routes_R)
+                        mut_R[i][s] = v_t
+                        mut_R[j][t] = v_s
+                        if debug: print(f"Replacing vertex {v_s} with {v_t} (index {s} with {t})\nP_i: {mut_R[i]} [NEW]\nP_j: {mut_R[j]} [NEW]")
+                        return mut_R
+                
+    return routes_R
+
+#routes_R = offspring_variables[11]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_swap_vertices_between_routes(routes_R, main_problem)
+#assert routes_R!=mut_R
+
 def mut_donate_vertex_between_routes(routes_R, main_problem):
     '''A mutation function for donating a randomly selected vertex from a randomly
     selected route to another randomly selected route in a route set if feasible.'''   

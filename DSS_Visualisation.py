@@ -627,7 +627,7 @@ def save_results_analysis_fig(initial_set, df_non_dominated_set, validation_data
     plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
     plt.close()
         
-def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results_per_run, labels, validation_line=False):
+def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results_per_run, labels, validation_line=False, type_mut="line"):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format
     If the value of the validation HV line is given, it is printed'''
@@ -645,13 +645,28 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     ax_twin.set(ylabel=labels[3])
     ax_twin.legend(loc=0) 
     
+    # Mutation plots
+    if type_mut == 'line':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        for mut_nr in range(1,len(df_mut_smooth.columns)):
+            axs[1, 0].plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
     
-    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
-    for mut_nr in range(1,len(df_mut_smooth.columns)):
-        axs[1, 0].plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
+    elif type_mut == 'stacked':
+        mut_names = df_mut_ratios.columns[1:]
+        spread_mutation_values = [df_mut_ratios[y] for y in mut_names]
+        axs[1, 0].stackplot(df_mut_ratios["Generation"], spread_mutation_values, labels=mut_names, linewidth=0)
+    
+    elif type_mut == 'stacked_smooth':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        mut_names = df_mut_smooth.columns[1:]
+        spread_mutation_values = [df_mut_smooth[y] for y in mut_names]
+        axs[1, 0].stackplot(df_mut_smooth["Generation"], spread_mutation_values, labels=mut_names, linewidth=0)
+    else:
+        print(f"Error: {type_mut} is not a valid option for argument 'type_mut'") 
+        
     axs[1, 0].set_title('Mutation ratios over all generations')
     axs[1, 0].set(xlabel='Generations', ylabel='Mutation ratio')
-    axs[1, 0].legend(loc=0) 
+    axs[1, 0].legend(loc='upper left') 
     
     axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', label='HV obtained')
     axs[0, 1].set_title('HV over all generations')
@@ -678,12 +693,12 @@ def save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_
     axs[1, 1].legend(loc=0)
     try:
         plt.ioff()
-        plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+        plt.savefig(path_results_per_run / ("Results_summary_"+ type_mut +".pdf"), bbox_inches='tight')
         plt.close()
     except:
         pass
     
-def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, validation_data, df_data, df_mut_ratios, name_input_data, path_results_per_run, labels, validation_line=False):
+def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, validation_data, df_data, df_mut_ratios, name_input_data, path_results_per_run, labels, validation_line=False, type_mut = 'line'):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     '''labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations format
     If the value of the validation HV line is given, it is printed'''
@@ -706,14 +721,31 @@ def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, val
     ax_twin.plot(range(len(df_data))[::n_th], df_data[labels[1]][::n_th], c='b', label=labels[3])
     ax_twin.set(ylabel=labels[3])
     ax_twin.legend(loc=0) 
+
     
+    # Mutation plots
+    if type_mut == 'line':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        for mut_nr in range(1,len(df_mut_smooth.columns)):
+            axs[1, 0].plot(range(len(df_data))[::n_th], df_mut_smooth[df_mut_smooth.columns[mut_nr]][::n_th], label=df_mut_smooth.columns[mut_nr])
     
-    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
-    for mut_nr in range(1,len(df_mut_smooth.columns)):
-        axs[1, 0].plot(range(len(df_data))[::n_th], df_mut_smooth[df_mut_smooth.columns[mut_nr]][::n_th], label=df_mut_smooth.columns[mut_nr])
+    elif type_mut == 'stacked':
+        mut_names = df_mut_ratios.columns[1:]
+        spread_mutation_values = [df_mut_ratios[y][::n_th] for y in mut_names]
+        axs[1, 0].stackplot(range(len(df_data))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
+    
+    elif type_mut == 'stacked_smooth':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        mut_names = df_mut_smooth.columns[1:]
+        spread_mutation_values = [df_mut_smooth[y][::n_th] for y in mut_names]
+        axs[1, 0].stackplot(range(len(df_data))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
+    else:
+        print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
+    
+      
     axs[1, 0].set_title('Mutation ratios over all iterations')
     axs[1, 0].set(xlabel='Iteration', ylabel='Mutation ratio')
-    axs[1, 0].legend(loc=0) 
+    axs[1, 0].legend(loc='upper left') 
     
     axs[0, 1].plot(range(len(df_data))[::n_th], df_data["HV"][::n_th], c='r', label='HV obtained')
     axs[0, 1].set_title(f'HV for every {n_th}_th iteration')
@@ -740,12 +772,12 @@ def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, val
     axs[1, 1].legend(loc=0)
     try:
         plt.ioff()
-        plt.savefig(path_results_per_run / "Results_summary.pdf", bbox_inches='tight')
+        plt.savefig(path_results_per_run / ("Results_summary_"+ type_mut +".pdf"), bbox_inches='tight')
         plt.close()
     except:
         pass
 
-def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results, labels, validation_line=False):
+def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results, labels, validation_line=False, type_mut = 'line'):
     '''Print Objective functions over time, all solutions and pareto set obtained'''
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format
     If the value of the validation HV line is given, it is printed'''
@@ -764,12 +796,28 @@ def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validati
     ax_twin.legend(loc=0) 
     
     
-    df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
-    for mut_nr in range(3,len(df_mut_smooth.columns)):
-        axs[1, 0].plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
+    # Mutation plots
+    if type_mut == 'line':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        for mut_nr in range(3,len(df_mut_smooth.columns)): # 3 accomodates for the added columns for the read in df
+            axs[1, 0].plot(df_mut_smooth["Generation"], df_mut_smooth[df_mut_smooth.columns[mut_nr]], label=df_mut_smooth.columns[mut_nr])
+    
+    elif type_mut == 'stacked':
+        mut_names = df_mut_ratios.columns[3:]
+        spread_mutation_values = [df_mut_ratios[y] for y in mut_names]
+        axs[1, 0].stackplot(df_mut_ratios["Generation"], spread_mutation_values, labels=mut_names, linewidth=0)
+    
+    elif type_mut == 'stacked_smooth':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        mut_names = df_mut_smooth.columns[3:]
+        spread_mutation_values = [df_mut_smooth[y] for y in mut_names]
+        axs[1, 0].stackplot(df_mut_smooth["Generation"], spread_mutation_values, labels=mut_names, linewidth=0)
+    else:
+        print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
+    
     axs[1, 0].set_title('Averaged mutation ratios over all generations')
     axs[1, 0].set(xlabel='Generations', ylabel='Mutation ratio')
-    axs[1, 0].legend(loc=0) 
+    axs[1, 0].legend(loc='upper left') 
     
     axs[0, 1].plot(df_data_generations["Generation"], df_data_generations["HV"], c='r', label='HV obtained')
     axs[0, 1].set_title('Average HV over all generations')
@@ -795,10 +843,11 @@ def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validati
     axs[1, 1].legend(loc=0)
     try:
         plt.ioff()
-        plt.savefig(path_results / "Averaged_summary.pdf", bbox_inches='tight')
+        plt.savefig(path_results / ("Averaged_summary_"+ type_mut +".pdf"), bbox_inches='tight')
         plt.close()
     except:
         pass
+    
 
 def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels):
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''

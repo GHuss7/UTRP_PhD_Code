@@ -71,7 +71,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][2]   # set the name of the input data
+                   "Mandl8_UTRP",][1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0

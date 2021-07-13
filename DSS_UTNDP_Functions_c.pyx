@@ -3619,6 +3619,172 @@ def mut_delete_vertex_inside_route(routes_R, main_problem):
 #mut_R = mut_delete_vertex_inside_route(routes_R, main_problem)
 #assert routes_R!=mut_R
 
+def mut_relocate_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for relocating a randomly selected vertex from a 
+    randomly selected route in a route set if feasible.'''   
+    mut_R = copy.deepcopy(routes_R)
+    
+    debug = False
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+
+        # ensures that no terminal may be selected
+        shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+        for s in shuffled_vertex_indices:
+            v_s = P_i[s] # select a random vertex
+            if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+            
+            # Find all the selected vertex's neighbours
+            e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
+            # Determine whether it is safe to remove the vertex by checking the neighbours' neighbours
+            if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
+                
+                del mut_R[i][s] # tentatively removes the vertex
+                if debug: print(f"Vertex REMOVED: {v_s} \t(loc: {s})")
+                  
+                shuffled_vertex_indices_t = random.sample(range(len(mut_R[i]))[:-1], k=len(mut_R[i])-1)
+                shuffled_vertex_indices_t.remove(s-1) # ensures the vertex is not placed back into same position with t+1
+                
+                for t in shuffled_vertex_indices_t:
+                    # Find all the selected vertex's neighbours
+                    e_pot_rep = [P_i[t], P_i[t+1]] # potential edge to replace when vertex is added
+                    if debug: print(f"Pot replace: {e_pot_rep}")
+                    # pot_adds = set(neigh[e_pot_rep[0]]).intersection(set(neigh[e_pot_rep[1]])).difference(set(P_i))
+                    # pot_adds = v_s
+                    
+                    
+                    #if debug: print(f"Pot adds: {pot_adds}")
+                    # ensure both vertices in path are neighbours to v_s
+                    if len(set(neigh[v_s]).intersection(set(e_pot_rep)))==2:
+                        #v_pot = random.choice(list(pot_adds))
+                        v_pot = v_s
+                        mut_R[i].insert(t+1, v_pot)
+                        if debug: print(f"Vertex INSERTED: {v_pot} \t(loc: {t+1})\nP_i: {mut_R[i]} [NEW]")
+                
+                        return mut_R
+                
+                mut_R[i] = P_i.copy() # reset the route
+                
+             
+    return routes_R
+
+#routes_R = offspring_variables[11]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_relocate_vertex_inside_route(routes_R, main_problem)
+#assert routes_R!=mut_R
+
+def mut_replace_vertex_inside_route(routes_R, main_problem):
+    '''A mutation function for raplacing a randomly selected vertex with 
+    another random feasible vertex from a randomly selected route in a route 
+    set if feasible.'''   
+    debug = False
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+
+        # ensures that no terminals may be selected
+        shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+        for s in shuffled_vertex_indices:
+            v_s = P_i[s] # select a random vertex
+            if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+            
+            # Find all the selected vertex's neighbours
+            e_pot_add = [P_i[s-1], P_i[s+1]] # two neighbours of v_s
+            
+            # see whether the two neighbours have another vertex in common that is not in the route set
+            pot_replace = list(set(neigh[e_pot_add[0]]).intersection(set(neigh[e_pot_add[1]])).difference(set(P_i))) 
+            
+            if debug: print(f"Edge: {e_pot_add} with potential replacements: {pot_replace}")
+            
+            if pot_replace:
+                v_replace = random.choice(pot_replace)
+                mut_R = copy.deepcopy(routes_R)
+                mut_R[i][s] = v_replace
+                if debug: print(f"Replacing vertex {v_s} with {v_replace}\nP_i: {mut_R[i]} [NEW]")
+                return mut_R
+                
+    return routes_R
+
+#routes_R = offspring_variables[11]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_replace_vertex_inside_route(routes_R, main_problem)
+#assert routes_R!=mut_R
+
+def mut_donate_vertex_between_routes(routes_R, main_problem):
+    '''A mutation function for donating a randomly selected vertex from a randomly
+    selected route to another randomly selected route in a route set if feasible.'''   
+    debug = False
+    con_min_v = main_problem.problem_constraints.con_minNodes
+    con_max_v = main_problem.problem_constraints.con_maxNodes
+    neigh = main_problem.mapping_adjacent
+    search_order = random.sample(range(len(routes_R)), k=len(routes_R))
+    if debug: print(f"Search order: {search_order}")
+    
+    for i in search_order:
+        P_i = routes_R[i].copy()
+        if debug: print(f"\n\nP_i: {P_i}")
+        if len(P_i) > con_min_v:
+            # ensures that no terminals may be selected
+            shuffled_vertex_indices = random.sample(range(len(P_i))[1:-1], k=len(P_i)-2)
+            for s in shuffled_vertex_indices:
+                v_s = P_i[s] # select a random vertex
+                if debug: print(f"Vertex START: {v_s} \t(loc: {s})")
+                
+                # Find all the selected vertex's neighbours
+                e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
+                # Determine whether it is safe to remove the vertex by checking the neighbours' neighbours
+                if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
+                    
+                    search_order_j = random.sample(range(len(routes_R)), k=len(routes_R))
+                    for j in search_order_j:
+                        if i != j:
+                            P_j = routes_R[j].copy()
+                            if debug: print(f"\n\nP_j: {P_j}")
+                            # ensure the vertex is not in P_j and that it has at least two neighbours in P_j
+                            
+                            bool_v_s_in_P_j = (len(set([v_s]).difference(set(P_j)))!=0)
+                            bool_neigh_v_s_in_P_j = (len(set(neigh[v_s]).intersection(set(P_j)))>1)
+                            bool_P_j_len_con = (len(P_j) < con_max_v)
+                            
+                            
+                            if  bool_v_s_in_P_j & bool_neigh_v_s_in_P_j & bool_P_j_len_con:
+                                
+                                shuffled_vertex_indices_t = random.sample(range(len(P_j))[:-1], k=len(P_j)-1)
+                                
+                                for t in shuffled_vertex_indices_t:
+                                    # Find all the selected vertex's neighbours
+                                    e_pot_rep = [P_j[t], P_j[t+1]] # potential edge to replace when vertex is added
+                                    if debug: print(f"Pot replace: {e_pot_rep}")                                   
+                                    
+                                    # ensure both vertices in path are neighbours to v_s
+                                    if len(set(neigh[v_s]).intersection(set(e_pot_rep)))==2:
+                                        mut_R = copy.deepcopy(routes_R)
+                                        del mut_R[i][s] # remove vertex v_s from P_i
+                                        if debug: print(f"Vertex REMOVED: {v_s} \t(loc: {s})\nP_i: {routes_R[i]} [OLD]\nP_i: {mut_R[i]} [NEW]")
+                                        
+                                        v_pot = v_s
+                                        P_j.insert(t+1, v_pot) # insert vertex v_s into P_j
+                                        mut_R[j] = P_j
+                                        if debug: print(f"Vertex INSERTED: {v_pot} \t(loc: {t+1})\nP_j: {routes_R[j]} [OLD]\nP_j: {mut_R[j]} [NEW]")
+                                
+                                        return mut_R
+
+    return routes_R
+
+#routes_R = offspring_variables[11]
+#main_problem = UTNDP_problem_1
+#mut_R = mut_donate_vertex_inside_route(routes_R, main_problem)
+#assert routes_R!=mut_R
+
 
 def mut_remove_largest_cost_per_dem_terminal_from_path(route_to_mutate, main_problem, path_index):
     '''Mutation function that removes a terminal vertex from a path that 

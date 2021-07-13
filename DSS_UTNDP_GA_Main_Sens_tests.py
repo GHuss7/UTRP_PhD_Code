@@ -71,7 +71,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][1]   # set the name of the input data
+                   "Mandl8_UTRP",][0]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -178,9 +178,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 400, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 20, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -188,7 +188,7 @@ if Decisions["Choice_import_dictionaries"]:
     "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
     "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
     "tournament_size" : 2,
-    "termination_criterion" : "StoppingByEvaluations",
+    "termination_criterion" : "StoppingByEvaluations", # "StoppingByNonImprovement", "FirstToBreach" #TODO: Write logic for stop criterion
     "max_evaluations" : 25000,
     "gen_compare_HV" : 10, # Compare generations for improvement in HV
     "HV_improvement_th": 0.00005, # Treshold that terminates the search

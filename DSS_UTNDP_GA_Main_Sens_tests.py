@@ -371,9 +371,9 @@ if True:
             RL = ev.evaluateTotalRouteLength(routes,travelTimes)
             return (0, RL) # returns (0, f2_TRT)
         
-        fn_obj_2 = fn_obj_ATT
+        # fn_obj_2 = fn_obj_ATT
         # fn_obj_2 = fn_obj_TRT
-        #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
+        fn_obj_2 = gf_p.fn_obj_3 # returns (f1_ATT, RD)
     
     # Add/Delete individuals to/from population
     def combine_offspring_with_pop_3(pop, offspring_variables, UTNDP_problem_input):
@@ -501,6 +501,11 @@ if True:
         
         else:
             pop_1 = pop_loaded
+            
+        if dis_obj:
+            print("Recalculating objectives for initial solutions")
+            for sol_i in range(len(pop_1.variables)):
+                pop_1.objectives[sol_i] = fn_obj_2(pop_1.variables[sol_i], UTNDP_problem_1)
             
         #pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
         #pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_sup_loaded)

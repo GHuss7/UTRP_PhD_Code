@@ -727,18 +727,18 @@ def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, val
     if type_mut == 'line':
         df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
         for mut_nr in range(1,len(df_mut_smooth.columns)):
-            axs[1, 0].plot(range(len(df_data))[::n_th], df_mut_smooth[df_mut_smooth.columns[mut_nr]][::n_th], label=df_mut_smooth.columns[mut_nr])
+            axs[1, 0].plot(range(len(df_mut_smooth))[::n_th], df_mut_smooth[df_mut_smooth.columns[mut_nr]][::n_th], label=df_mut_smooth.columns[mut_nr])
     
     elif type_mut == 'stacked':
         mut_names = df_mut_ratios.columns[1:]
         spread_mutation_values = [df_mut_ratios[y][::n_th] for y in mut_names]
-        axs[1, 0].stackplot(range(len(df_data))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
+        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
     
     elif type_mut == 'stacked_smooth':
         df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
         mut_names = df_mut_smooth.columns[1:]
         spread_mutation_values = [df_mut_smooth[y][::n_th] for y in mut_names]
-        axs[1, 0].stackplot(range(len(df_data))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
+        axs[1, 0].stackplot(range(len(df_mut_smooth))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
     else:
         print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
     

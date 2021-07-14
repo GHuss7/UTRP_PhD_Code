@@ -49,13 +49,13 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][0]   # set the name of the input data
+                   "Mandl8_UTRP",][6]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
-dis_obj = False
-load_sup = True #TODO Remove later
+dis_obj = True
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -64,11 +64,11 @@ else:
     Decisions = {
     "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : True,
+    "Choice_conduct_sensitivity_analysis" : False,
     "Choice_import_dictionaries" : True,
     "Choice_relative_results_referencing" : False,
     "Choice_init_temp_with_trial_runs" : False, # runs M trial runs for the initial temperature
-    "Choice_normal_run" : False, # choose this for a normal run without Sensitivity Analysis
+    "Choice_normal_run" : True, # choose this for a normal run without Sensitivity Analysis
     "Choice_import_saved_set" : True, # import the prespecified set
     "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
     "Additional_text" : "Tests",
@@ -151,7 +151,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
     "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 2000, # the total number of accepts that are allowed
+    "max_total_iterations" : 30000, # the total number of accepts that are allowed
     "max_epochs" : 4000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
@@ -272,7 +272,7 @@ def main(UTNDP_problem_1):
     stats = {} # define the stats dictionary
     
     #%% Define the Objective UTNDP functions
-    def fn_obj(routes, UTNDP_problem_input):
+    def fn_obj_2(routes, UTNDP_problem_input):
         return (ev.evalObjs(routes, 
                 UTNDP_problem_input.problem_data.mx_dist, 
                 UTNDP_problem_input.problem_data.mx_demand, 
@@ -292,8 +292,8 @@ def main(UTNDP_problem_1):
             return (0, RL) # returns (0, f2_TRT)
         
         #fn_obj_2 = fn_obj_ATT
-        fn_obj_2 = fn_obj_TRT
-        #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
+        # fn_obj_2 = fn_obj_TRT
+        fn_obj_2 = gf_p.fn_obj_3 # returns (f1_ATT, RD)
         
     # %% Load files and set folder paths    
     '''Load validation data'''
@@ -346,15 +346,22 @@ def main(UTNDP_problem_1):
         '''Load initial solutions from populations'''
         
         directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj, pop_size_to_create=Decisions["Pop_size_to_create"])
+        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
         
         if load_sup:
-            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj, pop_loaded)
+            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
             pop_1 = pop_sup_loaded
         
         else:
             pop_1 = pop_loaded
             
+        if dis_obj:
+            print("Recalculating objectives for initial solutions")
+            f_compare_route = fn_obj_2(UTNDP_problem_1.route_compare, UTNDP_problem_1)
+            for sol_i in range(len(pop_1.variables)):
+                pop_1.variables[sol_i] = UTNDP_problem_1.route_compare
+                pop_1.objectives[sol_i] = f_compare_route
+                
         #pop_1 = gc.PopulationRoutes(UTNDP_problem_1)  
         #pop_1.generate_or_load_initial_population(UTNDP_problem_1, fn_obj_2, route_gen_func=route_gen_funcs[route_gen_func_name], pop_choices=pop_sup_loaded)
         
@@ -370,7 +377,8 @@ def main(UTNDP_problem_1):
         # create the dataframe
         df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","R_x"])   
         for i in range(len(routes_R_initial_set)):
-            f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+            #f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+            f_new = pop_1.objectives[i]
             df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
     
         print("Initial route set imported with size: "+str(len(routes_R_initial_set)))
@@ -388,7 +396,8 @@ def main(UTNDP_problem_1):
             
             df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","Routes"])   
             for i in range(len(routes_R_initial_set)):
-                f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+                #f_new = ev.evalObjs(routes_R_initial_set[i], UTNDP_problem_1.problem_data.mx_dist, UTNDP_problem_1.problem_data.mx_demand, UTNDP_problem_1.problem_inputs.__dict__)
+                f_new = fn_obj_2(routes_R_initial_set[i], UTNDP_problem_1)
                 df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], gf.convert_routes_list2str(routes_R_initial_set[i])]
             
             
@@ -439,7 +448,7 @@ def main(UTNDP_problem_1):
             #                                          "Route",\
             #                                          "Attempts"]) # create a df to keep data for SA Analysis
                             
-            f_cur = fn_obj(routes_R, UTNDP_problem_1)
+            f_cur = fn_obj_2(routes_R, UTNDP_problem_1)
             df_archive.loc[0] = [f_cur[0], f_cur[1], gf.convert_routes_list2str(routes_R)]
             HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
             # df_SA_analysis.loc[0] = [f_cur[0], f_cur[1], HV,\
@@ -492,7 +501,7 @@ def main(UTNDP_problem_1):
                     
 
                     # Evaluate objective function of new solution
-                    f_new = fn_obj(routes_R_new, UTNDP_problem_1)
+                    f_new = fn_obj_2(routes_R_new, UTNDP_problem_1)
                     HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
                     
                     ld_SA_analysis = ga.add_UTRP_SA_data_ld(f_new[0], f_new[1], HV, SA_Temp, epoch, 
@@ -624,12 +633,7 @@ def main(UTNDP_problem_1):
                         #ax1.scatter(f_cur[0], f_cur[1], s=1, c='y', marker="o", label='Current')
                         #ax1.scatter(f_new[0], f_new[1], s=1, c='r', marker="o", label='New')
                         plt.legend(loc='upper left');
-                        plt.show()
-                        
-                    '''Load validation data'''
-                    #Mumford_validation_data = pd.read_csv("./Validation_Data/Mumford_results_on_Mandl_2013/MumfordResultsParetoFront_headers.csv")
-                    John_validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_data/Results_data_headers.csv")
-                    
+                        plt.show() 
                     
             
                     '''Print Objective functions over time, all solutions and pareto set obtained'''
@@ -649,18 +653,18 @@ def main(UTNDP_problem_1):
                     
                     axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], df_SA_analysis["HV"][::n_th], s=1, c='r', marker="o", label='HV obtained')
                     axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], df_SA_analysis["Temperature"][::n_th]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       #s=1, c='g', marker="o", label='HV Mumford (2013)')
-                    axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], np.ones(len(df_SA_analysis))[::n_th]*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       s=1, c='black', marker="o", label='HV John (2016)')
+
+                    if validation_data:
+                        axs[0, 1].scatter(range(len(df_SA_analysis))[::n_th], np.ones(len(df_SA_analysis))[::n_th]*gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], max_objs, min_objs),\
+                           s=1, c='black', marker="o", label='Validation data')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
                     
                     axs[1, 1].scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=10, c='orange', marker="o", label='Initial route sets')
                     axs[1, 1].scatter(df_archive["f_2"], df_archive["f_1"], s=10, c='r', marker="o", label='Pareto front obtained')
-                    #axs[1, 1].scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="o", label='Mumford results (2013)')
-                    axs[1, 1].scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+                    if validation_data:
+                        axs[1, 1].scatter(validation_data.iloc[:,1], validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
                     axs[1, 1].set_title('Pareto front obtained vs Mumford Results')
                     axs[1, 1].set(xlabel='f2_TRT', ylabel='f1_ATT')
                     axs[1, 1].legend(loc="upper right")
@@ -688,10 +692,10 @@ def main(UTNDP_problem_1):
                     
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["HV"], s=1, c='r', marker="o", label='HV obtained')
                     axs[0, 1].scatter(range(len(df_SA_analysis)), df_SA_analysis["Temperature"]/UTNDP_problem_1.problem_SA_parameters.Temp, s=1, c='b', marker="o", label='SA Temperature')
-                    #axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                    #   s=1, c='g', marker="o", label='HV Mumford (2013)')
-                    axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], max_objs, min_objs),\
-                       s=1, c='black', marker="o", label='HV John (2016)')
+
+                    if validation_data:                    
+                        axs[0, 1].scatter(range(len(df_SA_analysis)), np.ones(len(df_SA_analysis))*gf.norm_and_calc_2d_hv(validation_data.iloc[:,0:2], max_objs, min_objs),\
+                           s=1, c='black', marker="o", label='Validation data')
                     axs[0, 1].set_title('HV and Temperature over all iterations')
                     axs[0, 1].set(xlabel='Iterations', ylabel='%')
                     axs[0, 1].legend(loc="upper right")
@@ -751,9 +755,7 @@ def main(UTNDP_problem_1):
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
         stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
         stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
-        #stats_overall['HV Benchmark Mumford 2013'] = gf.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-        stats_overall['HV Benchmark John 2016'] = gf.norm_and_calc_2d_hv(John_validation_data.iloc[:,0:2], UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
-            
+  
         # df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")
         del df_durations
@@ -779,8 +781,9 @@ def main(UTNDP_problem_1):
         
         axs.scatter(df_routes_R_initial_set.iloc[:,1], df_routes_R_initial_set.iloc[:,0], s=20, c='orange', marker="o", label='Initial route sets')
         axs.scatter(df_overall_pareto_set["f_2"], df_overall_pareto_set["f_1"], s=10, c='r', marker="o", label='Pareto front obtained from all runs')
-        #axs.scatter(Mumford_validation_data.iloc[:,1], Mumford_validation_data.iloc[:,0], s=10, c='g', marker="x", label='Mumford results (2013)')
-        axs.scatter(John_validation_data.iloc[:,1], John_validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
+        
+        if validation_data:
+            axs.scatter(validation_data.iloc[:,1], validation_data.iloc[:,0], s=10, c='b', marker="o", label='John results (2016)')
         axs.set_title('Pareto front obtained vs Mumford Results')
         axs.set(xlabel='f2_TRT', ylabel='f1_ATT')
         axs.legend(loc="upper right")

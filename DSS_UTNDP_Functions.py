@@ -490,8 +490,19 @@ def load_UTRP_pop_or_create(name, directory, main_problem, route_gen_func, fn_ob
     '''A function that loads the population data if it exists, and creates it
     otherwise. This will help longterm to save time.'''
     if (directory / (name+".pickle")).exists():
-        pop_1 = load_obj_pickle(name, directory)
-        print(f'LOADED: Population {name} loaded from {directory}')
+        try:
+            pop_1 = load_obj_pickle(name, directory)
+            print(f'LOADED: Population {name} loaded from {directory}')
+        except EOFError as err:
+            print(f"Exception in load_UTRP_pop_or_create:: {err}")
+            try: 
+                directory.mkdir() 
+            except OSError as error: 
+                print(error) 
+            pop_1 = gc.PopulationRoutes(main_problem)  
+            pop_1.generate_initial_population_smart(main_problem, fn_obj, route_gen_func, new_pop_size=pop_size_to_create)
+            save_obj_pickle(pop_1, name, directory)
+            print(f'SAVED: Population by {route_gen_func.__name__} saved to {directory}')
     
     else:
         try: 

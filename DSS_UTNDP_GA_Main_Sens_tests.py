@@ -71,13 +71,14 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][3]   # set the name of the input data
+                   "Mandl8_UTRP",][6]   # set the name of the input data
+
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
-dis_obj = False
-load_sup = True #TODO Remove later
+dis_obj = True
+load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -180,7 +181,7 @@ if Decisions["Choice_import_dictionaries"]:
     "method" : "GA",
     "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
     "generations" : 1500, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
+    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -188,7 +189,7 @@ if Decisions["Choice_import_dictionaries"]:
     "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
     "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
     "tournament_size" : 2,
-    "termination_criterion" : ["StoppingByEvaluations", "StoppingByNonImprovement", "FirstToBreach"][2]
+    "termination_criterion" : ["StoppingByEvaluations", "StoppingByNonImprovement", "FirstToBreach"][0],
     "max_evaluations" : 25000,
     "gen_compare_HV" : 40, # Compare generations for improvement in HV
     "HV_improvement_th": 0.00005, # Treshold that terminates the search
@@ -370,8 +371,8 @@ if True:
             RL = ev.evaluateTotalRouteLength(routes,travelTimes)
             return (0, RL) # returns (0, f2_TRT)
         
-        #fn_obj_2 = fn_obj_ATT
-        fn_obj_2 = fn_obj_TRT
+        fn_obj_2 = fn_obj_ATT
+        # fn_obj_2 = fn_obj_TRT
         #fn_obj_2 = gf.fn_obj_3 # returns (f1_ATT, RD)
     
     # Add/Delete individuals to/from population
@@ -492,7 +493,7 @@ if True:
                            
         # Load and save initial population
         directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-        pop_loaded = gf.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
+        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
         
         if load_sup:
             pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)

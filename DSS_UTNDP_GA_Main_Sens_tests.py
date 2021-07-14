@@ -71,7 +71,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][0]   # set the name of the input data
+                   "Mandl8_UTRP",][3]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -132,13 +132,13 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 "Donate_between_routes" : gf.mut_donate_vertex_between_routes,
                 "Swap_between_routes" : gf.mut_swap_vertices_between_routes,
                 
-                #"Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
+                "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
                 #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
                 #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
                 #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
                 #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                 
-                #"Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
+                "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
                 #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                 #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
                 #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
@@ -178,9 +178,9 @@ if Decisions["Choice_import_dictionaries"]:
     '''State the various GA input parameters for frequency setting''' 
     parameters_GA={
     "method" : "GA",
-    "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 400, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 20, # STANDARD: 20 (John 2016)
+    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+    "generations" : 1500, # STANDARD: 200 (John 2016)
+    "number_of_runs" : 10, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
     "crossover_distribution_index" : 5,
     "mutation_probability" : 1, # John: 1/|Route set| -> set later
@@ -188,9 +188,9 @@ if Decisions["Choice_import_dictionaries"]:
     "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
     "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
     "tournament_size" : 2,
-    "termination_criterion" : "StoppingByEvaluations", # "StoppingByNonImprovement", "FirstToBreach" #TODO: Write logic for stop criterion
+    "termination_criterion" : ["StoppingByEvaluations", "StoppingByNonImprovement", "FirstToBreach"][2]
     "max_evaluations" : 25000,
-    "gen_compare_HV" : 10, # Compare generations for improvement in HV
+    "gen_compare_HV" : 40, # Compare generations for improvement in HV
     "HV_improvement_th": 0.00005, # Treshold that terminates the search
      "number_of_variables" : parameters_constraints["con_r"],
     "number_of_objectives" : 2, # this could still be automated in the future
@@ -477,6 +477,7 @@ if True:
         # TODO: Remove duplicate functions! (compare set similarity and obj function values)
         
         stats['begin_time'] = datetime.datetime.now() # enter the begin time
+        stats['Termination'] ="By_user"
         print("######################### RUN {0} #########################".format(run_nr))
         print("Generation 0 initiated" + " ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
         
@@ -564,6 +565,9 @@ if True:
         
         # %% Run generations
         """ ######## Run each generation ################################################################ """
+        if UTNDP_problem_1.problem_GA_parameters.termination_criterion == "StoppingByNonImprovement":
+            UTNDP_problem_1.problem_GA_parameters.generations = 100000
+            
         for i_gen in range(1, UTNDP_problem_1.problem_GA_parameters.generations + 1):    
             # Some stats
             stats['begin_time_gen'] = datetime.datetime.now() # enter the begin time
@@ -684,17 +688,22 @@ if True:
                                                                 round(APD, 4)))
                 
             # Test whether HV is still improving
-            gen_compare = UTNDP_problem_1.problem_GA_parameters.gen_compare_HV
-            HV_improvement_th = UTNDP_problem_1.problem_GA_parameters.HV_improvement_th
-            if len(df_data_generations) > gen_compare:
-                HV_diff = df_data_generations['HV'].iloc[-1] - df_data_generations['HV'].iloc[-gen_compare-1]
-                if HV_diff < HV_improvement_th:
-                    stats['Termination'] = 'Non-improving_HV'
-                    print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.6f}]')
-                    break
+            if UTNDP_problem_1.problem_GA_parameters.termination_criterion == "StoppingByNonImprovement" or \
+                UTNDP_problem_1.problem_GA_parameters.termination_criterion == "FirstToBreach":
+                gen_compare = UTNDP_problem_1.problem_GA_parameters.gen_compare_HV
+                HV_improvement_th = UTNDP_problem_1.problem_GA_parameters.HV_improvement_th
+                if len(df_data_generations) > gen_compare:
+                    HV_diff = df_data_generations['HV'].iloc[-1] - df_data_generations['HV'].iloc[-gen_compare-1]
+                    if HV_diff < HV_improvement_th:
+                        stats['Termination'] = 'Non-improving_HV'
+                        print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.6f}]')
+                        break
             
                 
         #%% Stats updates
+        
+        if (stats['Termination'] != 'Non-improving_HV') and (__name__ == "__main__"):
+            stats['Termination'] = 'By_evaluations'
         stats['end_time'] = datetime.datetime.now() # save the end time of the run
         stats['duration'] = stats['end_time'] - stats['begin_time'] # calculate and save the duration of the run
         stats['begin_time'] = stats['begin_time'].strftime("%m/%d/%Y, %H:%M:%S") # update in better format

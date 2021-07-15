@@ -71,14 +71,12 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][6]   # set the name of the input data
+                   "Mandl8_UTRP",][0]   # set the name of the input data
 
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
-dis_obj = True
-load_sup = False #TODO Remove later
 
 if False:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
@@ -92,10 +90,28 @@ else:
     "Choice_relative_results_referencing" : False,
     "Additional_text" : "Tests",
     "Pop_size_to_create" : 2000,
+    "Load_supplementing_pop" : True,
     "Measure_APD" : False, # measure Average Population Diversity
     "Log_prints_every" : 20, # every n generations a log should be printed
     "CSV_prints_every" : 100, # every n generations a csv should be printed
     "PDF_prints_every" : 20, # every n generations a csv should be printed
+    "Obj_func_disruption" : False,
+    
+    "route_gen_func" : "KSP_unseen_robust_prob",
+    "crossover_func" : "Unseen_probabilistic_replace_subsets",
+    "mutation_funcs" : ["Intertwine_two",
+                         "Add_vertex",
+                         "Delete_vertex",
+                         "Invert_path_vertices",
+                         "Insert_inside_vertex",
+                         "Relocate_inside_vertex",
+                         "Replace_inside_vertex",
+                         "Donate_between_routes",
+                         "Swap_between_routes",
+                         "Trim_one_terminal_cb",
+                         "Grow_one_terminal_cb",
+                         "Grow_one_path_random_cb",
+                         "Grow_routes_random_cb"],
     }
     
 #%% Set functions to use
@@ -104,7 +120,8 @@ route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_
                    "KSP_unseen_robust_prob" : gc.Routes.return_feasible_route_robust_k_shortest_probabilistic,
                     "Greedy_demand" : gc.Routes.return_feasible_route_set_greedy_demand,
                     "Unseen_robust" : gc.Routes.return_feasible_route_robust}
-route_gen_func_name = list(route_gen_funcs.keys())[2]
+assert Decisions["route_gen_func"] in route_gen_funcs.keys()
+route_gen_func_name = Decisions["route_gen_func"]
 
 crossover_funcs = {"Mumford" : gf.crossover_mumford,
                    "Unseen_probabilistic" : gf.crossover_unseen_probabilistic,
@@ -112,42 +129,44 @@ crossover_funcs = {"Mumford" : gf.crossover_mumford,
                    "Unseen_probabilistic_replace_subsets_ksp" : gf.crossover_unseen_probabilistic_rem_subsets_ksp,
                    "Mumford_replace_subsets" : gf.crossover_mumford_rem_subsets,
                    "Unseen_probabilistic_replace_subsets" : gf.crossover_unseen_probabilistic_rem_subsets}
-crossover_func_name = list(crossover_funcs.keys())[5]
+assert Decisions["crossover_func"] in crossover_funcs.keys()
+crossover_func_name = Decisions["crossover_func"]
 
 mutations = {#"No_mutation" : gf.no_mutation,
                 "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
-                #"Delete_vertex" : gf.remove_vertex_from_terminal,
-                #"Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                #"Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
-                #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
-                #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
-                #"Repl_subsets" : gf.mut_replace_path_subsets,
+                "Delete_vertex" : gf.remove_vertex_from_terminal,
+                
                 "Invert_path_vertices" : gf.mut_invert_route_vertices,
                 "Insert_inside_vertex" : gf.mut_add_vertex_inside_route,
-                #"Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
+                "Delete_inside_vertex" : gf.mut_delete_vertex_inside_route,
                 
                 "Relocate_inside_vertex" : gf.mut_relocate_vertex_inside_route,
                 "Replace_inside_vertex" : gf.mut_replace_vertex_inside_route,
                 "Donate_between_routes" : gf.mut_donate_vertex_between_routes,
                 "Swap_between_routes" : gf.mut_swap_vertices_between_routes,
-                
+    
+                "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
+                "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                "Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                "Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
+                "Repl_subsets" : gf.mut_replace_path_subsets,
+                      
                 "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
-                #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
-                #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
-                #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
-                #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
+                "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                "Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
+                "Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
+                "Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                 
                 "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
                 "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
                 "Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
-
-                #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
-                #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
-                
-                
+                "Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
+                "Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
                 }
+
+mutations = {k : v for (k,v) in mutations.items() if k in Decisions["mutation_funcs"]}
 
 all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
 all_functions_dict = {'Route_gen':route_gen_func_name,**all_functions_dict, 'Crossover':crossover_func_name}
@@ -359,7 +378,7 @@ if True:
                 UTNDP_problem_input.problem_data.mx_demand, 
                 UTNDP_problem_input.problem_inputs.__dict__)) # returns (f1_ATT, f2_TRT)
     
-    if dis_obj:
+    if Decisions["Obj_func_disruption"]:
         def fn_obj_ATT(routes, UTNDP_problem_input):           
             ATT = ev.evalATT(routes, 
                         UTNDP_problem_input.problem_data.mx_dist, 
@@ -496,14 +515,14 @@ if True:
         directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
         pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
         
-        if load_sup:
+        if Decisions["Load_supplementing_pop"]:
             pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
             pop_1 = pop_sup_loaded
         
         else:
             pop_1 = pop_loaded
             
-        if dis_obj:
+        if Decisions["Obj_func_disruption"]:
             print("Recalculating objectives for initial solutions")
             for sol_i in range(len(pop_1.variables)):
                 pop_1.objectives[sol_i] = fn_obj_2(pop_1.variables[sol_i], UTNDP_problem_1)
@@ -522,7 +541,7 @@ if True:
         ga.save_obj_pickle(pop_1, "Pop_init", path_results_per_run)
         
         # If disruption obj function employed, seed the solution
-        if dis_obj:
+        if Decisions["Obj_func_disruption"]:
             pop_1.insert_solution_into_pop([UTNDP_problem_1.route_compare], 
                                            UTNDP_problem_1, fn_obj=fn_obj_2, obj_values=False)
         

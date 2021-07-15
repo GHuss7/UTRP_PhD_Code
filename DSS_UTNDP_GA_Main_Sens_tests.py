@@ -73,7 +73,22 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl7_UTRP", #9
                    "Mandl8_UTRP", #10
 
-                   "1_1_UTRP_Mandl6_NSGAII_Initial_solutions"][-1]   # set the name of the input data
+                   '1_1_Mandl6_GA_Initial_solutions', #11
+                   '1_2_Mumford0_GA_Initial_solutions', #12
+                   '1_3_Mumford1_GA_Initial_solutions', #13
+                   '2_1_Mandl6_GA_Crossover', #14
+                   '2_2_Mumford0_GA_Crossover', #15
+                   '2_3_Mumford1_GA_Crossover', #16
+                   '3_1_Mandl6_GA_Repair', #17
+                   '3_2_Mumford0_GA_Repair', #18
+                   '3_3_Mumford1_GA_Repair', #19
+                   '4_1_Mandl6_GA_Mutation_treshold', #20
+                   '4_2_Mumford0_GA_Mutation_treshold', #21
+                   '4_3_Mumford1_GA_Mutation_treshold', #22
+                   '5_1_Mandl6_GA_Mutation', #23
+                   '5_2_Mumford0_GA_Mutation', #24
+                   '5_3_Mumford1_GA_Mutation', #25
+                   ][13]   # set the name of the input data
 
 
 # %% Set input parameters
@@ -193,9 +208,9 @@ if Decisions["Choice_import_dictionaries"]:
         parameters_GA={
         "method" : "GA",
         "termination_criterion" : ["StoppingByEvaluations", "StoppingByNonImprovement", "FirstToBreach"][0],
-        "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-        "generations" : 1500, # STANDARD: 200 (John 2016)
-        "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+        "population_size" : 200, #should be an even number STANDARD: 200 (John 2016)
+        "generations" : 200, # STANDARD: 200 (John 2016)
+        "number_of_runs" : 20, # STANDARD: 20 (John 2016)
         "crossover_probability" : 0.6, 
         "mutation_probability" : 1, # John: 1/|Route set| -> set later
         "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
@@ -916,11 +931,18 @@ if __name__ == "__main__":
         # open file and read the content in a list
         with open(("./Input_Data/"+name_input_data+"/Sensitivity_list.txt"), 'r') as filehandle:
             sensitivity_list = json.load(filehandle)   
- 
-        sensitivity_list = sensitivity_list[sens_from:sens_to]   
+        if sens_to == -1:
+            sensitivity_list = sensitivity_list[sens_from:]    
+        print(f"LOADED: Sensitivity list:\n{sensitivity_list}")
+
  
         for parameter_index in range(len(sensitivity_list)):
-            sensitivity_list[parameter_index].insert(0, parameters_GA)
+            if sensitivity_list[parameter_index][0] == "parameters_GA": 
+                sensitivity_list[parameter_index][0] = parameters_GA
+            elif sensitivity_list[parameter_index][0] == "Decisions":
+                sensitivity_list[parameter_index][0] = Decisions
+            else:
+                print(f"Sensitivity list not loaded correctly:\n{sensitivity_list[parameter_index]}")
         
         for sensitivity_test in sensitivity_list:
             parameter_dict = sensitivity_test[0]
@@ -939,6 +961,7 @@ if __name__ == "__main__":
                 # Update problem instance
                 UTNDP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
                 UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
+                UTNDP_problem_1.Decisions = Decisions
                 
                 # Run model
                 main(UTNDP_problem_1)

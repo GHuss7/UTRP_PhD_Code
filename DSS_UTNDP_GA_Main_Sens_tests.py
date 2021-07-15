@@ -88,7 +88,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '5_1_Mandl6_GA_Mutation', #23
                    '5_2_Mumford0_GA_Mutation', #24
                    '5_3_Mumford1_GA_Mutation', #25
-                   ][13]   # set the name of the input data
+                   ][12]   # set the name of the input data
 
 
 # %% Set input parameters

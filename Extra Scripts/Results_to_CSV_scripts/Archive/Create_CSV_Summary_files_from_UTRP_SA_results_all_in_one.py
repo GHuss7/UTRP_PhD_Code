@@ -46,40 +46,34 @@ for results_folder_name in result_entries:
 
         """Capture all the results into dataframes"""
         if parameter_name in parameters_list:
-            try:
-                df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV.csv")
-                df_results_read["parameter"] = parameter_name
-                df_results_read["value"] = value
-                #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
-    
-                df_index = parameters_list.index(parameter_name)
-                df_list_of_ST_results_HV[df_index] = df_list_of_ST_results_HV[df_index].append(df_results_read)
-            except:
-                print(f"FILE NOT FOUND: {path_to_main_folder / results_folder_name}/Results_description_HV.csv")
+            df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV.csv")
+            df_results_read["parameter"] = parameter_name
+            df_results_read["value"] = value
+            #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
+
+            df_index = parameters_list.index(parameter_name)
+            df_list_of_ST_results_HV[df_index] = df_list_of_ST_results_HV[df_index].append(df_results_read)
         
         else:
             # Creates the new dataframe
-            try:
-                parameters_list.append(parameter_name)
-                df_list_of_ST_results_HV.append(pd.DataFrame())
-                
-                df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV.csv")
-                df_results_read["parameter"] = parameter_name
-                df_results_read["value"] = value
-                #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
-                
-                df_index = parameters_list.index(parameter_name)
-                df_list_of_ST_results_HV[df_index] = df_results_read
-            except:
-                print(f"FILE NOT FOUND: {path_to_main_folder / results_folder_name}/Results_description_HV.csv")
+            parameters_list.append(parameter_name)
+            df_list_of_ST_results_HV.append(pd.DataFrame())
+            
+            df_results_read = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Results_description_HV.csv")
+            df_results_read["parameter"] = parameter_name
+            df_results_read["value"] = value
+            #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
+            
+            df_index = parameters_list.index(parameter_name)
+            df_list_of_ST_results_HV[df_index] = df_results_read
 
 
 """Print dataframes as .csv files"""
-all_in_one_df = pd.DataFrame(columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "outliers",  "parameter", "value"])
+all_in_one_df = pd.DataFrame(columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "parameter", "value"])
 
 if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
-        results_dataframe.columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "outliers", "parameter", "value"]
+        results_dataframe.columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "parameter", "value"]
         results_dataframe.to_csv(path_to_main_folder / f"{prefix_for_each_csv_file}_{parameter}.csv")
         all_in_one_df = all_in_one_df.append(results_dataframe)
 

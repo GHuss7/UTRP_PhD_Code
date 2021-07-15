@@ -742,7 +742,6 @@ def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, val
     else:
         print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
     
-      
     axs[1, 0].set_title('Mutation ratios over all iterations')
     axs[1, 0].set(xlabel='Iteration', ylabel='Mutation ratio')
     axs[1, 0].legend(loc='upper left') 

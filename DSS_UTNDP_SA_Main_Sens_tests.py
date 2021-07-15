@@ -49,7 +49,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][6]   # set the name of the input data
+                   "Mandl8_UTRP",][1]   # set the name of the input data
 
 # %% Set input parameters
 sens_from = 0
@@ -150,19 +150,19 @@ if Decisions["Choice_import_dictionaries"]:
     parameters_SA_routes={
     "method" : "SA",
     # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-    "max_iterations_t" : 1000, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+    "max_iterations_t" : 100, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
     "max_total_iterations" : 30000, # the total number of accepts that are allowed
     "max_epochs" : 4000, # the maximum number of epochs that are allowed
     "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
     "max_attempts" : 50, # maximum number of attempted moves per epoch
     "max_reheating_times" : 5, # the maximum number of times that reheating can take place
     "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
-    "Temp" : 10,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    "Temp" : 0.1,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
     "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-    "Cooling_rate" : 0.97, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+    "Cooling_rate" : 0.95, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
     "Reheating_rate" : 1.10, # the geometric reheating rate
     "number_of_initial_solutions" : 4, # sets the number of initial solutions to generate as starting position
-    "Feasibility_repair_attempts" : 5, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    "Feasibility_repair_attempts" : 10, # the max number of edges that will be added and/or removed to try and repair the route feasibility
     "number_of_runs" : 4, # number of runs to complete John 2016 set 20
     "iter_compare_HV" : 8000, # Compare iterations for improvement in HV
     "HV_improvement_th": 0.00005, # Treshold that terminates the search
@@ -818,17 +818,18 @@ if __name__ == "__main__":
         #                     ]
         
         """Quick tests with main parameters only"""
-        sensitivity_list = [[parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000, 1500], 
+        sensitivity_list = [[parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.8, 0.9, 0.95, 0.96, 0.97, 0.99, 0.9961682402927605],
+                            [parameters_SA_routes, "Temp", 0.001, 0.01, 0.1, 1, 10, 100],
+                            [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+                            [parameters_SA_routes, "max_attempts", 1, 3, 5, 10, 25, 50, 100, 200, 400],
+                            [parameters_SA_routes, "max_reheating_times", 1, 3, 5, 10, 25],
+                            [parameters_SA_routes, "Reheating_rate", 2, 1.5, 1.3, 1.1, 1.05, 1.02],
+
+                            [parameters_SA_routes, "max_iterations_t", 10, 50, 100, 250, 500, 1000], 
                             
                             [parameters_SA_routes, "min_accepts",  1, 3, 5, 10, 25, 50, 100, 200, 400], # takes longer at first... bottleneck
-                            
-                            [parameters_SA_routes, "max_poor_epochs", 1, 3, 5, 10, 25, 50, 100, 200, 400],
-                            
-                            [parameters_SA_routes, "Temp", 0.001, 0.01, 0.1, 1, 10, 100, 500, 1000],
-                            
-                            [parameters_SA_routes, "Cooling_rate", 0.5, 0.7, 0.9, 0.95, 0.97, 0.99, 0.9961682402927605],
-                            
-                            [parameters_SA_routes, "Feasibility_repair_attempts", 1, 2, 3, 4, 5, 6, 10],
+
+                            [parameters_SA_routes, "Feasibility_repair_attempts", 2, 5, 7, 10, 15, 20],
                             ]
         
         """Sensitivity analysis with highs and lows"""

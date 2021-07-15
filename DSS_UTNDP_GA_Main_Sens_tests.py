@@ -71,31 +71,35 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][0]   # set the name of the input data
+                   "Mandl8_UTRP", #10
+
+                   "1_1_UTRP_Mandl6_NSGAII_Initial_solutions"][-1]   # set the name of the input data
 
 
 # %% Set input parameters
 sens_from = 0
 sens_to = (sens_from + 1) if False else -1
 
-if False:
+if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
     Decisions = {
     "Choice_print_results" : True, 
-    "Choice_conduct_sensitivity_analysis" : False,
     "Choice_import_dictionaries" : True,
-    "Choice_print_full_data_for_analysis" : True,
     "Choice_relative_results_referencing" : False,
-    "Additional_text" : "Tests",
+    "Choice_print_full_data_for_analysis" : True,
     "Pop_size_to_create" : 2000,
-    "Load_supplementing_pop" : True,
-    "Measure_APD" : False, # measure Average Population Diversity
     "Log_prints_every" : 20, # every n generations a log should be printed
     "CSV_prints_every" : 100, # every n generations a csv should be printed
     "PDF_prints_every" : 20, # every n generations a csv should be printed
+    "Measure_APD" : False, # measure Average Population Diversity
+    
+    "Additional_text" : "Tests",
+    "Choice_conduct_sensitivity_analysis" : False,
+    "Load_supplementing_pop" : True,
     "Obj_func_disruption" : False,
+    "Update_mutation_ratios" : False,
     
     "route_gen_func" : "KSP_unseen_robust_prob",
     "crossover_func" : "Unseen_probabilistic_replace_subsets",
@@ -182,8 +186,31 @@ mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
-    #parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
-    
+    if True:
+        parameters_GA = json.load(open("./Input_Data/"+name_input_data+"/parameters_GA.json"))
+    else:
+        '''State the various GA input parameters for frequency setting''' 
+        parameters_GA={
+        "method" : "GA",
+        "termination_criterion" : ["StoppingByEvaluations", "StoppingByNonImprovement", "FirstToBreach"][0],
+        "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
+        "generations" : 1500, # STANDARD: 200 (John 2016)
+        "number_of_runs" : 1, # STANDARD: 20 (John 2016)
+        "crossover_probability" : 0.6, 
+        "mutation_probability" : 1, # John: 1/|Route set| -> set later
+        "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
+        "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
+        "gen_compare_HV" : 40, # Compare generations for improvement in HV
+        "HV_improvement_th": 0.0001, # Treshold that terminates the search
+        "crossover_distribution_index" : 5,
+        "mutation_distribution_index" : 10,
+        "tournament_size" : 2,
+        "max_evaluations" : 25000,
+        "number_of_variables" : parameters_constraints["con_r"],
+        "number_of_objectives" : 2, # this could still be automated in the future
+        "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
+        }
+
     file_name_ksp = "K_shortest_paths_50_shortened_5_demand"
     if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv"): 
         file_to_find = "./Input_Data/"+name_input_data+"/K_Shortest_Paths/"+file_name_ksp+".csv"
@@ -196,27 +223,7 @@ if Decisions["Choice_import_dictionaries"]:
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
    
-    '''State the various GA input parameters for frequency setting''' 
-    parameters_GA={
-    "method" : "GA",
-    "population_size" : 400, #should be an even number STANDARD: 200 (John 2016)
-    "generations" : 1500, # STANDARD: 200 (John 2016)
-    "number_of_runs" : 1, # STANDARD: 20 (John 2016)
-    "crossover_probability" : 0.6, 
-    "crossover_distribution_index" : 5,
-    "mutation_probability" : 1, # John: 1/|Route set| -> set later
-    "mutation_distribution_index" : 10,
-    "mutation_ratio" : 0.5, # Ratio used for the probabilites of mutations applied
-    "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
-    "tournament_size" : 2,
-    "termination_criterion" : ["StoppingByEvaluations", "StoppingByNonImprovement", "FirstToBreach"][0],
-    "max_evaluations" : 25000,
-    "gen_compare_HV" : 40, # Compare generations for improvement in HV
-    "HV_improvement_th": 0.00005, # Treshold that terminates the search
-     "number_of_variables" : parameters_constraints["con_r"],
-    "number_of_objectives" : 2, # this could still be automated in the future
-    "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
-    }
+
  
 else:    
     '''State the various parameter constraints''' 
@@ -255,12 +262,12 @@ else:
     "generations" : 2000, # STANDARD: 200 (John 2016)
     "number_of_runs" : 20, # STANDARD: 20 (John 2016)
     "crossover_probability" : 0.6, 
-    "crossover_distribution_index" : 5,
     "mutation_probability" : 0.95, # John: 1/|Route set| -> set later
-    "mutation_distribution_index" : 10,
     "mutation_ratio" : 0.1, # Ratio used for the probabilites of mutations applied
-    "tournament_size" : 2,
     "termination_criterion" : "StoppingByEvaluations",
+    "crossover_distribution_index" : 5,
+    "mutation_distribution_index" : 10,
+    "tournament_size" : 2,
     "max_evaluations" : 25000,
     "number_of_variables" : parameters_constraints["con_r"],
     "number_of_objectives" : 2, # this could still be automated in the future
@@ -338,6 +345,7 @@ UTNDP_problem_1.problem_data = gc.Problem_data(mx_dist, mx_demand, mx_coords)
 UTNDP_problem_1.problem_constraints = gc.Problem_constraints(parameters_constraints)
 UTNDP_problem_1.problem_inputs = gc.Problem_inputs(parameters_input)
 UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
+UTNDP_problem_1.Decisions = Decisions
 UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
@@ -360,9 +368,11 @@ else:
     UTNDP_problem_1.route_compare = route_compare
 del route_file, route_compare
 
-if True:
-#def main(UTNDP_problem_1):
+#if True:
+def main(UTNDP_problem_1):
     
+    Decisions = UTNDP_problem_1.Decisions # Load the decisions
+
     """ Keep track of the stats """
     stats_overall = {
         'execution_start_time' : datetime.datetime.now() # enter the begin time
@@ -477,12 +487,12 @@ if True:
     if not (path_results / "Parameters").exists():
         os.makedirs(path_results / "Parameters")
     
-    json.dump(parameters_input, open(path_results / "Parameters" / "parameters_input.json", "w")) # saves the parameters in a json file
-    json.dump(parameters_constraints, open(path_results / "Parameters" / "parameters_constraints.json", "w"))
-    json.dump(parameters_GA, open(path_results / "Parameters" / "parameters_GA.json", "w"))
-    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"))
+    json.dump(parameters_input, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
+    json.dump(parameters_constraints, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
+    json.dump(parameters_GA, open(path_results / "Parameters" / "parameters_GA.json", "w"), indent=4)
+    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"), indent=4)
     if Decisions["Choice_conduct_sensitivity_analysis"]:
-        json.dump(sensitivity_list, open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w'))
+        json.dump(sensitivity_list, open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w'), indent=4)
     
     
     '''################## Initiate the runs ##################'''
@@ -648,8 +658,9 @@ if True:
             df_mut = pd.DataFrame.from_dict(ld_mut)
             df_mut.reset_index(drop=True, inplace=True)
             
-            # Update the mutation ratios               
-            gf_p.update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
+            # Update the mutation ratios
+            if Decisions["Update_mutation_ratios"]:
+                gf_p.update_mutation_ratio_amalgam(df_mut_summary, UTNDP_problem_1)
             df_mut_ratios.loc[i_gen] = [i_gen]+list(UTNDP_problem_1.mutation_ratio)
             
             # Remove old generation
@@ -930,7 +941,7 @@ if __name__ == "__main__":
                 UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
                 
                 # Run model
-                #main(UTNDP_problem_1)
+                main(UTNDP_problem_1)
                 
                 # Reset the original parameters
                 parameter_dict[dict_entry] = temp_storage
@@ -940,5 +951,5 @@ if __name__ == "__main__":
         print(f'Finished in {round(finish-start, 6)} second(s)')
         
     else:
-        pass
-        #main(UTNDP_problem_1) 
+        #pass
+        main(UTNDP_problem_1) 

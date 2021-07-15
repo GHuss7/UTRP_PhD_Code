@@ -73,6 +73,7 @@ else:
     "Pop_size_to_create" : 2000,
     "Load_supplementing_pop" : True,
     "Obj_func_disruption" : False,
+    "Update_mutation_ratios" : False,
     
     "route_gen_func" : "KSP_unseen_robust_prob",    
     "mutation_funcs" : ["Intertwine_two",
@@ -185,7 +186,7 @@ if Decisions["Choice_import_dictionaries"]:
     "Feasibility_repair_attempts" : 10, # the max number of edges that will be added and/or removed to try and repair the route feasibility
     "number_of_runs" : 4, # number of runs to complete John 2016 set 20
     "iter_compare_HV" : 8000, # Compare iterations for improvement in HV
-    "HV_improvement_th": 0.00005, # Treshold that terminates the search
+    "HV_improvement_th": 0.0001, # Treshold that terminates the search
     "mutation_threshold" : 0.01, # Minimum threshold that mutation probabilities can reach
     } 
    
@@ -297,6 +298,7 @@ UTNDP_problem_1.problem_data = gc.Problem_data(mx_dist, mx_demand, mx_coords)
 UTNDP_problem_1.problem_constraints = gc.Problem_constraints(parameters_constraints)
 UTNDP_problem_1.problem_inputs = gc.Problem_inputs(parameters_input)
 UTNDP_problem_1.problem_SA_parameters = gc.Problem_metaheuristic_inputs(parameters_SA_routes)
+UTNDP_problem_1.Decisions = Decisions
 UTNDP_problem_1.k_short_paths = gc.K_shortest_paths(df_k_shortest_paths)
 UTNDP_problem_1.mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
 UTNDP_problem_1.max_objs = max_objs
@@ -329,6 +331,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
 
 # if True:
 def main(UTNDP_problem_1):
+
+    Decisions = UTNDP_problem_1.Decisions # Load the decisions
     
     """ Keep track of the stats """
     stats_overall = {
@@ -615,15 +619,16 @@ def main(UTNDP_problem_1):
                         df_mut_temp.drop(['Route'], axis='columns', inplace=True)
                         
                     # Update the mutation ratio counts
-                    if mut_output['Acceptance'] == -1:
-                        if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] > 1:
-                            UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] -= 1
-                    elif mut_output['Acceptance'] == 1:
-                        if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] < 100:
-                            UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] += 1
-                            
-                    # Update mutation ratios
-                    UTNDP_problem_1.mutation_ratio = UTNDP_problem_1.mutation_ratio_counts / np.sum(UTNDP_problem_1.mutation_ratio_counts)    
+                    if Decisions["Update_mutation_ratios"]:
+                        if mut_output['Acceptance'] == -1:
+                            if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] > 1:
+                                UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] -= 1
+                        elif mut_output['Acceptance'] == 1:
+                            if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] < 100:
+                                UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] += 1
+                                
+                        # Update mutation ratios
+                        UTNDP_problem_1.mutation_ratio = UTNDP_problem_1.mutation_ratio_counts / np.sum(UTNDP_problem_1.mutation_ratio_counts)    
                     df_mut_ratios.loc[total_iterations] = [total_iterations]+list(UTNDP_problem_1.mutation_ratio)
 
                 
@@ -675,9 +680,9 @@ def main(UTNDP_problem_1):
                 df_SA_analysis.to_csv(path_results_per_run / "SA_Analysis.csv")
                 df_archive.to_csv(path_results_per_run / "Archive_Routes.csv")
                 
-                json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results_per_run / "parameters_input.json", "w")) # saves the parameters in a json file
-                json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results_per_run / "parameters_constraints.json", "w"))
-                json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results_per_run / "parameters_SA_routes.json", "w"))
+                json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results_per_run / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
+                json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results_per_run / "parameters_constraints.json", "w"), indent=4)
+                json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results_per_run / "parameters_SA_routes.json", "w"), indent=4)
                 pickle.dump(stats, open(path_results_per_run / "stats.pickle", "ab"))
                 
                 with open(path_results_per_run / "Run_summary_stats.csv", "w") as archive_file:

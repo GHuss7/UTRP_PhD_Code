@@ -1,0 +1,20 @@
+{
+    "method": "GA",
+    "termination_criterion": "StoppingByEvaluations",
+    "population_size": 200,
+    "generations": 400,
+    "number_of_runs": 20,
+    "crossover_probability": 0.6,
+    "mutation_probability": 1,
+    "mutation_threshold": 0.01,
+    "mutation_ratio": 0.5,
+    "gen_compare_HV": 40,
+    "HV_improvement_th": 0.0001,
+    "crossover_distribution_index": 5,
+    "mutation_distribution_index": 10,
+    "tournament_size": 2,
+    "max_evaluations": 25000,
+    "number_of_variables": 15,
+    "number_of_objectives": 2,
+    "Number_of_initial_solutions": 10000
+}

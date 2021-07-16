@@ -1,0 +1,7 @@
+[["Decisions", "crossover_func", 
+"Mumford", 
+"Unseen_probabilistic",
+"Mumford_replace_subsets_ksp",
+"Unseen_probabilistic_replace_subsets_ksp",
+"Mumford_replace_subsets",
+"Unseen_probabilistic_replace_subsets"]]

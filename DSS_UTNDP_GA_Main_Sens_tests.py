@@ -88,7 +88,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '5_1_Mandl6_GA_Mutation', #23
                    '5_2_Mumford0_GA_Mutation', #24
                    '5_3_Mumford1_GA_Mutation', #25
-                   ][12]   # set the name of the input data
+                   ][14]   # set the name of the input data
 
 
 # %% Set input parameters
@@ -535,13 +535,22 @@ def main(UTNDP_problem_1):
         pop_size = UTNDP_problem_1.problem_GA_parameters.population_size
 
         # %% Generate intitial population
-                           
+           
+        # Set the correct path for the input data to be loaded                
+        github_path = "C:/Users/17832020/OneDrive - Stellenbosch University/Documents/GitHub"
+        if os.path.exists(github_path+"/DSS-Main"):
+            path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
+        elif os.path.exists(github_path+"/DSS_Main"):
+            path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
+        else:    
+            path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
+        
         # Load and save initial population
-        directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
+        path_populations = path_input_data/"Populations"
+        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), path_populations, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
         
         if Decisions["Load_supplementing_pop"]:
-            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
+            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), path_populations, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
             pop_1 = pop_sup_loaded
         
         else:
@@ -951,7 +960,10 @@ if __name__ == "__main__":
                 
                 print("Test: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
                 
-                UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
+                if sensitivity_test[1] == "crossover_func":
+                    UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter}"
+                else:
+                    UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
                 
                 temp_storage = parameter_dict[dict_entry]
                 

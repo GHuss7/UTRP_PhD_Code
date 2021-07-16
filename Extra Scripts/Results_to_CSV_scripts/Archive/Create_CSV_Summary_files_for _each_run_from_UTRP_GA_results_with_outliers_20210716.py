@@ -69,8 +69,8 @@ def get_sens_tests_stats_from_UTRP_GA_runs(path_to_main_folder):
     df_runs_summary["Mean_HV"] = df_all_obtained_HV["Mean"]
     # df_runs_summary.to_csv(path_to_main_folder / "Results_all_runs_summary.csv")
     df_HV_description.to_csv(path_to_main_folder / "Results_description_HV_no_outliers.csv")
-    df_HV_description_outliers.to_csv(path_to_main_folder / "Results_description_HV_with_outliers.csv")
-    df_HV_description_outliers_included.to_csv(path_to_main_folder / "Results_description_HV.csv")
+    df_HV_description_outliers.to_csv(path_to_main_folder / "Results_description_HV.csv")
+    df_HV_description_outliers_included.to_csv(path_to_main_folder / "Results_description_HV_with_outliers.csv")
     df_overall_results.to_csv(path_to_main_folder / "Overall_results.csv")
 
 

@@ -69,11 +69,11 @@ for results_folder_name in result_entries:
 
 
 """Print dataframes as .csv files"""
-all_in_one_df = pd.DataFrame(columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "outliers", "parameter", "value"])
+all_in_one_df = pd.DataFrame(columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "parameter", "value"])
 
 if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
-        results_dataframe.columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "outliers", "parameter", "value"]
+        results_dataframe.columns = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "parameter", "value"]
         results_dataframe.to_csv(path_to_main_folder / f"{prefix_for_each_csv_file}_{parameter}.csv")
         all_in_one_df = all_in_one_df.append(results_dataframe)
 

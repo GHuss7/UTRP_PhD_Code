@@ -91,7 +91,8 @@ name_input_data = ["Mandl_UTRP", #0
 
 
                    '0_2_Mumford0_GA_Repairs', 
-                   ][15]   # set the name of the input data
+                   '0_0_Mandl6_GA_Tester'
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -546,6 +547,9 @@ def main(UTNDP_problem_1):
             path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
         elif os.path.exists(github_path+"/DSS_Main"):
             path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
+        elif os.path.exists("C:/Users/gunth/OneDrive/Documents/GitHub/DSS-Main"):
+            github_path = "C:/Users/gunth/OneDrive/Documents/GitHub"
+            path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
         else:    
             path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
         
@@ -764,6 +768,21 @@ def main(UTNDP_problem_1):
                         print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.6f}]')
                         break
             
+            if i_gen == 1 or i_gen == 100:
+                # Calculate time projections for runs
+                start_time = stats['begin_time_gen'] # TIMING FUNCTION
+                end_time = datetime.datetime.now() # TIMING FUNCTION
+        
+                # Determine and print projections
+                diff = end_time - start_time
+                diff_sec = float(str(diff.seconds)+"."+str(diff.microseconds))
+                avg_time = diff_sec/(i_gen*pop_size)
+                tot_iter = ga.determine_total_iterations(UTNDP_problem_1, 1)
+                ga.time_projection_intermediate(avg_time, tot_iter, i_gen*pop_size,
+                                                t_now=datetime.datetime.now(),
+                                                print_iter_info=True) # prints the time projection of the algorithm
+
+
                 
         #%% Stats updates
         

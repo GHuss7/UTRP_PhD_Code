@@ -94,6 +94,43 @@ def time_projection(seconds_per_iteration, total_iterations, t_now=False, return
     if return_objs:
         return date_time_start, date_time_due
 
+def time_projection_intermediate(seconds_per_iteration, total_iterations, iterations_completed, t_now=False, return_objs=False, print_iter_info=False):
+    def get_time_objects(totsec):
+        h = totsec//3600
+        m = (totsec%3600) // 60
+        sec =(totsec%3600)%60 #just for reference
+        return h, m , sec
+    
+    total_estimated_seconds = seconds_per_iteration * total_iterations
+    t_total = timedelta(seconds=total_estimated_seconds)
+    tot_h, tot_m, tot_sec = get_time_objects(t_total.seconds)
+
+    remaining_estimated_seconds = seconds_per_iteration * (total_iterations - iterations_completed)
+    t_additional = timedelta(seconds=remaining_estimated_seconds)
+    dur_h, dur_m, dur_sec = get_time_objects(t_additional.seconds)
+    
+    # Get time now
+    if not t_now:
+        t_now = datetime.now()
+    date_time_start = t_now.strftime("%a, %d %b, %H:%M:%S")
+    
+    # Determine expected time
+    t_expected = t_now + t_additional
+    date_time_due = t_expected.strftime("%a, %d %b, %H:%M:%S")
+    
+    print(f"Start:    {date_time_start}")
+    print(f"Due date: {date_time_due}")
+    print(f"Total duration: {t_total.days} days, {tot_h} hrs, {tot_m} min, {tot_sec} sec\n")
+    
+    if print_iter_info:
+        print(f"Total iterations: {total_iterations} at {seconds_per_iteration:.2f} sec/it\n\
+Remaining iterations: {total_iterations-iterations_completed} at {seconds_per_iteration:.2f} sec/it\n\
+Remaining time: {t_additional.days} days, {dur_h} hrs, {dur_m} min, {dur_sec} sec\n\
+Percentage complete: {(iterations_completed/total_iterations)*100:.2f}%")
+       
+    if return_objs:
+        return date_time_start, date_time_due
+
 # Deterime total iterations
 def determine_total_iterations(main_problem, multiply_factor=1):
     len_pop = main_problem.problem_GA_parameters.population_size

@@ -73,21 +73,22 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl7_UTRP", #9
                    "Mandl8_UTRP", #10
 
-                   '1_1_Mandl6_GA_Initial_solutions' #11
-                   '1_2_Mumford0_GA_Initial_solutions' #12
-                   '1_3_Mumford1_GA_Initial_solutions' #13
-                   '2_1_Mandl6_GA_Crossover' #14
-                   '2_2_Mumford0_GA_Crossover' #15
-                   '2_3_Mumford1_GA_Crossover' #16
-                   '3_1_Mandl6_GA_Mutations' #17
-                   '3_2_Mumford0_GA_Mutations' #18
-                   '3_3_Mumford1_GA_Mutations' #19
-                   '4_1_Mandl6_GA_Update_mut_ratio' #20
-                   '4_2_Mumford0_GA_Update_mut_ratio' #21
-                   '4_3_Mumford1_GA_Update_mut_ratio' #22
-                   '5_1_Mandl6_GA_Mut_threshold' #23
-                   '5_2_Mumford0_GA_Mut_threshold' #24
-                   '5_3_Mumford1_GA_Mut_threshold' #25
+                   '1_1_Mandl6_GA_Initial_solutions', #11
+                    '1_2_Mumford0_GA_Initial_solutions', #12
+                    '1_3_Mumford1_GA_Initial_solutions', #13
+                    '2_1_Mandl6_GA_Crossover', #14
+                    '2_2_Mumford0_GA_Crossover', #15
+                    '2_3_Mumford1_GA_Crossover', #16
+                    '3_1_Mandl6_GA_Mutations', #17
+                    '3_2_Mumford0_GA_Mutations', #18
+                    '3_3_Mumford1_GA_Mutations', #19
+                    '4_1_Mandl6_GA_Update_mut_ratio', #20
+                    '4_2_Mumford0_GA_Update_mut_ratio', #21
+                    '4_3_Mumford1_GA_Update_mut_ratio', #22
+                    '5_1_Mandl6_GA_Mut_threshold', #23
+                    '5_2_Mumford0_GA_Mut_threshold', #24
+                    '5_3_Mumford1_GA_Mut_threshold', #25
+
 
                    '0_2_Mumford0_GA_Repairs', 
                    ][15]   # set the name of the input data

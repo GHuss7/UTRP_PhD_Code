@@ -13,7 +13,7 @@ from pathlib import Path
 import csv
 import json
 import pickle
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import math
 from math import inf
@@ -39,7 +39,7 @@ import DSS_UTNDP_Classes as gc
 
 # todo def main_dss(): # create a main function to encapsulate the main body
 # def main():
-    
+
 #%% Pymoo functions
 from pymoo.util.function_loader import load_function
 from pymoo.util.dominator import Dominator
@@ -92,7 +92,7 @@ Decisions = {
 }
 
 # Disables walk links
-if not(Decisions["Choice_consider_walk_links"]):
+if not Decisions["Choice_consider_walk_links"]:
     mx_walk = False
 
 # Load the respective input data (dictionaries) for the instance
@@ -166,7 +166,7 @@ with open("./Input_Data/"+name_input_data+"/Route_set.txt", 'r') as file:
 R_x = gf.convert_routes_str2list(route_str) # convert route set into list
 del route_str
 
-if 0 not in set([y for x in R_x for y in x]): # NB: test whether the route is in the correct format containing a 0
+if 0 not in {y for x in R_x for y in x}: # NB: test whether the route is in the correct format containing a 0
     for i in range(len(R_x)): # get routes in the correct format
         R_x[i] = [x - 1 for x in R_x[i]] # subtract 1 from each element in the list
     del i
@@ -258,7 +258,7 @@ class PopulationFreq(gf2.Frequencies):
                           f_2 = self.objectives[:,1],
                           rank = self.rank[:,0])
         
-        plt.style.use('seaborn-whitegrid')
+        #plt.style.use('seaborn-whitegrid')
         
         if plot_all_black:
             plt.plot(self.objectives[:,0], self.objectives[:,1], 'o', color='black')
@@ -960,7 +960,7 @@ def main(UTFSP_problem_1):
         stats_overall['HV obtained'] = gf_p.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
         #stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(Mumford_validation_data.iloc[:,0:2], UTFSP_problem_1.max_objs, UTFSP_problem_1.min_objs)
         
-        df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
+        # df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")
         del df_durations
         

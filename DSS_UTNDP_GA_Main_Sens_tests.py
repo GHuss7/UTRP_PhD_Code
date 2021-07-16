@@ -92,7 +92,7 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'
-                   ][-1]   # set the name of the input data
+                   ][17]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -541,17 +541,23 @@ def main(UTNDP_problem_1):
 
         # %% Generate intitial population
            
-        # Set the correct path for the input data to be loaded                
+        # Set the correct path for the input data to be loaded  
+        pop_to_load_name = "Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"])+".pickle"              
+        path_input_to_pop = "Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name
         github_path = "C:/Users/17832020/OneDrive - Stellenbosch University/Documents/GitHub"
-        if os.path.exists(github_path+"/DSS-Main"):
+        if os.path.exists(github_path+"/DSS-Main/"+path_input_to_pop):
             path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
-        elif os.path.exists(github_path+"/DSS_Main"):
+        elif os.path.exists(github_path+"/DSS_Main/"+path_input_to_pop):
             path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
-        elif os.path.exists("C:/Users/gunth/OneDrive/Documents/GitHub/DSS-Main"):
+        elif os.path.exists("C:/Users/gunth/OneDrive/Documents/GitHub/DSS-Main/"+path_input_to_pop):
             github_path = "C:/Users/gunth/OneDrive/Documents/GitHub"
             path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
+        elif os.path.exists("C:/Users/17832020/Documents/GitHub/DSS_Main/"+path_input_to_pop):
+             github_path = "C:/Users/17832020/Documents/GitHub"
+             path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
         else:    
             path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
+            print("No specified path found.")
         
         # Load and save initial population
         path_populations = path_input_data/"Populations"
@@ -992,7 +998,7 @@ if __name__ == "__main__":
                 
                     print("\nTest: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
                     
-                    if sensitivity_test[1] == "crossover_func":
+                    if (sensitivity_test[1] == "crossover_func") or  (sensitivity_test[1] == "mutation_funcs"):
                         UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter-2}"
                     else:
                         UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"

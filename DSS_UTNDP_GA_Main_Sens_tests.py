@@ -88,13 +88,15 @@ name_input_data = ["Mandl_UTRP", #0
                    '5_1_Mandl6_GA_Mutation', #23
                    '5_2_Mumford0_GA_Mutation', #24
                    '5_3_Mumford1_GA_Mutation', #25
-                   ][14]   # set the name of the input data
+                   '0_2_Mumford0_GA_Repairs', 
+                   ][-1]   # set the name of the input data
 
+# Set test paramaters
+sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
+sens_to = (sens_from + 1) if False else -1
+test_counters = [] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
-sens_from = 0
-sens_to = (sens_from + 1) if False else -1
-
 if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
@@ -913,7 +915,7 @@ def main(UTNDP_problem_1):
                 
             
                 gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
-                # ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
+                ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
             
             except PermissionError: pass
     
@@ -939,11 +941,19 @@ if __name__ == "__main__":
 
         # open file and read the content in a list
         with open(("./Input_Data/"+name_input_data+"/Sensitivity_list.txt"), 'r') as filehandle:
-            sensitivity_list = json.load(filehandle)   
+            sensitivity_list = json.load(filehandle)  
+            print(f"LOADED: Sensitivity list:\n{sensitivity_list}\n")
         if sens_to == -1:
-            sensitivity_list = sensitivity_list[sens_from:]    
-        print(f"LOADED: Sensitivity list:\n{sensitivity_list}")
-
+            sensitivity_list = sensitivity_list[sens_from:]  
+        else:
+            sensitivity_list = sensitivity_list[sens_from:sens_to]
+        print(f"TRUNCATED: Sensitivity list:\n{sensitivity_list}")
+        
+        # Print specific test counters
+        if test_counters == []:
+            print("Testing all combinations")
+        else:
+            print(f"Testing only variables: {test_counters}")
  
         for parameter_index in range(len(sensitivity_list)):
             if sensitivity_list[parameter_index][0] == "parameters_GA": 
@@ -957,29 +967,30 @@ if __name__ == "__main__":
             parameter_dict = sensitivity_test[0]
             dict_entry = sensitivity_test[1]
             for test_counter in range(2,len(sensitivity_test)):
+                if test_counters==[] or test_counter in [x_i + 2 for x_i in test_counters]:
                 
-                print("Test: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
-                
-                if sensitivity_test[1] == "crossover_func":
-                    UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter}"
-                else:
-                    UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
-                
-                temp_storage = parameter_dict[dict_entry]
-                
-                # Set new parameters
-                parameter_dict[dict_entry] = sensitivity_test[test_counter]
-    
-                # Update problem instance
-                UTNDP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
-                UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
-                UTNDP_problem_1.Decisions = Decisions
-                
-                # Run model
-                main(UTNDP_problem_1)
-                
-                # Reset the original parameters
-                parameter_dict[dict_entry] = temp_storage
+                    print("\nTest: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
+                    
+                    if sensitivity_test[1] == "crossover_func":
+                        UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter-2}"
+                    else:
+                        UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
+                    
+                    temp_storage = parameter_dict[dict_entry]
+                    
+                    # Set new parameters
+                    parameter_dict[dict_entry] = sensitivity_test[test_counter]
+        
+                    # Update problem instance
+                    UTNDP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
+                    UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
+                    UTNDP_problem_1.Decisions = Decisions
+                    
+                    # Run model
+                    main(UTNDP_problem_1)
+                    
+                    # Reset the original parameters
+                    parameter_dict[dict_entry] = temp_storage
         
         finish = time.perf_counter()
         
@@ -987,4 +998,5 @@ if __name__ == "__main__":
         
     else:
         #pass
+        print("Normal run initiated")
         main(UTNDP_problem_1) 

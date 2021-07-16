@@ -1,9 +1,9 @@
 {
     "method": "GA",
     "termination_criterion": "StoppingByEvaluations",
-    "population_size": 10,
-    "generations": 2,
-    "number_of_runs": 2,
+    "population_size": 200,
+    "generations": 400,
+    "number_of_runs": 20,
     "crossover_probability": 0.6,
     "mutation_probability": 1,
     "mutation_threshold": 0.01,

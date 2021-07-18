@@ -984,7 +984,7 @@ if __name__ == "__main__":
                     if (sensitivity_test[1] == "crossover_func") or  (sensitivity_test[1] == "mutation_funcs"):
                         UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter-2}"
                     else:
-                        UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
+                        UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],4)}"
                     
                     temp_storage = parameter_dict[dict_entry]
                     

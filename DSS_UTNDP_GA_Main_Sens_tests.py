@@ -89,10 +89,9 @@ name_input_data = ["Mandl_UTRP", #0
                     '5_2_Mumford0_GA_Mut_threshold', #24
                     '5_3_Mumford1_GA_Mut_threshold', #25
 
-
                    '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'
-                   ][18]   # set the name of the input data
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -156,7 +155,7 @@ crossover_funcs = {"Mumford" : gf.crossover_mumford,
 assert Decisions["crossover_func"] in crossover_funcs.keys()
 crossover_func_name = Decisions["crossover_func"]
 
-mutations = {#"No_mutation" : gf.no_mutation,
+mutations_all = {#"No_mutation" : gf.no_mutation,
                 "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
                 "Delete_vertex" : gf.remove_vertex_from_terminal,
@@ -190,7 +189,7 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 "Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
                 }
 
-mutations = {k : v for (k,v) in mutations.items() if k in Decisions["mutation_funcs"]}
+mutations = {k : v for (k,v) in mutations_all.items() if k in Decisions["mutation_funcs"]}
 
 all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
 all_functions_dict = {'Route_gen':route_gen_func_name,**all_functions_dict, 'Crossover':crossover_func_name}
@@ -294,7 +293,7 @@ else:
     "Number_of_initial_solutions" : 10000 # number of initial solutions to be generated and chosen from
     }
     
-# Sensitivity analysis lists    
+    # Sensitivity analysis lists    
     sensitivity_list = [#[parameters_constraints, "con_r", 4, 6, 7, 8],
                         #[parameters_constraints, "con_minNodes", 2, 3, 4, 5],
                         ["population_size", 10, 20, 50, 100, 150, 200, 300, 400],
@@ -304,39 +303,6 @@ else:
                         ["mutation_ratio", 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
                         ["population_size", 10]
                         ]
-    
-    #sensitivity_list = [
-                        #["population_size", 10, 20, 50, 100, 150, 200, 300], 
-                        #["generations", 10, 20, 50, 100, 150, 200, 300],
-                        #["crossover_probability", 0.5, 0.6, 0.7, 0.8],
-                        #["crossover_probability", 0.9, 0.95, 1],
-                        #["mutation_probability", 0.05, 0.1, 1/parameters_constraints["con_r"], 0.2, 0.3],                   
-                        #["mutation_probability", 0.5, 0.7, 0.9, 1],
-                        #["mutation_ratio", 0.1, 0.2]
-                        #]
-    
-    #sensitivity_list = [
-                        #["population_size", 20, 400], 
-                        #["generations", 20, 400],
-                        #["crossover_probability", 0.1],
-                        #["crossover_probability", 1],
-                        #["mutation_probability", 0.05], 
-                        #["mutation_probability", 0.9],
-                        #["mutation_probability", 1],  
-                        
-                        # ["mutation_ratio", 0.01],
-                        # ["mutation_ratio", 0.05],
-                        # ["mutation_ratio", 0.1],
-                        # ["mutation_ratio", 0.2],
-                        # ["mutation_ratio", 0.3],
-                        # ["mutation_ratio", 0.4],
-                        # ["mutation_ratio", 0.5],
-                        # ["mutation_ratio", 0.6],
-                        # ["mutation_ratio", 0.7],
-                        # ["mutation_ratio", 0.8],
-                        # ["mutation_ratio", 0.9],
-                        # ["mutation_ratio", 0.95],
-                        # ]
     
     sensitivity_list = sensitivity_list[sens_from:sens_to] # truncates the sensitivity list
 
@@ -391,7 +357,22 @@ del route_file, route_compare
 #if True:
 def main(UTNDP_problem_1):
     
+    # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions
+    
+    # Mutations reload
+    mutations = {k : v for (k,v) in mutations_all.items() if k in Decisions["mutation_funcs"]}
+
+    all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
+    all_functions_dict = {'Route_gen':route_gen_func_name,**all_functions_dict, 'Crossover':crossover_func_name}
+        
+    mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
+    mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
+    mut_names = [v['name'] for (k,v) in mutations_dict.items()]
+
+    UTNDP_problem_1.mutation_functions = mut_functions
+    UTNDP_problem_1.mutation_names = mut_names
+    UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 
     """ Keep track of the stats """
     stats_overall = {
@@ -784,7 +765,8 @@ def main(UTNDP_problem_1):
                 diff_sec = float(str(diff.seconds)+"."+str(diff.microseconds))
                 avg_time = diff_sec/(i_gen*pop_size)
                 tot_iter = ga.determine_total_iterations(UTNDP_problem_1, 1)
-                ga.time_projection_intermediate(avg_time, tot_iter, i_gen*pop_size,
+                completed_iter =  (run_nr-1)*UTNDP_problem_1.problem_GA_parameters.generations*(pop_size) + i_gen*pop_size
+                ga.time_projection_intermediate(avg_time, tot_iter, completed_iter,
                                                 t_now=datetime.datetime.now(),
                                                 print_iter_info=True) # prints the time projection of the algorithm
 
@@ -1001,7 +983,7 @@ if __name__ == "__main__":
                     if (sensitivity_test[1] == "crossover_func") or  (sensitivity_test[1] == "mutation_funcs"):
                         UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter-2}"
                     else:
-                        UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],2)}"
+                        UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],4)}"
                     
                     temp_storage = parameter_dict[dict_entry]
                     

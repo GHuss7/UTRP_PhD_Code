@@ -118,7 +118,7 @@ def time_projection_intermediate(seconds_per_iteration, total_iterations, iterat
     t_expected = t_now + t_additional
     date_time_due = t_expected.strftime("%a, %d %b, %H:%M:%S")
     
-    print(f"Start:    {date_time_start}")
+    print(f"\nStart:    {date_time_start}")
     print(f"Due date: {date_time_due}")
     print(f"Total duration: {t_total.days} days, {tot_h} hrs, {tot_m} min, {tot_sec} sec\n")
     
@@ -126,7 +126,7 @@ def time_projection_intermediate(seconds_per_iteration, total_iterations, iterat
         print(f"Total iterations: {total_iterations} at {seconds_per_iteration:.2f} sec/it\n\
 Remaining iterations: {total_iterations-iterations_completed} at {seconds_per_iteration:.2f} sec/it\n\
 Remaining time: {t_additional.days} days, {dur_h} hrs, {dur_m} min, {dur_sec} sec\n\
-Percentage complete: {(iterations_completed/total_iterations)*100:.2f}%")
+Percentage complete: {(iterations_completed/total_iterations)*100:.2f}%\n")
        
     if return_objs:
         return date_time_start, date_time_due

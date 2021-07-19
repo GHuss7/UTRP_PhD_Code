@@ -91,7 +91,7 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'
-                   ][-1]   # set the name of the input data
+                   ][17]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -853,16 +853,27 @@ def main(UTNDP_problem_1):
         # %% Save results after all runs
         if Decisions["Choice_print_results"]:
             '''Save the summarised results'''
-            df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
-            df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["f_1","f_2"]].values, True)] # reduce the pareto front from the total archive
-            df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
-            try:
-                df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
-            except PermissionError: pass
+            
+            for _ in range(5):
+                try:
+                    df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
+                    df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["f_1","f_2"]].values, True)] # reduce the pareto front from the total archive
+                    df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
+                    df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
+                    break
+                except PermissionError:
+                    time.sleep(5)
+                    continue
             
             '''Save the stats for all the runs'''
             # df_routes_R_initial_set.to_csv(path_results / "Routes_initial_set.csv")
-            df_durations = ga.get_stats_from_model_runs(path_results)
+            for _ in range(5):
+                try:
+                    df_durations = ga.get_stats_from_model_runs(path_results)
+                    break
+                except:
+                    time.sleep(5)
+                    continue
             
             stats_overall['execution_end_time'] =  datetime.datetime.now()
             
@@ -897,37 +908,41 @@ def main(UTNDP_problem_1):
             
             except PermissionError: pass
             
-            try:
-                ga.get_sens_tests_stats_from_model_runs(path_results, run_nr) # prints the runs summary
-                gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
-                gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
-                gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                                    name_input_data, 
-                                                    path_results, labels,
-                                                    stats_overall['HV Benchmark'], 'line')
+            for _ in range(5):
+                try:
+                    ga.get_sens_tests_stats_from_model_runs(path_results, run_nr) # prints the runs summary
+                    gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
+                    gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
+                    gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                                                        pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                                        pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                                                        name_input_data, 
+                                                        path_results, labels,
+                                                        stats_overall['HV Benchmark'], 'line')
+                    
+                    gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                                                        pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                                        pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                                                        name_input_data, 
+                                                        path_results, labels,
+                                                        stats_overall['HV Benchmark'], 'stacked')
+                    
+                    gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                                                        pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                                        pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                                                        name_input_data, 
+                                                        path_results, labels,
+                                                        stats_overall['HV Benchmark'], 'stacked_smooth')
+                    
                 
-                gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                                    name_input_data, 
-                                                    path_results, labels,
-                                                    stats_overall['HV Benchmark'], 'stacked')
+                    gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
+                    ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
+                    
+                    break
+                except PermissionError:
+                    time.sleep(5)
+                    continue
                 
-                gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                                    name_input_data, 
-                                                    path_results, labels,
-                                                    stats_overall['HV Benchmark'], 'stacked_smooth')
-                
-            
-                gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
-                ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
-            
-            except PermissionError: pass
-    
             #del archive_file, path_results_per_run, w           
             
             # %% Plot analysis graph

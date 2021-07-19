@@ -11,21 +11,8 @@ import string
 import json
 from pathlib import Path
 
-import argparse
-
-# Arguments from command line
-parser = argparse.ArgumentParser()
-
-#-dir DIRECTORY
-parser.add_argument("-dir", "--directory", dest = "dir", default = os.path.dirname(os.path.realpath(__file__)), help="Directory", type=str)
-
-args = parser.parse_args()
-arg_dir = args.dir
-
-print(arg_dir)
-
 # Ensure the directory is set to the file location
-dir_path = arg_dir
+dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 
 prefix_for_each_csv_file = "UTRP_GA_Summary"
@@ -42,8 +29,7 @@ title = {
 
 'Initial_solutions' : 'Use supplemented initial solution set',
 'Crossover' : 'Crossover operators applied',
-'Mutations' : 'Mutation operators applied',
-'Update_mut_ratio' : 'Updating the mutation ratio'                            
+'Mutations' : 'Mutation operators applied'                         
 }
 
 file_suffix = {
@@ -56,8 +42,7 @@ file_suffix = {
 
 'Initial_solutions' : 'initial_solutions',
 'Crossover' : 'crossover_funcs' ,
-'Mutations' : 'mutation_funcs',
-'Update_mut_ratio' : 'update_mut_ratio'                          
+'Mutations' : 'mutation_funcs'                         
 }
 
 def count_Run_folders(path_to_folder):
@@ -146,7 +131,7 @@ from pathlib import Path
 import math
 
 # Ensure the directory is set to the file location
-dir_path = arg_dir
+dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path)
 
 def isNaN(num):
@@ -286,9 +271,7 @@ try:
     with open(('./'+result_entries[0]+'/Parameters/Sensitivity_list.txt'), 'r') as filehandle:
         sensitivity_list = json.load(filehandle)  
         print("LOADED: Sensitivity list\n")
-        if (sensitivity_list[0][2] == "crossover_func"):
-            sens_list_values = [x.replace('_',' ') for x in sensitivity_list[0][2:]]
-        elif (sensitivity_list[0][2] == "mutation_funcs"):
+        if (sensitivity_list[0][2] == "Crossover") or (sensitivity_list[0][2] == "Mutations"):
             sens_list_values = [x[0].replace('_',' ') for x in sensitivity_list[0][2:]]
         else:
             sens_list_values = [x for x in sensitivity_list[0][2:]]

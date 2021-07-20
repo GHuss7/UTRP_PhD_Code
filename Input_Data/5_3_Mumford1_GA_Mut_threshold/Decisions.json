@@ -28,6 +28,6 @@
 	"Trim_one_terminal_cb",
 	"Trim_one_path_random_cb",
 	"Grow_one_terminal_cb",
-	"Grow_one_path_random_cb",
+	"Grow_one_path_random_cb"
     ]
 }

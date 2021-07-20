@@ -14,7 +14,7 @@
     "Obj_func_disruption": false,
     "Update_mutation_ratios": true,
     "route_gen_func": "KSP_unseen_robust_prob",
-    "crossover_func": "Unseen_probabilistic_replace_subsets",
+    "crossover_func": "Mumford_replace_subsets",
     "mutation_funcs": [
 	"Intertwine_two",
 	"Add_vertex",

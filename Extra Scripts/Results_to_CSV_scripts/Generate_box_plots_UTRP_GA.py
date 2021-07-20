@@ -7,10 +7,15 @@ Created on Mon Sep 14 15:30:32 2020
 
 import pandas as pd
 import os
+import subprocess
 import re
 import string
 from pathlib import Path
 import math
+
+# Ensure the directory is set to the file location
+dir_path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(dir_path)
 
 '''State the dictionaries''' 
 title = {
@@ -19,7 +24,9 @@ title = {
 'crossover_probability' : 'Crossover probability',                       
 'generations' : 'Number of generations',              
 'mutation_probability' : 'Mutation probability',
-'population_size' : 'Population size'                           
+'population_size' : 'Population size',
+
+'Initial_solutions' : 'Use supplemented initial solution set'                           
 }
 
 file_suffix = {
@@ -28,7 +35,9 @@ file_suffix = {
 'crossover_probability' : 'crossover_probability',                       
 'generations' : 'num_generations',              
 'mutation_probability' : 'mutation_probability',
-'population_size' : 'population_size'                           
+'population_size' : 'population_size',
+
+'Initial_solutions' : 'initial_solutions'                           
 }
 
 def isNaN(num):
@@ -110,3 +119,67 @@ for file_name in result_entries:
         
 with open("Tikz_boxplots_UTRP_GA.txt", "w") as text_file:
     print(box_plot_str, file=text_file)
+
+
+preamble = r'''\documentclass[crop=false]{standalone}
+%\documentclass{standalone}
+\usepackage{tikz} % To generate the plot from csv
+\usepackage{pgfplots}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage[section]{placeins} % getting figures below sections
+\usepackage{blindtext}
+\usepackage{siunitx}
+\usepgfplotslibrary{units} % Allows to enter the units nicely
+\usetikzlibrary{external} %https://tex.stackexchange.com/questions/1460/script-to-automate-externalizing-tikz-graphics
+\tikzexternalize[prefix=savedfigures/]
+
+\pgfplotsset{compat=newest} % Allows to place the legend below plot
+\usepackage{pgfplotstable}
+\usepgfplotslibrary{statistics}
+
+% #################### Function definition for box plots read table ##################\
+\makeatletter
+\pgfplotsset{
+	boxplot prepared from table/.code={
+		\def\tikz@plot@handler{\pgfplotsplothandlerboxplotprepared}%
+		\pgfplotsset{
+			/pgfplots/boxplot prepared from table/.cd,
+			#1,
+		}
+	},
+	/pgfplots/boxplot prepared from table/.cd,
+	table/.code={\pgfplotstablecopy{#1}\to\boxplot@datatable},
+	row/.initial=0,
+	make style readable from table/.style={
+		#1/.code={
+			\pgfplotstablegetelem{\pgfkeysvalueof{/pgfplots/boxplot prepared from table/row}}{##1}\of\boxplot@datatable
+			\pgfplotsset{boxplot/#1/.expand once={\pgfplotsretval}}
+		}
+	},
+	make style readable from table=lower whisker,
+	make style readable from table=upper whisker,
+	make style readable from table=lower quartile,
+	make style readable from table=upper quartile,
+	make style readable from table=median,
+	make style readable from table=average,
+	make style readable from table=lower notch,
+	make style readable from table=upper notch
+}
+\makeatother'''
+
+#print(preamble)
+
+#%% Write the tex file and execute
+with open('box_plots.tex','w') as file:
+    file.write(preamble)
+    file.write('\n\\begin{document}\n')
+    file.write(box_plot_str)
+    file.write('\n\\end{document}\n')
+
+x = subprocess.call('pdflatex box_plots.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shel-escape
+if x != 0:
+	print('Exit-code not 0, check result!')
+else:
+	os.system('start box_plots.pdf')

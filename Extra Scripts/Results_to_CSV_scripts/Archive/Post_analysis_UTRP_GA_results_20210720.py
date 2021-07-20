@@ -303,7 +303,7 @@ except:
 with open('box_plots.tex','w') as file:
     file.write(preamble)
     file.write('\n\\begin{document}\n')
-    title_str = result_entries[0].split(' ')[0].replace('_',' ')
+    title_str = result_entries[0].replace('_',' ')
     file.write(f'\n\\section{{{title_str}}}\n')
     file.write(box_plot_str)
     #file.write('\n\section{Legend}\n')
@@ -324,5 +324,4 @@ x = subprocess.call('pdflatex box_plots.tex -interaction nonstopmode -shell-esca
 if x != 0:
 	print('Exit-code not 0, check result!')
 else:
-    if False:
-        os.system('start box_plots.pdf') # opens up the file if successfull
+	os.system('start box_plots.pdf')

@@ -44,12 +44,10 @@ title = {
 'Crossover' : 'Crossover operators applied',
 'Mutations' : 'Mutation operators applied',
 'Update_mut_ratio' : 'Updating the mutation ratio',
-'Mut_threshold' : 'Mutation threshold',
-'Repairs' : 'Repair strategy used',
-'repair_func' : 'Repair strategy used',                             
+'Mut_threshold' : 'Mutation threshold'                            
 }
 
-file_suffix = { #NB! Suffix may not have any spaces!
+file_suffix = {
 'con_minNodes' : 'min_nodes',               
 'con_r' : 'num_routes',                        
 'crossover_probability' : 'crossover_probability',                       
@@ -61,9 +59,7 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'Crossover' : 'crossover_funcs' ,
 'Mutations' : 'mutation_funcs',
 'Update_mut_ratio' : 'update_mut_ratio' ,
-'Mut_threshold' : 'mut_threshold',
-'Repairs' : 'repairs',
-'repair_func' : 'repairs',                                 
+'Mut_threshold' : 'mut_threshold'                           
 }
 
 def count_Run_folders(path_to_folder):
@@ -144,8 +140,6 @@ if True:
         results_dataframe.columns = named_cols
         if parameter in ['Mut_threshold']:
             results_dataframe.value = results_dataframe.value.astype(float)
-        elif parameter in ['Repairs', 'repair_func']:
-            pass
         else:
             results_dataframe.value = results_dataframe.value.astype(int)
         results_dataframe = results_dataframe.sort_values(by='value', ascending=True)

@@ -44,12 +44,10 @@ title = {
 'Crossover' : 'Crossover operators applied',
 'Mutations' : 'Mutation operators applied',
 'Update_mut_ratio' : 'Updating the mutation ratio',
-'Mut_threshold' : 'Mutation threshold',
-'Repairs' : 'Repair strategy used',
-'repair_func' : 'Repair strategy used',                             
+'Mut_threshold' : 'Mutation threshold'                            
 }
 
-file_suffix = { #NB! Suffix may not have any spaces!
+file_suffix = {
 'con_minNodes' : 'min_nodes',               
 'con_r' : 'num_routes',                        
 'crossover_probability' : 'crossover_probability',                       
@@ -61,9 +59,7 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'Crossover' : 'crossover_funcs' ,
 'Mutations' : 'mutation_funcs',
 'Update_mut_ratio' : 'update_mut_ratio' ,
-'Mut_threshold' : 'mut_threshold',
-'Repairs' : 'repairs',
-'repair_func' : 'repairs',                                 
+'Mut_threshold' : 'mut_threshold'                           
 }
 
 def count_Run_folders(path_to_folder):
@@ -103,10 +99,6 @@ for results_folder_name in result_entries:
                 df_results_read["parameter"] = parameter_name
                 df_results_read["value"] = value
                 #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
-                # Get HV overall
-                stats_dataframe = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Stats_overall.csv")
-                HV_overall = stats_dataframe[stats_dataframe.iloc[:,0] == "HV obtained"].iloc[0,1]
-                df_results_read["HV_overall"] = HV_overall
 
                 df_index = parameters_list.index(parameter_name)
                 df_list_of_ST_results_HV[df_index] = df_list_of_ST_results_HV[df_index].append(df_results_read)
@@ -120,10 +112,6 @@ for results_folder_name in result_entries:
                 df_results_read["parameter"] = parameter_name
                 df_results_read["value"] = value
                 #df_results_read.rename(columns={0 :'Measurement'}, inplace=True )
-                # Get HV overall
-                stats_dataframe = pd.read_csv(f"{path_to_main_folder / results_folder_name}/Stats_overall.csv")
-                HV_overall = stats_dataframe[stats_dataframe.iloc[:,0] == "HV obtained"].iloc[0,1]
-                df_results_read["HV_overall"] = HV_overall
                 
                 parameters_list.append(parameter_name)
                 df_list_of_ST_results_HV.append(pd.DataFrame())
@@ -135,7 +123,7 @@ for results_folder_name in result_entries:
 
 
 """Print dataframes as .csv files"""
-named_cols = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "outliers", "parameter", "value", "HV_overall"]
+named_cols = ["test", "count", "mean", "std", "min", "lq", "med", "uq", "max", "outliers", "parameter", "value"]
 all_in_one_df = pd.DataFrame(columns = named_cols)
 # assert (df_list_of_ST_results_HV[0].columns == named_cols).all()
 
@@ -144,8 +132,6 @@ if True:
         results_dataframe.columns = named_cols
         if parameter in ['Mut_threshold']:
             results_dataframe.value = results_dataframe.value.astype(float)
-        elif parameter in ['Repairs', 'repair_func']:
-            pass
         else:
             results_dataframe.value = results_dataframe.value.astype(int)
         results_dataframe = results_dataframe.sort_values(by='value', ascending=True)
@@ -233,8 +219,7 @@ for file_name in result_entries:
 			f'median={round(df_results_read["med"].iloc[row_i],5)}, {nl}' \
 			f'average={round(df_results_read["mean"].iloc[row_i],5)}{"}"}, {nl}' \
     		f'color = blue, solid, area legend] {nl}' \
-    		f'coordinates {{{outlier_logic(df_results_read["outliers"].iloc[row_i], row_i)}}}; {nl}'\
-            f'\\addplot[only marks,mark=asterisk,color = blue]coordinates{{({row_i+1},{round(float(df_results_read["HV_overall"].iloc[row_i]),5)})}}; {nl}')
+    		f'coordinates {{{outlier_logic(df_results_read["outliers"].iloc[row_i], row_i)}}}; {nl}')
                 
             box_plot_str = "\n".join([box_plot_str, temp_str])
                 

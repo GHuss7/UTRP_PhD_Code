@@ -2011,7 +2011,7 @@ def keep_individuals(pop, survivor_indices):
 # %% Repair functions
 """Repair functions"""
 
-def repair_add_missing_from_terminal_old(routes_R, main_problem):
+def repair_add_missing_from_terminal(routes_R, main_problem):
     """ A function that searches for all the missing nodes, and tries to connect 
     them with one route's terminal node """
     n_nodes = main_problem.problem_inputs.n
@@ -2169,7 +2169,7 @@ def repair_add_missing_from_terminal_multiple_debug(routes_R, UTNDP_problem):
 
     return routes_R
 
-def repair_add_missing_from_terminal(routes_R, UTNDP_problem):
+def repair_add_missing_from_terminal_multiple(routes_R, UTNDP_problem):
     """ A robust function that searches for all the missing nodes, and tries to connect 
     them with one route's terminal node by trying to add one or more vertices to terminal vertices"""
     

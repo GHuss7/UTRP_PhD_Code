@@ -43,8 +43,7 @@ title = {
 'Initial_solutions' : 'Use supplemented initial solution set',
 'Crossover' : 'Crossover operators applied',
 'Mutations' : 'Mutation operators applied',
-'Update_mut_ratio' : 'Updating the mutation ratio',
-'Mut_threshold' : 'Mutation threshold'                            
+'Update_mut_ratio' : 'Updating the mutation ratio'                            
 }
 
 file_suffix = {
@@ -58,8 +57,7 @@ file_suffix = {
 'Initial_solutions' : 'initial_solutions',
 'Crossover' : 'crossover_funcs' ,
 'Mutations' : 'mutation_funcs',
-'Update_mut_ratio' : 'update_mut_ratio' ,
-'Mut_threshold' : 'mut_threshold'                           
+'Update_mut_ratio' : 'update_mut_ratio'                          
 }
 
 def count_Run_folders(path_to_folder):
@@ -130,10 +128,7 @@ all_in_one_df = pd.DataFrame(columns = named_cols)
 if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
         results_dataframe.columns = named_cols
-        if parameter in ['Mut_threshold']:
-            results_dataframe.value = results_dataframe.value.astype(float)
-        else:
-            results_dataframe.value = results_dataframe.value.astype(int)
+        results_dataframe.value = results_dataframe.value.astype(int)
         results_dataframe = results_dataframe.sort_values(by='value', ascending=True)
         results_dataframe.to_csv(path_to_main_folder / f"{prefix_for_each_csv_file}_{parameter}.csv")
         

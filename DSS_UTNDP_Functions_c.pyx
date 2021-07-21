@@ -3383,10 +3383,13 @@ def mut_replace_path_subsets(routes_R, main_problem, routes_to_search=False, lim
                             if debug: print(sub_list_index)
                             mut_R = replace_path_prob_demand_per_cost(mut_R, main_problem, sub_list_index, routes_to_search)
                             # mut_R = replace_path_prob_unmet_demand_limited_len(mut_R, main_problem, sub_list_index, routes_to_search, limit_len=limit_len)
-                
-                    while is_route_sublist_in_set(mut_R, sub_list_index):
+                    
+                    tries = len(routes_R)
+                    while is_route_sublist_in_set(mut_R, sub_list_index) & (tries > 0):
                         mut_R = replace_path_prob_demand_per_cost(mut_R, main_problem, sub_list_index, ksp)
-                
+                        tries =- 1
+                    if tries == 0:
+                        return routes_R
                 return mut_R
 
 def is_route_sublist_in_set(routes_R, index_i):

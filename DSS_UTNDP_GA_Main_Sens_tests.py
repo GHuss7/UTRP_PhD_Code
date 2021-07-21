@@ -88,6 +88,9 @@ name_input_data = ["Mandl_UTRP", #0
                     '5_1_Mandl6_GA_Mut_threshold', #23
                     '5_2_Mumford0_GA_Mut_threshold', #24
                     '5_3_Mumford1_GA_Mut_threshold', #25
+                    '6_1_Mandl6_GA_repair_func', #26
+                    '6_2_Mumford0_GA_repair_func', #27
+                    '6_3_Mumford1_GA_repair_func', #28
 
                    '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'

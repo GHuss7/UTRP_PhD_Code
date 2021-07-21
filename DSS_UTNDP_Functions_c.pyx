@@ -2011,7 +2011,7 @@ def keep_individuals(pop, survivor_indices):
 # %% Repair functions
 """Repair functions"""
 
-def repair_add_missing_from_terminal(routes_R, main_problem):
+def repair_add_missing_from_terminal_single(routes_R, main_problem): # old repair strategy
     """ A function that searches for all the missing nodes, and tries to connect 
     them with one route's terminal node """
     n_nodes = main_problem.problem_inputs.n
@@ -2239,6 +2239,18 @@ def repair_add_missing_from_terminal_multiple(routes_R, UTNDP_problem):
                     
                     break # inner loop was broken, then break the outer loop too
 
+    return routes_R
+
+def repair_add_missing_from_terminal(routes_R, main_problem):
+    """ A wrapper function for repairing a route set with either trying one vertex or multiple"""
+    try:
+        if main_problem.Decisions.Repair_multiple:
+            routes_R = repair_add_missing_from_terminal_multiple(routes_R, main_problem)
+        else:
+            routes_R = repair_add_missing_from_terminal_single(routes_R, main_problem)
+    except:
+        routes_R = repair_add_missing_from_terminal_single(routes_R, main_problem)
+    
     return routes_R
 
 def repair_add_path_to_route_set_ksp(route_to_repair, main_problem, k_shortest_paths_all):

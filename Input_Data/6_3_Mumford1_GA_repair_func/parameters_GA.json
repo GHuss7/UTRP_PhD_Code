@@ -2,7 +2,7 @@
     "method": "GA",
     "termination_criterion": "StoppingByEvaluations",
     "population_size": 200,
-    "generations": 400,
+    "generations": 200,
     "number_of_runs": 20,
     "crossover_probability": 0.6,
     "mutation_probability": 1,

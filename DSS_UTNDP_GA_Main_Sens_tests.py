@@ -94,7 +94,7 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'
-                   ][23]   # set the name of the input data
+                   ][26]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -122,6 +122,7 @@ else:
     "Load_supplementing_pop" : True,
     "Obj_func_disruption" : False,
     "Update_mutation_ratios" : False,
+    "Repair_multiple" : False,
     
     "route_gen_func" : "KSP_unseen_robust_prob",
     "crossover_func" : "Unseen_probabilistic_replace_subsets",
@@ -760,15 +761,15 @@ def main(UTNDP_problem_1):
             
             if i_gen == 1 or i_gen == 100:
                 # Calculate time projections for runs
-                start_time = stats['begin_time_gen'] # TIMING FUNCTION
+                start_time_run = stats['begin_time'] # TIMING FUNCTION # stats_overall['execution_start_time']
                 end_time = datetime.datetime.now() # TIMING FUNCTION
         
                 # Determine and print projections
-                diff = end_time - start_time
+                diff = end_time - start_time_run
                 diff_sec = float(str(diff.seconds)+"."+str(diff.microseconds))
-                avg_time = diff_sec/(i_gen*pop_size)
                 tot_iter = ga.determine_total_iterations(UTNDP_problem_1, 1)
                 completed_iter =  (run_nr-1)*UTNDP_problem_1.problem_GA_parameters.generations*(pop_size) + i_gen*pop_size
+                avg_time = diff_sec/(completed_iter)
                 ga.time_projection_intermediate(avg_time, tot_iter, completed_iter,
                                                 t_now=datetime.datetime.now(),
                                                 print_iter_info=True) # prints the time projection of the algorithm

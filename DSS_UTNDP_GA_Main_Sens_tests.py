@@ -91,6 +91,11 @@ name_input_data = ["Mandl_UTRP", #0
                     '6_1_Mandl6_GA_Mut_threshold', #26
                     '6_2_Mumford0_GA_Mut_threshold', #27
                     '6_3_Mumford1_GA_Mut_threshold', #28
+                    '7_1_Mandl6_GA_Pop_size', #29
+                    '7_2_Mumford0_GA_Pop_size', #30
+                    '7_3_Mumford1_GA_Pop_size', #31
+                    '7_4_Mumford2_GA_Pop_size', #32
+                    '7_5_Mumford3_GA_Pop_size', #33
 
                    '0_0_Mandl6_GA_Tester'
                    ][25]   # set the name of the input data

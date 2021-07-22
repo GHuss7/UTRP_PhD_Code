@@ -9,7 +9,7 @@
     "PDF_prints_every": 200,
     "Measure_APD": false,
     "Additional_text": "Tests",
-    "Choice_conduct_sensitivity_analysis": false,
+    "Choice_conduct_sensitivity_analysis": true,
     "Load_supplementing_pop": false,
     "Obj_func_disruption": false,
     "Update_mutation_ratios": false,

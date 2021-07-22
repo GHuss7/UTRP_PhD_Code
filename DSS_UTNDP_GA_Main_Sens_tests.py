@@ -94,12 +94,12 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'
-                   ][26]   # set the name of the input data
+                   ][25]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
-test_counters = [] # empty list means all, filled in values means only those tests
+test_counters = [0,1,2] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
 if True:

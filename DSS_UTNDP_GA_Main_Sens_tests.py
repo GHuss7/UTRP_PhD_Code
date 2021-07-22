@@ -85,14 +85,13 @@ name_input_data = ["Mandl_UTRP", #0
                     '4_1_Mandl6_GA_Update_mut_ratio', #20
                     '4_2_Mumford0_GA_Update_mut_ratio', #21
                     '4_3_Mumford1_GA_Update_mut_ratio', #22
-                    '5_1_Mandl6_GA_Mut_threshold', #23
-                    '5_2_Mumford0_GA_Mut_threshold', #24
-                    '5_3_Mumford1_GA_Mut_threshold', #25
-                    '6_1_Mandl6_GA_repair_func', #26
-                    '6_2_Mumford0_GA_repair_func', #27
-                    '6_3_Mumford1_GA_repair_func', #28
+                    '5_1_Mandl6_GA_repair_func', #23
+                    '5_2_Mumford0_GA_repair_func', #24
+                    '5_3_Mumford1_GA_repair_func', #25
+                    '6_1_Mandl6_GA_Mut_threshold', #26
+                    '6_2_Mumford0_GA_Mut_threshold', #27
+                    '6_3_Mumford1_GA_Mut_threshold', #28
 
-                   '0_2_Mumford0_GA_Repairs', 
                    '0_0_Mandl6_GA_Tester'
                    ][25]   # set the name of the input data
 

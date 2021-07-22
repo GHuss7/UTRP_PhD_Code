@@ -721,20 +721,20 @@ def main(UTNDP_problem_1):
                     df_gen_temp = df_gen_temp.assign(mean_f_1=df_pop_generations.groupby('Generation', as_index=False)['f_1'].mean().iloc[:,1],
                                        mean_f_2=df_pop_generations.groupby('Generation', as_index=False)['f_2'].mean().iloc[:,1])
                     labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
-                    gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
-                                         df_gen_temp, df_mut_ratios, name_input_data, 
-                                         path_results_per_run, labels,
-                                         stats_overall['HV Benchmark'], type_mut='line')
-                    gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
-                                         df_gen_temp, df_mut_ratios, name_input_data, 
-                                         path_results_per_run, labels,
-                                         stats_overall['HV Benchmark'], type_mut='stacked')
+                    #gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                    #                     df_gen_temp, df_mut_ratios, name_input_data, 
+                    #                     path_results_per_run, labels,
+                    #                     stats_overall['HV Benchmark'], type_mut='line')
+                    #gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                    #                     df_gen_temp, df_mut_ratios, name_input_data, 
+                    #                     path_results_per_run, labels,
+                    #                     stats_overall['HV Benchmark'], type_mut='stacked')
                     gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
                                          df_gen_temp, df_mut_ratios, name_input_data, 
                                          path_results_per_run, labels,
                                          stats_overall['HV Benchmark'], type_mut='stacked_smooth')
                     
-                    gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
+                    #gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
 
                 except PermissionError: pass
             
@@ -810,14 +810,14 @@ def main(UTNDP_problem_1):
                 
                 # Print and save result summary figures:
                 labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
-                gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
-                                             df_data_generations, df_mut_ratios, name_input_data, 
-                                             path_results_per_run, labels,
-                                             stats_overall['HV Benchmark'], type_mut='line')
-                gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
-                                             df_data_generations, df_mut_ratios, name_input_data, 
-                                             path_results_per_run, labels,
-                                             stats_overall['HV Benchmark'], type_mut='stacked')
+                #gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                #                             df_data_generations, df_mut_ratios, name_input_data, 
+                #                             path_results_per_run, labels,
+                #                             stats_overall['HV Benchmark'], type_mut='line')
+                #gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
+                #                             df_data_generations, df_mut_ratios, name_input_data, 
+                #                             path_results_per_run, labels,
+                #                             stats_overall['HV Benchmark'], type_mut='stacked')
                 gv.save_results_analysis_mut_fig(initial_set, df_non_dominated_set, validation_data, 
                                              df_data_generations, df_mut_ratios, name_input_data, 
                                              path_results_per_run, labels,
@@ -916,19 +916,19 @@ def main(UTNDP_problem_1):
                     ga.get_sens_tests_stats_from_model_runs(path_results, run_nr) # prints the runs summary
                     gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
                     gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
-                    gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                                        pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                                        pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                                        name_input_data, 
-                                                        path_results, labels,
-                                                        stats_overall['HV Benchmark'], 'line')
+                    #gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                    #                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                    #                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                    #                                    name_input_data, 
+                    #                                    path_results, labels,
+                    #                                    stats_overall['HV Benchmark'], 'line')
                     
-                    gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                                        pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                                        pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                                        name_input_data, 
-                                                        path_results, labels,
-                                                        stats_overall['HV Benchmark'], 'stacked')
+                    #gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
+                    #                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                    #                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                    #                                    name_input_data, 
+                    #                                    path_results, labels,
+                    #                                    stats_overall['HV Benchmark'], 'stacked')
                     
                     gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
                                                         pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 

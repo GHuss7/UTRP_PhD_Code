@@ -97,8 +97,10 @@ name_input_data = ["Mandl_UTRP", #0
                     '7_4_Mumford2_GA_Pop_size', #32
                     '7_5_Mumford3_GA_Pop_size', #33
 
-                   '0_0_Mandl6_GA_Tester'
-                   ][33]   # set the name of the input data
+                   '0_0_Mandl6_GA_Tester',
+                   '0_5_Mumford3_GA_Time_tester'
+                   
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -532,21 +534,26 @@ def main(UTNDP_problem_1):
            
         # Set the correct path for the input data to be loaded  
         pop_to_load_name = "Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"])+".pickle"              
-        path_input_to_pop = "Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name
-        github_path = "C:/Users/17832020/OneDrive - Stellenbosch University/Documents/GitHub"
-        if os.path.exists(github_path+"/DSS-Main/"+path_input_to_pop):
-            path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
-        elif os.path.exists(github_path+"/DSS_Main/"+path_input_to_pop):
-            path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
-        elif os.path.exists("C:/Users/gunth/OneDrive/Documents/GitHub/DSS-Main/"+path_input_to_pop):
-            github_path = "C:/Users/gunth/OneDrive/Documents/GitHub"
-            path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
-        elif os.path.exists("C:/Users/17832020/Documents/GitHub/DSS_Main/"+path_input_to_pop):
-             github_path = "C:/Users/17832020/Documents/GitHub"
-             path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
-        else:    
-            path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
-            print("No specified path found. Try copying the instance data into a folder listed above.")
+        path_input_to_pop = "./Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name
+        if os.path.exists(path_input_to_pop):
+            path_input_data = Path("./Input_Data/"+name_input_data)
+        else: #TODO The else case below is not neccesary, the above is sufficient
+            pop_to_load_name = "Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"])+".pickle"              
+            path_input_to_pop = "Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name
+            github_path = "C:/Users/17832020/OneDrive - Stellenbosch University/Documents/GitHub"
+            if os.path.exists(github_path+"/DSS-Main/"+path_input_to_pop):
+                path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
+            elif os.path.exists(github_path+"/DSS_Main/"+path_input_to_pop):
+                path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
+            elif os.path.exists("C:/Users/gunth/OneDrive/Documents/GitHub/DSS-Main/"+path_input_to_pop):
+                github_path = "C:/Users/gunth/OneDrive/Documents/GitHub"
+                path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
+            elif os.path.exists("C:/Users/17832020/Documents/GitHub/DSS_Main/"+path_input_to_pop):
+                 github_path = "C:/Users/17832020/Documents/GitHub"
+                 path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
+            else:    
+                path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
+                print("No specified path found. Try copying the instance data into a folder listed above.")
         
         # Load and save initial population
         path_populations = path_input_data/"Populations"

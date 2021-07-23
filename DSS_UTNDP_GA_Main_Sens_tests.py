@@ -98,7 +98,7 @@ name_input_data = ["Mandl_UTRP", #0
                     '7_5_Mumford3_GA_Pop_size', #33
 
                    '0_0_Mandl6_GA_Tester'
-                   ][-1]   # set the name of the input data
+                   ][33]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -546,7 +546,7 @@ def main(UTNDP_problem_1):
              path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
         else:    
             path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
-            print("No specified path found.")
+            print("No specified path found. Try copying the instance data into a folder listed above.")
         
         # Load and save initial population
         path_populations = path_input_data/"Populations"

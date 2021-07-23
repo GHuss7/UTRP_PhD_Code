@@ -100,7 +100,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][-1]   # set the name of the input data
+                   ][-2]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -859,9 +859,9 @@ def main(UTNDP_problem_1):
             print("End of generations: " + datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
             
             # Visualise the generations
-            try:
-                gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
-            except PermissionError: pass
+            #try:
+            #    gv.plot_generations_objectives_UTRP(df_pop_generations, every_n_gen=10, path=path_results_per_run)
+            #except PermissionError: pass
             
     #del i_gen, mutated_variables, offspring_variables, pop_size, survivor_indices
     

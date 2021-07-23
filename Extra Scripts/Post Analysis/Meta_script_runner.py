@@ -19,18 +19,31 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 all_result_folders = os.listdir(dir_path)
 
 # Set folders to do the operation on:
-apply_list = ['Results_1_1_Mandl6_GA_Initial_solutions',
-     'Results_1_2_Mumford0_GA_Initial_solutions',
-     'Results_1_3_Mumford1_GA_Initial_solutions',
-     'Results_2_1_Mandl6_GA_Crossover',
-     'Results_2_2_Mumford0_GA_Crossover',
-     'Results_2_3_Mumford1_GA_Crossover',
-     'Results_3_1_Mandl6_GA_Mutations',
-     'Results_3_2_Mumford0_GA_Mutations',
-     'Results_3_3_Mumford1_GA_Mutations',
-     'Results_4_1_Mandl6_GA_Update_mut_ratio',
-     'Results_4_2_Mumford0_GA_Update_mut_ratio',
-     'Results_4_3_Mumford1_GA_Update_mut_ratio']
+apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
+     # 'Results_1_2_Mumford0_GA_Initial_solutions',
+     # 'Results_1_3_Mumford1_GA_Initial_solutions',
+     # 'Results_2_1_Mandl6_GA_Crossover',
+     # 'Results_2_2_Mumford0_GA_Crossover',
+     # 'Results_2_3_Mumford1_GA_Crossover',
+     # 'Results_3_1_Mandl6_GA_Mutations',
+     # 'Results_3_2_Mumford0_GA_Mutations',
+     # 'Results_3_3_Mumford1_GA_Mutations',
+     # 'Results_4_1_Mandl6_GA_Update_mut_ratio',
+     # 'Results_4_2_Mumford0_GA_Update_mut_ratio',
+     # 'Results_4_3_Mumford1_GA_Update_mut_ratio',
+     # 'Results_5_1_Mandl6_GA_repair_func',
+     # 'Results_5_2_Mumford0_GA_repair_func',
+     # 'Results_5_3_Mumford1_GA_repair_func',
+     # 'Results_6_1_Mandl6_GA_Mut_threshold',
+     # 'Results_6_2_Mumford0_GA_Mut_threshold',
+     # 'Results_6_3_Mumford1_GA_Mut_threshold',
+     'Results_7_1_Mandl6_GA_Pop_size',
+     'Results_7_2_Mumford0_GA_Pop_size',
+     'Results_7_3_Mumford1_GA_Pop_size',
+     'Results_7_4_Mumford2_GA_Pop_size',
+     'Results_7_5_Mumford3_GA_Pop_size',
+
+     ]
 
 # Ensure the directory is set to the file location
 # Call the PdfFileMerger

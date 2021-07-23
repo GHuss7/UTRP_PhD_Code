@@ -23,6 +23,8 @@ Multi-computer setup:
 	
 	3.2) Spyder: Tools -> Preferences -> IPython Console -> Graphics -> Backend -> Qt5
 
+	3.3) Spyder: View -> Window Layouts -> RStudio Layout
+
 4.) Update Anaconda with: conda update --all
 
 5.) Download iGraph wheel for same Python installation (3.7 or 3.8)

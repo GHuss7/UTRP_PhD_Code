@@ -13,7 +13,7 @@
     "Load_supplementing_pop": true,
     "Obj_func_disruption": false,
     "Update_mutation_ratios": true,
-    "Repair_multiple" : true,
+    "Repair_multiple" : false,
     "route_gen_func": "KSP_unseen_robust_prob",
     "crossover_func": "Mumford_replace_subsets",
     "mutation_funcs": [

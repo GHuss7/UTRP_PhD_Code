@@ -123,8 +123,8 @@ def time_projection_intermediate(seconds_per_iteration, total_iterations, iterat
     print(f"Total duration: {t_total.days} days, {tot_h} hrs, {tot_m} min, {tot_sec} sec\n")
     
     if print_iter_info:
-        print(f"Total iterations: {total_iterations} at {seconds_per_iteration:.2f} sec/it\n\
-Remaining iterations: {total_iterations-iterations_completed} at {seconds_per_iteration:.2f} sec/it\n\
+        print(f"Total iterations: {total_iterations} at {seconds_per_iteration:.4f} sec/it\n\
+Remaining iterations: {total_iterations-iterations_completed} at {seconds_per_iteration:.4f} sec/it\n\
 Remaining time: {t_additional.days} days, {dur_h} hrs, {dur_m} min, {dur_sec} sec\n\
 Percentage complete: {(iterations_completed/total_iterations)*100:.2f}%\n")
        

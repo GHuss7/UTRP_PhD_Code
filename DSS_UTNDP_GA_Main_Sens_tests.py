@@ -98,12 +98,12 @@ name_input_data = ["Mandl_UTRP", #0
                     '7_5_Mumford3_GA_Pop_size', #33
 
                    '0_0_Mandl6_GA_Tester'
-                   ][25]   # set the name of the input data
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
-test_counters = [0,1,2] # empty list means all, filled in values means only those tests
+test_counters = [] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
 if True:
@@ -602,7 +602,7 @@ def main(UTNDP_problem_1):
         df_mut_ratios.loc[0] = [0]+list(UTNDP_problem_1.mutation_ratio) #TODO: Convert to list of dictionaries
         
         # Determine non-dominated set
-        df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
+        df_non_dominated_set = gf.create_non_dom_set_from_dataframe_fast(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
         HV = gf_p.norm_and_calc_2d_hv_np(df_non_dominated_set[["f_1","f_2"]].values, UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs) # Calculate HV
         
         if Decisions['Measure_APD']: 
@@ -773,7 +773,7 @@ def main(UTNDP_problem_1):
                 diff_sec = float(str(diff.seconds)+"."+str(diff.microseconds))
                 tot_iter = ga.determine_total_iterations(UTNDP_problem_1, 1)
                 completed_iter =  (run_nr-1)*UTNDP_problem_1.problem_GA_parameters.generations*(pop_size) + i_gen*pop_size
-                avg_time = diff_sec/(completed_iter)
+                avg_time = diff_sec/(i_gen*pop_size)
                 ga.time_projection_intermediate(avg_time, tot_iter, completed_iter,
                                                 t_now=datetime.datetime.now(),
                                                 print_iter_info=True) # prints the time projection of the algorithm
@@ -797,7 +797,7 @@ def main(UTNDP_problem_1):
             
             # Create and save the dataframe 
             df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
-            df_non_dominated_set = gf.create_non_dom_set_from_dataframe(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
+            df_non_dominated_set = gf.create_non_dom_set_from_dataframe_fast(df_data_for_analysis, obj_1_name='f_1', obj_2_name='f_2')
             
             # Compute means for generations
             df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)

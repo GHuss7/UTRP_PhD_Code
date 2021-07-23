@@ -45,6 +45,55 @@ import cython
 from cython.parallel cimport prange, parallel
 cimport numpy as np
 
+# %% Fast list of lists copy function
+# R_1 = [[0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123],
+#        [0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123,0,1,2,3,4,5,6,7,8,10,12,34,545,35,24,12,123]]
+# %timeit R_copy = copy.deepcopy(R_1)
+# R_copy = R_1[:]
+# R_copy[0][0] = 10
+# R_1
+
+# %timeit R_copy = [x[:] for x in R_1]
+#R_copy[0][0] = 10
+#assert R_1[0][0] != R_copy[0][0]
+
+def lol_copy(list_of_lists):
+    '''A function that returns a deepcopy of a list of lists, but faster than deepcopy'''
+    list_copy = [x[:] for x in list_of_lists]
+    return list_copy
+
+def lolol_copy(list_of_lists_of_lists):
+    '''A function that returns a deepcopy of a list of lists of lists, but faster than deepcopy'''
+    list_copy = [[x[:] for x in R_x] for R_x in list_of_lists_of_lists]
+    return list_copy
+
 # %% Range functions 
 def rangeEx(a,b,c):
     # A function for creating a range between a and b and excluding a number c
@@ -374,8 +423,8 @@ def routes_generation_unseen_prob(parent_i, parent_j, solution_len):
     each parent that maximises the unseen vertices added to the child route
     Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
     parents = []  
-    parents.append(copy.deepcopy(parent_i))
-    parents.append(copy.deepcopy(parent_j))
+    parents.append(lol_copy(parent_i))
+    parents.append(lol_copy(parent_j))
     parent_index = random.randint(0,1) # counter to help alternate between parents  
     
     child_i = [] # define child
@@ -424,8 +473,8 @@ def routes_generation_unseen_probabilistic(parent_i, parent_j, solution_len):
     each parent that maximises the unseen vertices added to the child route probabilisticly
     Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
     parents = []  
-    parents.append(copy.deepcopy(parent_i))
-    parents.append(copy.deepcopy(parent_j))
+    parents.append(lol_copy(parent_i))
+    parents.append(lol_copy(parent_j))
     parent_index = random.randint(0,1) # counter to help alternate between parents  
     
     child_i = [] # define child
@@ -1298,7 +1347,7 @@ def change_delete_node_from_back(routes_R, r): # Delete node from end of route
                 
 def perturb_make_small_change(routes_R, r, mapping_adjacent):
     # makes a small change to the route set
-    R = copy.deepcopy(routes_R)
+    R = lol_copy(routes_R)
     p = random.uniform(0,1)
     if p < 0.25:
         change_add_node_to_first_node(R, r, mapping_adjacent)
@@ -1315,7 +1364,7 @@ def perturb_make_small_add_terminal(routes_R, main_problem):
     r = main_problem.problem_constraints.con_r
     mapping_adjacent = main_problem.mapping_adjacent
     
-    R = copy.deepcopy(routes_R)
+    R = lol_copy(routes_R)
     p = random.uniform(0,1)
     if p < 0.50:
         change_add_node_to_first_node(R, r, mapping_adjacent)
@@ -1327,7 +1376,7 @@ def perturb_make_small_del_terminal(routes_R, main_problem):
     # makes a small change to the route set by deleting terminal vertex
     r = main_problem.problem_constraints.con_r
     
-    R = copy.deepcopy(routes_R)
+    R = lol_copy(routes_R)
     p = random.uniform(0,1)
     if p < 0.50:
         change_delete_node_from_front(R, r)
@@ -2277,7 +2326,7 @@ def repair_add_path_to_route_set_ksp(route_to_repair, main_problem, k_shortest_p
     
     else:
         path_to_add = random.choice(ksp)
-        #repaired_route = copy.deepcopy(route_to_repair)
+        #repaired_route = lol_copy(route_to_repair)
         repaired_route = route_to_repair
         repaired_route.extend([path_to_add])
         
@@ -2308,7 +2357,7 @@ def add_path_satisfying_max_unmet_demand(route_to_repair, main_problem, routes_t
 
     path_to_add = routes_to_search[random.choice(pot_route_indices)]
     # print(f"{path_to_add}")
-    repaired_route = copy.deepcopy(route_to_repair)
+    repaired_route = lol_copy(route_to_repair)
     repaired_route.extend([path_to_add])
     
     return repaired_route
@@ -2345,7 +2394,7 @@ def add_path_max_unmet_demand_limited_len(route_to_repair, main_problem, removed
 
     path_to_add = routes_to_search[random.choice(pot_route_indices)]
     # print(f"{path_to_add}")
-    repaired_route = copy.deepcopy(route_to_repair)
+    repaired_route = lol_copy(route_to_repair)
     repaired_route.extend([path_to_add])
     
     return repaired_route
@@ -2388,7 +2437,7 @@ def add_path_prob_unmet_demand_limited_len(route_to_repair, main_problem, remove
     path_to_add = random.choices(routes_to_search, weights=prob_d_routes, k=1)[0]
     
     # print(f"{path_to_add}")
-    repaired_route = copy.deepcopy(route_to_repair)
+    repaired_route = lol_copy(route_to_repair)
     repaired_route.extend([path_to_add])
     
     return repaired_route
@@ -2402,7 +2451,7 @@ def replace_path_prob_unmet_demand_limited_len(route_to_replace, main_problem, r
     may be imported and used to search for the best demand.'''
 
     debug = False
-    route_copy = copy.deepcopy(route_to_replace)
+    route_copy = lol_copy(route_to_replace)
     replace_path = route_copy[replace_index]   
     if limit_len: 
         len_removed = len(replace_path)
@@ -2454,7 +2503,7 @@ def replace_path_prob_demand_per_cost(route_to_replace, main_problem, replace_in
     may be imported and used to search for the best demand.'''
 
     debug = False
-    route_copy = copy.deepcopy(route_to_replace)  
+    route_copy = lol_copy(route_to_replace)  
     
     del route_copy[replace_index] # removes the route that should be replaced
     
@@ -2505,8 +2554,8 @@ def crossover_routes_random(parent_i, parent_j):
     parent_i_indices = random.sample(range(parents_len), n_crossover_routes)
     parent_j_indices = random.sample(range(parents_len), n_crossover_routes)
     
-    child_i = copy.deepcopy(parent_i) # create children from parents
-    child_j = copy.deepcopy(parent_j) # create children from parents
+    child_i = lol_copy(parent_i) # create children from parents
+    child_j = lol_copy(parent_j) # create children from parents
     
     for i, j in zip(parent_i_indices, parent_j_indices):
         child_i[i] = parent_j[j]
@@ -2526,8 +2575,8 @@ def crossover_routes_unseen_prob(parent_i, parent_j):
     each parent that maximises the unseen vertices added to the child route
     Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
     parents = []  
-    parents.append(copy.deepcopy(parent_i))
-    parents.append(copy.deepcopy(parent_j))
+    parents.append(lol_copy(parent_i))
+    parents.append(lol_copy(parent_j))
     parent_index = random.randint(0,1) # counter to help alternate between parents  
     
     child_i = [] # define child
@@ -2576,8 +2625,8 @@ def crossover_routes_unseen_probabilistic(parent_i, parent_j):
     each parent that maximises the unseen vertices added to the child route probabilisticly
     Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
     parents = []  
-    parents.append(copy.deepcopy(parent_i))
-    parents.append(copy.deepcopy(parent_j))
+    parents.append(lol_copy(parent_i))
+    parents.append(lol_copy(parent_j))
     parent_index = random.randint(0,1) # counter to help alternate between parents  
     
     child_i = [] # define child
@@ -2634,8 +2683,8 @@ def crossover_routes_unseen_prob_UTRFSP(parent_i_route, parent_j_route, parent_i
     each parent that maximises the unseen vertices added to the child route
     Note: only generates one child, needs to be tested for feasibility and repaired if needed"""
     parents_route = []  
-    parents_route.append(copy.deepcopy(parent_i_route))
-    parents_route.append(copy.deepcopy(parent_j_route))
+    parents_route.append(lol_copy(parent_i_route))
+    parents_route.append(lol_copy(parent_j_route))
     parents_freq_args = []
     parents_freq_args.append(copy.deepcopy(list(parent_i_freq_args)))
     parents_freq_args.append(copy.deepcopy(list(parent_j_freq_args)))
@@ -3020,7 +3069,7 @@ def mutate_routes_two_intertwine(routes_R, main_problem):
     random_list = list(range(len(routes_R)))
     random.shuffle(random_list)
     
-    candidate_routes_R = copy.deepcopy(routes_R)
+    candidate_routes_R = lol_copy(routes_R)
     
     for i in random_list:
         for j in random_list:    
@@ -3065,7 +3114,7 @@ def mutate_routes_two_intertwine(routes_R, main_problem):
                         if test_all_four_constraints(candidate_routes_R, main_problem):
                             return candidate_routes_R
                         else:
-                            candidate_routes_R = copy.deepcopy(routes_R) # reset the candidate routes if unsuccessful
+                            candidate_routes_R = lol_copy(routes_R) # reset the candidate routes if unsuccessful
                     
     return routes_R # if no successful mutation was found
 
@@ -3075,7 +3124,7 @@ def add_vertex_to_terminal(routes_R, main_problem):
     r = main_problem.problem_constraints.con_r
     mapping_adjacent = main_problem.mapping_adjacent
     
-    R = copy.deepcopy(routes_R)
+    R = lol_copy(routes_R)
     p = random.uniform(0,1)
     if p < 0.5:
         change_add_node_to_first_node(R, r, mapping_adjacent)
@@ -3088,7 +3137,7 @@ def remove_vertex_from_terminal(routes_R, main_problem):
     # Removes a vertex from a terminal vertex
     r = main_problem.problem_constraints.con_r
     
-    R = copy.deepcopy(routes_R)
+    R = lol_copy(routes_R)
     p = random.uniform(0,1)
     if p < 0.5:
         change_delete_node_from_front(R, r)
@@ -3139,7 +3188,7 @@ def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
     for config in ['ff', 'bb', 'fb']:
         
         for pair in ctv_pairs[config]:
-            routes_R = copy.deepcopy(route_to_mutate)
+            routes_R = lol_copy(route_to_mutate)
             
             if config == 'ff':
                 P_new_front = routes_R[pair[0]]
@@ -3178,7 +3227,7 @@ def mutate_merge_routes_at_common_terminal(route_to_mutate, UTNDP_problem_1):
 def mut_replace_lowest_demand(route_to_mutate, main_problem):
     '''Mutation function for replacing the route with the lowest demand
     with a route from the k shortest paths that aims to maximise demand'''
-    routes_R = copy.deepcopy(route_to_mutate)
+    routes_R = lol_copy(route_to_mutate)
     
     mx_demand = main_problem.problem_data.mx_demand
     ksp = main_problem.k_short_paths.paths
@@ -3212,7 +3261,7 @@ def mut_remove_lowest_demand_terminal(route_to_mutate, main_problem):
     for i in range(len(route_to_mutate)):
         
         # front terminal vertex eval
-        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy = lol_copy(route_to_mutate)
         route_copy[i] = route_copy[i][1:]
         # test feasibility
         if test_all_four_constraints(route_copy, main_problem):
@@ -3223,7 +3272,7 @@ def mut_remove_lowest_demand_terminal(route_to_mutate, main_problem):
                                'dem_contribution':d_cont, 'cost':c}) 
         
         # end terminal vertex eval
-        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy = lol_copy(route_to_mutate)
         route_copy[i] = route_copy[i][:-1]
         # test feasibility
         if test_all_four_constraints(route_copy, main_problem):
@@ -3245,7 +3294,7 @@ def mut_remove_lowest_demand_terminal(route_to_mutate, main_problem):
     candidate = random.choice(candidates_min)
     
     # extract candidate details and return mutated route
-    mut_route = copy.deepcopy(route_to_mutate)
+    mut_route = lol_copy(route_to_mutate)
     if candidate['front']:
         mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][1:]
     else:
@@ -3267,7 +3316,7 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
     for i in range(len(route_to_mutate)):
         
         # front terminal vertex eval
-        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy = lol_copy(route_to_mutate)
         route_copy[i] = route_copy[i][1:]
         # test feasibility
         if test_all_four_constraints(route_copy, main_problem):
@@ -3278,7 +3327,7 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
                                'dem_contribution':d_cont, 'cost':c}) 
         
         # end terminal vertex eval
-        route_copy = copy.deepcopy(route_to_mutate)
+        route_copy = lol_copy(route_to_mutate)
         route_copy[i] = route_copy[i][:-1]
         # test feasibility
         if test_all_four_constraints(route_copy, main_problem):
@@ -3300,7 +3349,7 @@ def mut_remove_largest_cost_terminal(route_to_mutate, main_problem):
     candidate = random.choice(candidates_min)
     
     # extract candidate details and return mutated route
-    mut_route = copy.deepcopy(route_to_mutate)
+    mut_route = lol_copy(route_to_mutate)
     if candidate['front']:
         mut_route[candidate['route_nr']] = mut_route[candidate['route_nr']][1:]
     else:
@@ -3312,7 +3361,7 @@ def mut_replace_high_sim_routes(routes_R, main_problem):
     '''Mutation function where the routes with the maximum overlap is identified
     and then replaced by a better route'''
     debug = False
-    R_copy = copy.deepcopy(routes_R)
+    R_copy = lol_copy(routes_R)
     max_sim_list, max_sim = calc_path_similarity_matrix_for_mut(R_copy)
     pair = random.choice(max_sim_list)
     P_1 = routes_R[pair[0]]
@@ -3369,7 +3418,7 @@ def mut_replace_path_subsets(routes_R, main_problem, routes_to_search=False, lim
     mutated route as output'''
     # Identify shortest subset that should be replaced
     debug = False
-    mut_R = copy.deepcopy(routes_R)
+    mut_R = lol_copy(routes_R)
     ksp = main_problem.k_short_paths.paths
     
     for i, R_i in enumerate(mut_R):
@@ -3409,7 +3458,7 @@ def is_route_sublist_in_set(routes_R, index_i):
     routeset'''
     
     R_i = routes_R[index_i]
-    routes_copy = copy.deepcopy(routes_R)
+    routes_copy = lol_copy(routes_R)
     del routes_copy[index_i]
     
     for R_j in routes_copy:
@@ -3498,7 +3547,7 @@ def mut_invert_route_vertices(routes_R, main_problem):
                     
                     if test_two_adj_feasible(inverted_path, vertex_start, vertex_end, main_problem):
                         
-                        mut_R = copy.deepcopy(routes_R)
+                        mut_R = lol_copy(routes_R)
                         mut_R[i] = inverted_path
                         # if ev.evaluateTotalRouteLength(mut_R,main_problem.problem_data.mx_dist)>10000:   
                         #     debug = True
@@ -3562,7 +3611,7 @@ def mut_add_vertex_inside_route_not_working(routes_R, main_problem):
                     
                         if debug: print(f"Added {v_pot} between {v_s} and {v_add} at index position {max(P_i.index(v_s), P_i.index(v_add))}")
                         P_i.insert(max(P_i.index(v_s), P_i.index(v_add)), v_pot)
-                        mut_R = copy.deepcopy(routes_R)
+                        mut_R = lol_copy(routes_R)
                         mut_R[i] = P_i
                         return mut_R
                     
@@ -3588,7 +3637,7 @@ def mut_add_vertex_inside_route(routes_R, main_problem):
                     v_pot = random.choice(list(pot_adds))
                     P_i.insert(s+1, v_pot)
 
-                    mut_R = copy.deepcopy(routes_R)
+                    mut_R = lol_copy(routes_R)
                     mut_R[i] = P_i
 
                     return mut_R
@@ -3622,7 +3671,7 @@ def mut_delete_vertex_inside_route(routes_R, main_problem):
                 # Find all the selected vertex's neighbours
                 e_pot_add = [P_i[s-1], P_i[s+1]] # potential edge to add when v_s removed
                 if set(neigh[e_pot_add[0]]).intersection(set([e_pot_add[1]])):
-                    mut_R = copy.deepcopy(routes_R)
+                    mut_R = lol_copy(routes_R)
                     del mut_R[i][s]
                     if debug: print(f"Deleting vertex {v_s}\nP_i: {mut_R[i]} [NEW]")
                     return mut_R
@@ -3637,7 +3686,7 @@ def mut_delete_vertex_inside_route(routes_R, main_problem):
 def mut_relocate_vertex_inside_route(routes_R, main_problem):
     '''A mutation function for relocating a randomly selected vertex from a 
     randomly selected route in a route set if feasible.'''   
-    mut_R = copy.deepcopy(routes_R)
+    mut_R = lol_copy(routes_R)
     
     debug = False
     neigh = main_problem.mapping_adjacent
@@ -3722,7 +3771,7 @@ def mut_replace_vertex_inside_route(routes_R, main_problem):
             
             if pot_replace:
                 v_replace = random.choice(pot_replace)
-                mut_R = copy.deepcopy(routes_R)
+                mut_R = lol_copy(routes_R)
                 mut_R[i][s] = v_replace
                 if debug: print(f"Replacing vertex {v_s} with {v_replace}\nP_i: {mut_R[i]} [NEW]")
                 return mut_R
@@ -3775,7 +3824,7 @@ def mut_swap_vertices_between_routes(routes_R, main_problem):
                     bool_v_t_into_P_i = (len(set([v_t]).intersection(set(pot_replace_i))) == 1) # test if v_t can go into P_i
 
                     if bool_v_s_into_P_j & bool_v_t_into_P_i: # if both true, then swap  
-                        mut_R = copy.deepcopy(routes_R)
+                        mut_R = lol_copy(routes_R)
                         mut_R[i][s] = v_t
                         mut_R[j][t] = v_s
                         return mut_R
@@ -3835,7 +3884,7 @@ def mut_donate_vertex_between_routes(routes_R, main_problem):
                                     
                                     # ensure both vertices in path are neighbours to v_s
                                     if len(set(neigh[v_s]).intersection(set(e_pot_rep)))==2:
-                                        mut_R = copy.deepcopy(routes_R)
+                                        mut_R = lol_copy(routes_R)
                                         del mut_R[i][s] # remove vertex v_s from P_i
                                         if debug: print(f"Vertex REMOVED: {v_s} \t(loc: {s})\nP_i: {routes_R[i]} [OLD]\nP_i: {mut_R[i]} [NEW]")
                                         
@@ -4056,7 +4105,7 @@ def mut_remove_largest_cost_per_dem_terminal(route_to_mutate, main_problem):
 
 def mut_trim_one_terminal_cb(routes_R, main_problem):
     '''Creates a copy so that the original is not altered'''
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     route_copy = mut_remove_largest_cost_per_dem_terminal(route_copy, main_problem)
     return route_copy
 
@@ -4067,7 +4116,7 @@ def mut_trim_one_path_random_cb(routes_R, main_problem):
     Include a probabilistic element where the demand met per route cost is 
     considered.'''
     
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     len_routes = len(routes_R)
     con_min_v = main_problem.problem_constraints.con_minNodes
         
@@ -4094,7 +4143,7 @@ def mut_trim_routes_random_cb(routes_R, main_problem):
     Include a probabilistic element where the demand met per route cost is 
     considered.'''
     
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     len_routes = len(routes_R)
     con_min_v = main_problem.problem_constraints.con_minNodes
         
@@ -4122,7 +4171,7 @@ def mut_trim_all_paths_random_cb(routes_R, main_problem):
     Include a probabilistic element where the demand met per route cost is 
     considered.'''
     
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     len_routes = len(routes_R)
     con_min_v = main_problem.problem_constraints.con_minNodes
         
@@ -4150,7 +4199,7 @@ def mut_trim_full_overall_cb(routes_R, main_problem):
     Include a probabilistic element where the demand met per route cost is 
     considered.'''
     
-    copy_R = copy.deepcopy(routes_R)
+    copy_R = lol_copy(routes_R)
                               
     prev_nr_tot_vertices = len([y for x in copy_R for y in x])             
     copy_R = mut_remove_largest_cost_per_dem_terminal(copy_R, main_problem)
@@ -4176,7 +4225,7 @@ def mut_add_terminal_highest_demand_per_cost_naive(routes_R, main_problem):
     
     NB: No deepcopy is made, so the routes_R is altered also'''
     
-    #route_copy = copy.deepcopy(routes_R)
+    #route_copy = lol_copy(routes_R)
     route_copy = routes_R
     len_routes = len(routes_R)
     mx_demand = main_problem.problem_data.mx_demand
@@ -4260,7 +4309,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
     
     NB: No deepcopy is made, so the routes_R is altered also'''
     
-    #route_copy = copy.deepcopy(routes_R)
+    #route_copy = lol_copy(routes_R)
     route_copy = routes_R
     len_routes = len(routes_R)
     mx_demand = main_problem.problem_data.mx_demand
@@ -4335,7 +4384,7 @@ def mut_add_terminal_highest_demand_per_cost(routes_R, main_problem):
 
 def mut_grow_one_terminal_cb(routes_R, main_problem):
     '''Creates a copy so that the original is not altered'''
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     route_copy = mut_add_terminal_highest_demand_per_cost(route_copy, main_problem)
     return route_copy
 
@@ -4347,7 +4396,7 @@ def mut_grow_one_path_random_cb(routes_R, main_problem):
     Include a probabilistic element where the highest demand contribution per route cost is 
     considered.'''
     
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     len_routes = len(routes_R)
     mx_demand = main_problem.problem_data.mx_demand
     mx_dist = main_problem.problem_data.mx_dist
@@ -4443,7 +4492,7 @@ def mut_grow_routes_random_cb(routes_R, main_problem):
     Include a probabilistic element where the highest demand contribution per route cost is 
     considered.'''
     
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     len_routes = len(routes_R)
     mx_demand = main_problem.problem_data.mx_demand
     mx_dist = main_problem.problem_data.mx_dist
@@ -4540,7 +4589,7 @@ def mut_grow_all_paths_random_cb(routes_R, main_problem):
     Include a probabilistic element where the highest demand contribution per route cost is 
     considered.'''
     
-    route_copy = copy.deepcopy(routes_R)
+    route_copy = lol_copy(routes_R)
     len_routes = len(routes_R)
     mx_demand = main_problem.problem_data.mx_demand
     mx_dist = main_problem.problem_data.mx_dist
@@ -4635,7 +4684,7 @@ def mut_grow_full_overall_cb(routes_R, main_problem):
     Include a probabilistic element where the highest demand contribution per route cost is 
     considered.'''
     
-    copy_R = copy.deepcopy(routes_R) # set a break so that original is not altered
+    copy_R = lol_copy(routes_R) # set a break so that original is not altered
     
     prev_nr_tot_vertices = len([y for x in copy_R for y in x])             
     copy_R = mut_add_terminal_highest_demand_per_cost(copy_R, main_problem)
@@ -4878,7 +4927,7 @@ def mutate_overall_routes_all_smart_debug(routes_R, main_problem):
     
 def mutate_route_population(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
-    pop_mutated_variables = copy.deepcopy(pop_variables_routes) # NB deepcopy breaks link to variables
+    pop_mutated_variables = lolol_copy(pop_variables_routes) # NB deepcopy breaks link to variables
     for i in range(len(pop_mutated_variables)):
         mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
         pop_mutated_variables[i] = mut_output["Route"]
@@ -4886,7 +4935,7 @@ def mutate_route_population(pop_variables_routes, main_problem):
 
 def mutate_route_population_detailed(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
-    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    pop_mutated_variables = lolol_copy(pop_variables_routes)
     df_mut_details = pd.DataFrame(columns=(["Mut_nr", "Mut_successful", "Mut_repaired"]))
     for i in range(len(pop_mutated_variables)):
         mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
@@ -4899,7 +4948,7 @@ def mutate_route_population_detailed(pop_variables_routes, main_problem):
 def mutate_route_population_detailed_ld(pop_variables_routes, main_problem):
     """A function to mutate over the entire population, 
     returns a list of dictionaries"""
-    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    pop_mutated_variables = lolol_copy(pop_variables_routes)
     ld_mut_details = []
     for i in range(len(pop_mutated_variables)):
         mut_output = mutate_overall_routes_all_smart(pop_mutated_variables[i], main_problem)
@@ -4909,7 +4958,7 @@ def mutate_route_population_detailed_ld(pop_variables_routes, main_problem):
 
 def mutate_route_population_UTRFSP(pop_variables_routes, main_problem):
     """A function to mutate over the entire population"""
-    pop_mutated_variables = copy.deepcopy(pop_variables_routes)
+    pop_mutated_variables = lolol_copy(pop_variables_routes)
     for i in range(len(pop_mutated_variables)):
          pop_mutated_variables[i] = mutate_overall_routes(pop_mutated_variables[i], main_problem, 
                           main_problem.problem_GA_parameters.mutation_probability_routes)

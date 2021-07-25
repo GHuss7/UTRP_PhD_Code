@@ -96,11 +96,17 @@ name_input_data = ["Mandl_UTRP", #0
                     '7_3_Mumford1_GA_Pop_size', #31
                     '7_4_Mumford2_GA_Pop_size', #32
                     '7_5_Mumford3_GA_Pop_size', #33
+                    '8_1_Mandl6_GA_Crossover_prob', #34
+                    '8_2_Mumford0_GA_Crossover_prob', #35
+                    '8_3_Mumford1_GA_Crossover_prob', #36
+                    '8_4_Mumford2_GA_Crossover_prob', #37
+                    '8_5_Mumford3_GA_Crossover_prob', #38
+
 
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][-2]   # set the name of the input data
+                   ][34]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience

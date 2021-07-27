@@ -35,13 +35,10 @@ spl_word = 'GA_' # initializing split word
 title = {
 'con_minNodes' : 'Minimum vertices',               
 'con_r' : 'Number of routes',                        
-'crossover_probability' : 'Crossover probability', 
-'Crossover_prob' : 'Crossover probability', 
+'crossover_probability' : 'Crossover probability',                       
 'generations' : 'Number of generations',              
 'mutation_probability' : 'Mutation probability',
-'Mut_prob' : 'Mutation probability',
 'population_size' : 'Population size',
-'Pop_size' : 'Population size',
 
 'Initial_solutions' : 'Use supplemented initial solution set',
 'Crossover' : 'Crossover operators applied',
@@ -55,13 +52,10 @@ title = {
 file_suffix = { #NB! Suffix may not have any spaces!
 'con_minNodes' : 'min_nodes',               
 'con_r' : 'num_routes',                        
-'crossover_probability' : 'crossover_probability', 
-'Crossover_prob' : 'crossover_probability',                      
+'crossover_probability' : 'crossover_probability',                       
 'generations' : 'num_generations',              
 'mutation_probability' : 'mutation_probability',
-'Mut_prob' : 'mutation_probability',
 'population_size' : 'population_size',
-'Pop_size' : 'population_size',
 
 'Initial_solutions' : 'initial_solutions',
 'Crossover' : 'crossover_funcs' ,

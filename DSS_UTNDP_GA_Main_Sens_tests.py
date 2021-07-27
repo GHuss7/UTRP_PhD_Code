@@ -101,17 +101,21 @@ name_input_data = ["Mandl_UTRP", #0
                     '8_3_Mumford1_GA_Crossover_prob', #36
                     '8_4_Mumford2_GA_Crossover_prob', #37
                     '8_5_Mumford3_GA_Crossover_prob', #38
-
+                    '9_1_Mandl6_GA_Mut_prob', #39
+                    '9_2_Mumford0_GA_Mut_prob', #40
+                    '9_3_Mumford1_GA_Mut_prob', #41
+                    '9_4_Mumford2_GA_Mut_prob', #42
+                    '9_5_Mumford3_GA_Mut_prob', #43
 
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][34]   # set the name of the input data
+                   ][40]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
-test_counters = [] # empty list means all, filled in values means only those tests
+test_counters = [4] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
 if True:
@@ -776,7 +780,7 @@ def main(UTNDP_problem_1):
                         print(f'Run terminated by non-improving HV after Gen {i_gen} HV:{HV:.4f} [Gen comp:{gen_compare} | HV diff: {HV_diff:.6f}]')
                         break
             
-            if i_gen == 1 or i_gen == 100:
+            if i_gen ==2 or i_gen == 100:
                 # Calculate time projections for runs
                 start_time_run = stats['begin_time'] # TIMING FUNCTION # stats_overall['execution_start_time']
                 end_time = datetime.datetime.now() # TIMING FUNCTION

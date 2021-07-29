@@ -1,0 +1,42 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jul 19 18:09:49 2021
+
+@author: 17832020
+"""
+import pandas as pd
+import os
+import re
+import string
+import json
+from pathlib import Path
+import subprocess
+from PyPDF2 import PdfFileMerger, PdfFileReader
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
+# Get all the results folders:
+all_result_folders = os.listdir(dir_path)
+
+dir_prefix = "C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/Results"
+
+# Set folders to do the operation on:
+apply_list = ["Results_8_5_Mumford3_GA_Crossover_prob/8_5_Mumford3_GA_Crossover_prob_20210725_214537 GA_crossover_probability_0.4",
+                ]
+
+# Ensure the directory is set to the file location
+
+for apply_folder in apply_list: 
+    current_wd = dir_prefix+'/'+apply_folder # This directs the script to run in the relevant folders
+    
+    # Take note: This runs the script in the folder itself
+    # x = subprocess.call(f"python {dir_path}\Post_analysis_UTRP_GA_results.py -dir '{current_wd}'") # -interaction nonstopmode -shel-escape
+    command_str = f'python Recon_runs_UTRP_GA.py -dir "{current_wd}"'
+    x = subprocess.call(command_str) # -interaction nonstopmode -shel-escape
+
+    if x != 0:
+        print(f'Exit-code not 0, check result! [{apply_folder}]')
+        
+    else:	
+        print(f"Success! [{apply_folder}]")
+        os.chdir(current_wd)

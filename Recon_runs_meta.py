@@ -21,8 +21,14 @@ all_result_folders = os.listdir(dir_path)
 dir_prefix = "C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/Results"
 
 # Set folders to do the operation on:
-apply_list = ["Results_8_5_Mumford3_GA_Crossover_prob/8_5_Mumford3_GA_Crossover_prob_20210725_214537 GA_crossover_probability_0.4",
-                ]
+apply_list = [
+                #"Results_7_5_Mumford3_GA_Pop_size/7_5_Mumford3_GA_Pop_size_20210723_134827 GA_population_size_500",
+                #"Results_7_5_Mumford3_GA_Pop_size/7_5_Mumford3_GA_Pop_size_20210723_111033 GA_population_size_600",
+                #"Results_8_5_Mumford3_GA_Crossover_prob/8_5_Mumford3_GA_Crossover_prob_20210725_214537 GA_crossover_probability_0.4",
+                "Results_8_5_Mumford3_GA_Crossover_prob/8_5_Mumford3_GA_Crossover_prob_20210726_072740 GA_crossover_probability_0.5",
+                #"Results_9_5_Mumford3_GA_Mut_prob/9_5_Mumford3_GA_Mut_prob_20210727_225424 GA_mutation_probability_0.95",
+                #"Results_9_5_Mumford3_GA_Mut_prob/9_5_Mumford3_GA_Mut_prob_20210728_083726 GA_mutation_probability_1"
+            ]
 
 # Ensure the directory is set to the file location
 
@@ -39,4 +45,4 @@ for apply_folder in apply_list:
         
     else:	
         print(f"Success! [{apply_folder}]")
-        os.chdir(current_wd)
+        os.chdir(dir_path)

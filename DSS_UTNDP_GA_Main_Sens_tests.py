@@ -106,16 +106,22 @@ name_input_data = ["Mandl_UTRP", #0
                     '9_3_Mumford1_GA_Mut_prob', #41
                     '9_4_Mumford2_GA_Mut_prob', #42
                     '9_5_Mumford3_GA_Mut_prob', #43
+                    '10_1_Mandl6_GA_Long_run', #44
+                    '10_2_Mumford0_GA_Long_run', #45
+                    '10_3_Mumford1_GA_Long_run', #46
+                    '10_4_Mumford2_GA_Long_run', #47
+                    '10_5_Mumford3_GA_Long_run', #48
+
 
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][40]   # set the name of the input data
+                   ][44]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
-test_counters = [4] # empty list means all, filled in values means only those tests
+test_counters = [] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
 if True:
@@ -636,6 +642,7 @@ def main(UTNDP_problem_1):
         # Load the initial set
         df_pop_generations = pd.DataFrame.from_dict(ld_pop_generations)
         initial_set = df_pop_generations.iloc[0:UTNDP_problem_1.problem_GA_parameters.population_size,:] # load initial set
+        initial_set.to_csv(path_results_per_run / "Pop_initial_set.csv")
 
         print("Generation {0} duration: {1} [HV:{2} | BM:{3}] APD:{4}".format(str(0),
                                                         ga.print_timedelta_duration(stats['end_time'] - stats['begin_time']),
@@ -1048,4 +1055,5 @@ if __name__ == "__main__":
     else:
         #pass
         print("Normal run initiated")
+        UTNDP_problem_1.add_text = "Long_run"
         main(UTNDP_problem_1) 

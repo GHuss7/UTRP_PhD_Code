@@ -148,7 +148,7 @@ all_in_one_df = pd.DataFrame(columns = named_cols)
 if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
         results_dataframe.columns = named_cols
-        if parameter in ['Mut_threshold','Mut_prob','Crossover_prob']:
+        if parameter in ['Mut_threshold']:
             results_dataframe.value = results_dataframe.value.astype(float)
         elif parameter in ['Repairs', 'repair_func']:
             pass

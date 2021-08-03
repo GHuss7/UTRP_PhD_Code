@@ -46,6 +46,11 @@ input_data_names = ['7_1_Mandl6_GA_Pop_size', #29
                     '9_3_Mumford1_GA_Mut_prob', #41
                     '9_4_Mumford2_GA_Mut_prob', #42
                     '9_5_Mumford3_GA_Mut_prob', #43
+                    '10_1_Mandl6_GA_Long_run', #44
+                    '10_2_Mumford0_GA_Long_run', #45
+                    '10_3_Mumford1_GA_Long_run', #46
+                    '10_4_Mumford2_GA_Long_run', #47
+                    '10_5_Mumford3_GA_Long_run', #48
                     ]
 
 # Arguments from command line

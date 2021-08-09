@@ -49,7 +49,7 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][1]   # set the name of the input data
+                   "Mandl8_UTRP",][0]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -104,7 +104,7 @@ route_gen_funcs = {"KSP_unseen_robust" : gc.Routes.return_feasible_route_robust_
 assert Decisions["route_gen_func"] in route_gen_funcs.keys()
 route_gen_func_name = Decisions["route_gen_func"]
 
-mutations = {#"No_mutation" : gf.no_mutation,
+mutations_all = {#"No_mutation" : gf.no_mutation,
                 "Intertwine_two" : gf.mutate_routes_two_intertwine, 
                 "Add_vertex" : gf.add_vertex_to_terminal,
                 "Delete_vertex" : gf.remove_vertex_from_terminal,
@@ -119,30 +119,29 @@ mutations = {#"No_mutation" : gf.no_mutation,
                 "Swap_between_routes" : gf.mut_swap_vertices_between_routes,
     
                 "Merge_terminals" : gf.mutate_merge_routes_at_common_terminal, 
-                #"Repl_low_dem_route" : gf.mut_replace_lowest_demand,
-                #"Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
-                #"Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
-                #"Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
-                #"Repl_subsets" : gf.mut_replace_path_subsets,
+                "Repl_low_dem_route" : gf.mut_replace_lowest_demand,
+                "Rem_low_dem_terminal" : gf.mut_remove_lowest_demand_terminal,
+                "Rem_lrg_cost_terminal" : gf.mut_remove_largest_cost_terminal,
+                "Repl_high_sim_route":gf.mut_replace_high_sim_routes, # bad mutation
+                "Repl_subsets" : gf.mut_replace_path_subsets,
                       
                 "Trim_one_terminal_cb" : gf.mut_trim_one_terminal_cb,
-                #"Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
-                #"Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
-                #"Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
-                #"Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
+                "Trim_one_path_random_cb" : gf.mut_trim_one_path_random_cb,
+                "Trim_routes_random_cb" : gf.mut_trim_routes_random_cb,
+                "Trim_all_paths_random_cb" : gf.mut_trim_all_paths_random_cb,
+                "Trim_full_overall_cb" : gf.mut_trim_full_overall_cb,
                 
                 "Grow_one_terminal_cb" : gf.mut_grow_one_terminal_cb,
-                #"Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
-                #"Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
-                #"Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
-                #"Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
+                "Grow_one_path_random_cb" : gf.mut_grow_one_path_random_cb,
+                "Grow_routes_random_cb" : gf.mut_grow_routes_random_cb,
+                "Grow_all_paths_random_cb" : gf.mut_grow_all_paths_random_cb,
+                "Grow_full_overall_cb" : gf.mut_grow_full_overall_cb,
                 
-                #"MSC_add_terminal" : gf.perturb_make_small_add_terminal,
-                #"MSC_del_terminal" : gf.perturb_make_small_del_terminal,
+                "MSC_add_terminal" : gf.perturb_make_small_add_terminal,
+                "MSC_del_terminal" : gf.perturb_make_small_del_terminal,
                 }
 
-mutations = {k : v for (k,v) in mutations.items() if k in Decisions["mutation_funcs"]}
-
+mutations = {k : v for (k,v) in mutations_all.items() if k in Decisions["mutation_funcs"]}
 
 all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
 
@@ -338,7 +337,21 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
 if True:
 # def main(UTNDP_problem_1):
 
+    # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions
+    
+    # Mutations reload
+    mutations = {k : v for (k,v) in mutations_all.items() if k in Decisions["mutation_funcs"]}
+
+    all_functions_dict = {"Mut_"+k : v.__name__ for (k,v) in mutations.items()}
+        
+    mutations_dict = {i+1:{"name":k, "func":v} for i,(k,v) in zip(range(len(mutations)),mutations.items())}
+    mut_functions = [v['func'] for (k,v) in mutations_dict.items()]
+    mut_names = [v['name'] for (k,v) in mutations_dict.items()]
+
+    UTNDP_problem_1.mutation_functions = mut_functions
+    UTNDP_problem_1.mutation_names = mut_names
+    UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
     
     """ Keep track of the stats """
     stats_overall = {

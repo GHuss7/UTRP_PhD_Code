@@ -58,10 +58,10 @@ name_input_data = ["Mandl_UTRP", #0
                     '22_2_Mumford0_SA_Mut_update', #15
                     '22_3_Mumford1_SA_Mut_update', #16
 
+                   '0_21_1_Mandl6_SA_Initial_solutions_Short_test',
                    
                    
-                   
-                   ][0]   # set the name of the input data
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -69,7 +69,7 @@ sens_to = (sens_from + 1) if False else -1
 test_counters = [] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
-if False:
+if True:
     Decisions = json.load(open("./Input_Data/"+name_input_data+"/Decisions.json"))
 
 else:
@@ -168,7 +168,7 @@ mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data
 if Decisions["Choice_import_dictionaries"]:
     parameters_constraints = json.load(open("./Input_Data/"+name_input_data+"/parameters_constraints.json"))
     parameters_input = json.load(open("./Input_Data/"+name_input_data+"/parameters_input.json"))
-    #parameters_SA_routes = json.load(open("./Input_Data/"+name_input_data+"/parameters_SA_routes.json"))
+    parameters_SA_routes = json.load(open("./Input_Data/"+name_input_data+"/parameters_SA_routes.json"))
 
     file_name_ksp = "K_shortest_paths_50_shortened_5_demand"
     if not os.path.exists("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv"): 
@@ -182,28 +182,28 @@ if Decisions["Choice_import_dictionaries"]:
     else:
         df_k_shortest_paths = pd.read_csv("./Input_Data/"+name_input_data+"/K_Shortest_Paths/Saved/"+file_name_ksp+".csv")
    
-    parameters_SA_routes={
-    "method" : "SA",
-    # ALSO: t_max > A_min (max_iterations_t > min_accepts)
-    "max_iterations_t" : 100, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
-    "max_total_iterations" : 8000, # the total number of accepts that are allowed
-    "max_epochs" : 4000, # the maximum number of epochs that are allowed
-    "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
-    "max_attempts" : 50, # maximum number of attempted moves per epoch
-    "max_reheating_times" : 5, # the maximum number of times that reheating can take place
-    "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
-    "Temp" : 0.1,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
-    "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
-    "Cooling_rate" : 0.95, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
-    "Reheating_rate" : 1.10, # the geometric reheating rate
-    "number_of_initial_solutions" : 4, # sets the number of initial solutions to generate as starting position
-    "Feasibility_repair_attempts" : 10, # the max number of edges that will be added and/or removed to try and repair the route feasibility
-    "number_of_runs" : 4, # number of runs to complete John 2016 set 20
-    "iter_compare_HV" : 8000, # Compare iterations for improvement in HV
-    "HV_improvement_th": 0.0001, # Treshold that terminates the search
-    "mutation_threshold" : 0.03, # Minimum threshold that mutation probabilities can reach,
-    "mutation_update_interval" : 200, # The interval in which the mutation ratio is updated
-    } 
+    # parameters_SA_routes={
+    # "method" : "SA",
+    # # ALSO: t_max > A_min (max_iterations_t > min_accepts)
+    # "max_iterations_t" : 100, # maximum allowable number length of iterations per epoch; Danie PhD (pg. 98): Dreo et al. chose 100
+    # "max_total_iterations" : 8000, # the total number of accepts that are allowed
+    # "max_epochs" : 4000, # the maximum number of epochs that are allowed
+    # "min_accepts" : 25, # minimum number of accepted moves per epoch; Danie PhD (pg. 98): Dreo et al. chose 12N (N being some d.o.f.)
+    # "max_attempts" : 50, # maximum number of attempted moves per epoch
+    # "max_reheating_times" : 5, # the maximum number of times that reheating can take place
+    # "max_poor_epochs" : 400, # maximum number of epochs which may pass without the acceptance of any new solution
+    # "Temp" : 0.1,  # starting temperature and a geometric cooling schedule is used on it # M = 1000 gives 93.249866 from 20 runs
+    # "M_iterations_for_temp" : 1000, # the number of initial iterations to establish initial starting temperature
+    # "Cooling_rate" : 0.95, # the geometric cooling rate 0.97 has been doing good, but M =1000 gives 0.996168
+    # "Reheating_rate" : 1.10, # the geometric reheating rate
+    # "number_of_initial_solutions" : 4, # sets the number of initial solutions to generate as starting position
+    # "Feasibility_repair_attempts" : 10, # the max number of edges that will be added and/or removed to try and repair the route feasibility
+    # "number_of_runs" : 4, # number of runs to complete John 2016 set 20
+    # "iter_compare_HV" : 8000, # Compare iterations for improvement in HV
+    # "HV_improvement_th": 0.0001, # Treshold that terminates the search
+    # "mutation_threshold" : 0.03, # Minimum threshold that mutation probabilities can reach,
+    # "mutation_update_interval" : 200, # The interval in which the mutation ratio is updated
+    # } 
    
 
 else:
@@ -346,8 +346,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-if True:
-# def main(UTNDP_problem_1):
+# if True:
+def main(UTNDP_problem_1):
 
     # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions
@@ -418,7 +418,7 @@ if True:
             path_parent_folder = Path(os.path.dirname(os.getcwd()))
     
     path_results = path_parent_folder / ("Results/Results_"+
-                                         name_input_data+"_SA"+
+                                         name_input_data+
                                          "/"+name_input_data+
                                          "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                          " "+parameters_SA_routes['method']+
@@ -427,13 +427,23 @@ if True:
     '''Save the parameters used in the runs'''
     if not (path_results / "Parameters").exists():
         os.makedirs(path_results / "Parameters")
+    print(UTNDP_problem_1.problem_inputs.__dict__)
+    # json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
+    # json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
+    # json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results / "Parameters" / "parameters_SA_routes.json", "w"), indent=4)
+    # json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"), indent=4)
+    with open(path_results / "Parameters" / "parameters_input.json", "w") as f:
+        json.dump(UTNDP_problem_1.problem_inputs.__dict__, f, indent=4) # saves the parameters in a json file
+    with open(path_results / "Parameters" / "parameters_constraints.json", "w") as f:
+        json.dump(UTNDP_problem_1.problem_constraints.__dict__, f, indent=4)
+    with open(path_results / "Parameters" / "parameters_SA_routes.json", "w") as f:
+        json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, f, indent=4)
+    with open(path_results / "Parameters" / "Decisions.json", "w") as f:
+        json.dump(Decisions, f, indent=4)
     
-    json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
-    json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
-    json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results / "Parameters" / "parameters_SA_routes.json", "w"), indent=4)
-    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"), indent=4)
     if Decisions["Choice_conduct_sensitivity_analysis"]:
-        json.dump(sensitivity_list, open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w'), indent=4)
+        with open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w') as f:
+            json.dump(sensitivity_list, f, indent=4)
     
     # %% Generate an initial feasible solution
     #routes_R = gf.generate_initial_feasible_route_set(mx_dist, UTNDP_problem_1.problem_constraints.__dict__)
@@ -454,19 +464,42 @@ if True:
         # for i in range(len(df_routes_R_initial_set)):
         #     routes_R_initial_set.append(gf.convert_routes_str2list(df_routes_R_initial_set.iloc[i,2]))
         
+        # Set the correct path for the input data to be loaded  
+        pop_to_load_name = "Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"])+".pickle"              
+        path_input_to_pop = "./Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name
+        if os.path.exists(path_input_to_pop):
+            path_input_data = Path("./Input_Data/"+name_input_data)
+        else: #TODO The else case below is not neccesary, the above is sufficient
+            pop_to_load_name = "Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"])+".pickle"              
+            path_input_to_pop = "Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name
+            github_path = "C:/Users/17832020/OneDrive - Stellenbosch University/Documents/GitHub"
+            if os.path.exists(github_path+"/DSS-Main/"+path_input_to_pop):
+                path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
+            elif os.path.exists(github_path+"/DSS_Main/"+path_input_to_pop):
+                path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
+            elif os.path.exists("C:/Users/gunth/OneDrive/Documents/GitHub/DSS-Main/"+path_input_to_pop):
+                github_path = "C:/Users/gunth/OneDrive/Documents/GitHub"
+                path_input_data = Path(github_path+"/DSS-Main/Input_Data/"+name_input_data)
+            elif os.path.exists("C:/Users/17832020/Documents/GitHub/DSS_Main/"+path_input_to_pop):
+                 github_path = "C:/Users/17832020/Documents/GitHub"
+                 path_input_data = Path(github_path+"/DSS_Main/Input_Data/"+name_input_data)
+            else:    
+                path_input_data = path_parent_folder / ("DSS Main/Input_Data/"+name_input_data)
+                print("No specified path found. Try copying the instance data into a folder listed above.")
         
         '''Load initial solutions from populations'''
-        
-        directory = Path(path_parent_folder / ("DSS Main/Input_Data/"+name_input_data+"/Populations"))
-        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
+
+        # Load and save initial population
+        path_populations = path_input_data/"Populations"
+        pop_loaded = gf_p.load_UTRP_pop_or_create("Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), path_populations, UTNDP_problem_1, route_gen_funcs[route_gen_func_name], fn_obj_2, pop_size_to_create=Decisions["Pop_size_to_create"])
         
         if Decisions["Load_supplementing_pop"]:
-            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), directory, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
+            pop_sup_loaded = gf_p.load_UTRP_supplemented_pop_or_create("Pop_sup_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"]), path_populations, UTNDP_problem_1,route_gen_funcs[route_gen_func_name], fn_obj_2, pop_loaded)
             pop_1 = pop_sup_loaded
         
         else:
             pop_1 = pop_loaded
-            
+                    
         if Decisions["Obj_func_disruption"]:
             print("Recalculating objectives for initial solutions")
             f_compare_route = fn_obj_2(UTNDP_problem_1.route_compare, UTNDP_problem_1)
@@ -981,8 +1014,8 @@ if True:
 #     if Decisions["Choice_normal_run"]:
 #         df_archive = main(UTNDP_problem_1)
 
-if False:
-# if __name__ == "__main__":
+# if False:
+if __name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()
@@ -1034,7 +1067,7 @@ if False:
         
                     # Update problem instance
                     UTNDP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
-                    UTNDP_problem_1.problem_SA_parameters = gc.gc.Problem_metaheuristic_inputs(parameters_SA_routes)
+                    UTNDP_problem_1.problem_SA_parameters = gc.Problem_metaheuristic_inputs(parameters_SA_routes)
                     UTNDP_problem_1.Decisions = Decisions
                     
                     # Run model

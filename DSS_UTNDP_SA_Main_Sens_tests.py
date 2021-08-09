@@ -49,7 +49,19 @@ name_input_data = ["Mandl_UTRP", #0
                    "Mandl4_UTRP", #7
                    "Mandl6_UTRP", #8
                    "Mandl7_UTRP", #9
-                   "Mandl8_UTRP",][0]   # set the name of the input data
+                   "Mandl8_UTRP", #10
+                   
+                   '21_1_Mandl6_SA_Initial_solutions', #11
+                    '21_2_Mumford0_SA_Initial_solutions', #12
+                    '21_3_Mumford1_SA_Initial_solutions', #13
+                    '22_1_Mandl6_SA_Mut_update', #14
+                    '22_2_Mumford0_SA_Mut_update', #15
+                    '22_3_Mumford1_SA_Mut_update', #16
+
+                   
+                   
+                   
+                   ][0]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -411,6 +423,17 @@ if True:
                                          "_"+stats_overall['execution_start_time'].strftime("%Y%m%d_%H%M%S")+
                                          " "+parameters_SA_routes['method']+
                                          f"_{UTNDP_problem_1.add_text}")
+    
+    '''Save the parameters used in the runs'''
+    if not (path_results / "Parameters").exists():
+        os.makedirs(path_results / "Parameters")
+    
+    json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
+    json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
+    json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results / "Parameters" / "parameters_SA_routes.json", "w"), indent=4)
+    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"), indent=4)
+    if Decisions["Choice_conduct_sensitivity_analysis"]:
+        json.dump(sensitivity_list, open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w'), indent=4)
     
     # %% Generate an initial feasible solution
     #routes_R = gf.generate_initial_feasible_route_set(mx_dist, UTNDP_problem_1.problem_constraints.__dict__)
@@ -984,7 +1007,7 @@ if False:
             print(f"Testing only variables: {test_counters}")
  
         for parameter_index in range(len(sensitivity_list)):
-            if sensitivity_list[parameter_index][0] == "parameters_GA": 
+            if sensitivity_list[parameter_index][0] == "parameters_SA": 
                 sensitivity_list[parameter_index][0] = parameters_SA_routes
             elif sensitivity_list[parameter_index][0] == "Decisions":
                 sensitivity_list[parameter_index][0] = Decisions
@@ -1011,7 +1034,7 @@ if False:
         
                     # Update problem instance
                     UTNDP_problem_1.problem_constraints = gc.Problem_inputs(parameters_constraints)
-                    UTNDP_problem_1.problem_SA_parameters = gc.Problem_GA_inputs(parameters_SA_routes)
+                    UTNDP_problem_1.problem_SA_parameters = gc.gc.Problem_metaheuristic_inputs(parameters_SA_routes)
                     UTNDP_problem_1.Decisions = Decisions
                     
                     # Run model

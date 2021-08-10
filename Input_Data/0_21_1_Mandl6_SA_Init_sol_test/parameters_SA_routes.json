@@ -1,7 +1,7 @@
 {
     "method": "SA",
     "max_iterations_t": 100,
-    "max_total_iterations": 1000,
+    "max_total_iterations": 200,
     "max_epochs": 4000,
     "min_accepts": 25,
     "max_attempts": 50,
@@ -13,7 +13,7 @@
     "Reheating_rate": 1.1,
     "number_of_initial_solutions": 10,
     "Feasibility_repair_attempts": 10,
-    "number_of_runs": 10,
+    "number_of_runs": 2,
     "iter_compare_HV": 8000,
     "HV_improvement_th": 0.0001,
     "mutation_threshold": 0.03,

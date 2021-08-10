@@ -934,7 +934,7 @@ def main(UTNDP_problem_1):
             del key, val
             
         ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
-        ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
+        # ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
         
         
         gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)

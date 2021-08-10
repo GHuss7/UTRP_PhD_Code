@@ -657,7 +657,7 @@ def generate_initial_route_sets(main_problem, printing=True):
     if printing:
         print("Initial route set generated"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")   
     
-    df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
+    df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","Routes"])   
     for i in range(len(routes_R_initial_set)):
         f_new = ev.evalObjs(routes_R_initial_set[i], main_problem.problem_data.mx_dist, main_problem.problem_data.mx_demand, main_problem.problem_inputs.__dict__)
         df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], convert_routes_list2str(routes_R_initial_set[i])]

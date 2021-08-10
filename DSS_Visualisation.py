@@ -879,14 +879,14 @@ def save_final_avgd_results_analysis_SA(initial_set, df_non_dominated_set, valid
     
     elif type_mut == 'stacked':
         mut_names = df_mut_ratios.columns[3:]
-        spread_mutation_values = [df_mut_ratios[y] for y in mut_names]
-        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values[::n_th], labels=mut_names, linewidth=0)
+        spread_mutation_values = [df_mut_ratios[y][::n_th] for y in mut_names]
+        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
     
     elif type_mut == 'stacked_smooth':
         df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
         mut_names = df_mut_smooth.columns[3:]
         spread_mutation_values = [df_mut_smooth[y] for y in mut_names]
-        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values[::n_th], labels=mut_names, linewidth=0)
+        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
     else:
         print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
     

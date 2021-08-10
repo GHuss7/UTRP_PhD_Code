@@ -59,9 +59,10 @@ name_input_data = ["Mandl_UTRP", #0
                     '22_3_Mumford1_SA_Mut_update', #16
 
                    '0_21_1_Mandl6_SA_Init_sol_test',
+                   '0_22_1_Mandl6_SA_Mut_tests',
                    
                    
-                   ][11]   # set the name of the input data
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -750,7 +751,7 @@ def main(UTNDP_problem_1):
                     HV_diff = ld_SA_analysis[-1]['HV'] - ld_SA_analysis[-iter_compare-1]['HV']
                     if HV_diff < HV_improvement_th:
                         stats['Termination'] = 'Non-improving_HV'
-                        print(f'Run terminated by non-improving HV after Iter {total_iterations} [Iter comp:{iter_compare} | HV diff: {HV_diff}')
+                        print(f'Run terminated by non-improving HV after Iter {total_iterations} [Iter comp:{iter_compare} | HV diff: {HV_diff:.6f}')
                         break
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, iteration_t, counter_archive
@@ -1076,7 +1077,7 @@ if __name__ == "__main__":
                 
                     print("\nTest: {0} = {1}".format(sensitivity_test[1], sensitivity_test[test_counter]))
                     
-                    if (sensitivity_test[1] == "crossover_func") or  (sensitivity_test[1] == "mutation_funcs"):
+                    if sensitivity_test[1] in ["crossover_func", "mutation_funcs", "mut_update_func"]:
                         UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{test_counter-2}"
                     else:
                         UTNDP_problem_1.add_text = f"{sensitivity_test[1]}_{round(sensitivity_test[test_counter],4)}"

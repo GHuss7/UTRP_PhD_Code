@@ -58,7 +58,7 @@ name_input_data = ["Mandl_UTRP", #0
                     '22_2_Mumford0_SA_Mut_update', #15
                     '22_3_Mumford1_SA_Mut_update', #16
 
-                   '0_21_1_Mandl6_SA_Initial_solutions_Short_test',
+                   '0_21_1_Mandl6_SA_Init_sol_test',
                    
                    
                    ][-1]   # set the name of the input data
@@ -1040,7 +1040,7 @@ if __name__ == "__main__":
             print(f"Testing only variables: {test_counters}")
  
         for parameter_index in range(len(sensitivity_list)):
-            if sensitivity_list[parameter_index][0] == "parameters_SA": 
+            if sensitivity_list[parameter_index][0] == "parameters_SA_routes": 
                 sensitivity_list[parameter_index][0] = parameters_SA_routes
             elif sensitivity_list[parameter_index][0] == "Decisions":
                 sensitivity_list[parameter_index][0] = Decisions

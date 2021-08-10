@@ -61,7 +61,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_21_1_Mandl6_SA_Init_sol_test',
                    
                    
-                   ][-1]   # set the name of the input data
+                   ][11]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -75,6 +75,7 @@ if True:
 else:
     Decisions = {
     "Choice_generate_initial_set" : True, # the alternative loads a set that is prespecified, False is default for MANDL NB
+    "Choice_first_init_set_only" : False, # if true, it selects only the initial route set found in the first location to help standardise
     "Choice_print_results" : True, 
     "Choice_conduct_sensitivity_analysis" : False,
     "Choice_import_dictionaries" : True,
@@ -85,6 +86,9 @@ else:
     "Set_name" : "Overall_Pareto_set_for_case_study_GA.csv", # the name of the set in the main working folder
     "Additional_text" : "Tests",
     "Pop_size_to_create" : 2000,
+    "Log_prints_every" : 20, # every n generations a log should be printed
+    "CSV_prints_every" : 100, # every n generations a csv should be printed
+    "PDF_prints_every" : 20, # every n generations a csv should be printed
     "Load_supplementing_pop" : True,
     "Obj_func_disruption" : False,
     "Update_mutation_ratios" : True,
@@ -305,6 +309,7 @@ else:
 max_objs = np.array([parameters_input['ref_point_max_f1_ATT'],parameters_input['ref_point_max_f2_TRT']])
 min_objs = np.array([parameters_input['ref_point_min_f1_ATT'],parameters_input['ref_point_min_f2_TRT']])
 
+labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"] # names labels for the visualisations
   
 # %% Define the adjacent mapping of each node
 mapping_adjacent = gf.get_mapping_of_adj_edges(mx_dist) # creates the mapping of all adjacent nodes
@@ -427,7 +432,7 @@ def main(UTNDP_problem_1):
     '''Save the parameters used in the runs'''
     if not (path_results / "Parameters").exists():
         os.makedirs(path_results / "Parameters")
-    print(UTNDP_problem_1.problem_inputs.__dict__)
+
     # json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
     # json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
     # json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, open(path_results / "Parameters" / "parameters_SA_routes.json", "w"), indent=4)
@@ -439,7 +444,7 @@ def main(UTNDP_problem_1):
     with open(path_results / "Parameters" / "parameters_SA_routes.json", "w") as f:
         json.dump(UTNDP_problem_1.problem_SA_parameters.__dict__, f, indent=4)
     with open(path_results / "Parameters" / "Decisions.json", "w") as f:
-        json.dump(Decisions, f, indent=4)
+        json.dump(UTNDP_problem_1.Decisions, f, indent=4)
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         with open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w') as f:
@@ -559,7 +564,7 @@ def main(UTNDP_problem_1):
         
     for run_nr in run_nr_counter:
         route_set_nr_counter = [run_nr]
-        if Decisions["Choice_conduct_sensitivity_analysis"]: route_set_nr_counter = [0] # standardizes the sensitivity analysis to only the first route set
+        if Decisions["Choice_first_init_set_only"]: route_set_nr_counter = [0] # standardizes the sensitivity analysis to only the first route set
         
         for route_set_nr in route_set_nr_counter:
             print("Started route set number "+str(route_set_nr + 1)+" ("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")
@@ -880,7 +885,8 @@ def main(UTNDP_problem_1):
             
                 try:
                     df_mut_ratios = pd.DataFrame.from_dict(ld_mut_ratios)
-                    
+                    df_mut_ratios.to_csv(path_results_per_run / "Mut_ratios.csv")
+
                     # gv.save_results_analysis_mut_fig_UTRP_SA(df_routes_R_initial_set, df_archive, validation_data, 
                     #  df_SA_analysis, df_mut_ratios, name_input_data, 
                     #  path_results_per_run, 
@@ -932,10 +938,25 @@ def main(UTNDP_problem_1):
             for key, val in {**stats_overall, **UTNDP_problem_1.problem_inputs.__dict__, **UTNDP_problem_1.problem_constraints.__dict__, **UTNDP_problem_1.problem_SA_parameters.__dict__}.items():
                 w.writerow([key, val])
             del key, val
-            
-        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
-        # ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
         
+        for _ in range(5):
+            try:    
+                ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
+                gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
+                gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
+                # ga.capture_all_runs_HV_over_iterations_from_UTRP_SA(path_results)
+                
+                gv.save_final_avgd_results_analysis_SA(df_routes_R_initial_set, df_overall_pareto_set, validation_data, 
+                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                                    name_input_data, 
+                                    path_results, labels,
+                                    stats_overall['HV Benchmark'], 'stacked_smooth')
+                
+                break
+            except PermissionError:
+                time.sleep(5)
+                continue
         
         gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
 

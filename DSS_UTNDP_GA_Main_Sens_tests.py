@@ -514,10 +514,10 @@ def main(UTNDP_problem_1):
     if not (path_results / "Parameters").exists():
         os.makedirs(path_results / "Parameters")
     
-    json.dump(parameters_input, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
-    json.dump(parameters_constraints, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
-    json.dump(parameters_GA, open(path_results / "Parameters" / "parameters_GA.json", "w"), indent=4)
-    json.dump(Decisions, open(path_results / "Parameters" / "Decisions.json", "w"), indent=4)
+    json.dump(UTNDP_problem_1.problem_inputs.__dict__, open(path_results / "Parameters" / "parameters_input.json", "w"), indent=4) # saves the parameters in a json file
+    json.dump(UTNDP_problem_1.problem_constraints.__dict__, open(path_results / "Parameters" / "parameters_constraints.json", "w"), indent=4)
+    json.dump(UTNDP_problem_1.problem_GA_parameters.__dict__, open(path_results / "Parameters" / "parameters_GA.json", "w"), indent=4)
+    json.dump(UTNDP_problem_1.Decisions, open(path_results / "Parameters" / "Decisions.json", "w"), indent=4)
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         json.dump(sensitivity_list, open(path_results / "Parameters" / 'Sensitivity_list.txt', 'w'), indent=4)
     

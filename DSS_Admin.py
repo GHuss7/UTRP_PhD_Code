@@ -243,7 +243,11 @@ def get_obj_stats_from_model_runs(path_to_main_folder):
         if re.match("^Run_[0-9]+$", result_entries[i]):
             results_file_path = path_to_main_folder / result_entries[i] # sets the path 
             
-            len_df = len(pd.read_csv(results_file_path / 'Data_generations.csv'))
+            try:
+                len_df = len(pd.read_csv(results_file_path / 'Data_generations.csv'))
+            except:
+                len_df = len(pd.read_csv(results_file_path / 'SA_Analysis.csv'))
+
 
             if min_len == 0:
                min_len = len_df
@@ -256,7 +260,11 @@ def get_obj_stats_from_model_runs(path_to_main_folder):
         if re.match("^Run_[0-9]+$", result_entries[i]):
             results_file_path = path_to_main_folder / result_entries[i] # sets the path 
             
-            df_data_gen = pd.read_csv(results_file_path / 'Data_generations.csv')
+            try:
+                df_data_gen = pd.read_csv(results_file_path / 'Data_generations.csv')
+            except:
+                df_data_gen = pd.read_csv(results_file_path / 'SA_Analysis.csv')
+                df_data_gen = df_data_gen[["f_1", "f_2", "HV"]]
             
             if run_counter == 0:
                 data_gen_sums = np.array(df_data_gen.values)[:min_len,:]

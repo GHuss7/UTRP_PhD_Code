@@ -1,5 +1,6 @@
 {
     "Choice_generate_initial_set": true,
+    "Choice_first_init_set_only" : false,
     "Choice_print_results": true,
     "Choice_conduct_sensitivity_analysis": true,
     "Choice_import_dictionaries": true,
@@ -10,6 +11,9 @@
     "Set_name": "Overall_Pareto_set_for_case_study_GA.csv",
     "Additional_text": "Tests",
     "Pop_size_to_create": 2000,
+    "Log_prints_every" : 20,
+    "CSV_prints_every" : 100,
+    "PDF_prints_every" : 20,
     "Load_supplementing_pop": false,
     "Obj_func_disruption": false,
     "Update_mutation_ratios": false,

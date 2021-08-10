@@ -711,7 +711,7 @@ def save_results_analysis_mut_fig_UTRP_SA(initial_set, df_non_dominated_set, val
     elif len(df_data) < 10000:
         n_th = 10
     else:
-        n_th = 100 
+        n_th = 100
     
     axs[0, 0].set_title(f'Objectives for every {n_th}_th iteration')
     axs[0, 0].plot(range(len(df_data))[::n_th], df_data[labels[0]][::n_th], c='r', label=labels[2])
@@ -784,7 +784,6 @@ def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validati
     fig.set_figheight(15)
     fig.set_figwidth(20)
     
-    
     axs[0, 0].set_title('Averaged mean objectives over all generations')
     axs[0, 0].plot(df_data_generations["Generation"], df_data_generations["mean_f_1"], c='r', label=labels[2])
     axs[0, 0].set(xlabel='Generations', ylabel=labels[2])
@@ -846,7 +845,79 @@ def save_final_avgd_results_analysis(initial_set, df_non_dominated_set, validati
         plt.close()
     except:
         pass
+
+def save_final_avgd_results_analysis_SA(initial_set, df_non_dominated_set, validation_data, df_data_generations, df_mut_ratios, name_input_data, path_results, labels, validation_line=False, type_mut = 'line'):
+    '''Print Objective functions over time, all solutions and pareto set obtained'''
+    '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format
+    If the value of the validation HV line is given, it is printed'''
+    fig, axs = plt.subplots(2, 2)
+    fig.set_figheight(15)
+    fig.set_figwidth(20)
     
+    if len(df_mut_ratios) < 1000:
+        n_th = 1
+    elif len(df_mut_ratios) < 10000:
+        n_th = 10
+    else:
+        n_th = 100
+    
+    axs[0, 0].set_title('Averaged mean objectives over all iterations')
+    axs[0, 0].plot(range(len(df_data_generations))[::n_th], df_data_generations["f_1"][::n_th], c='r', label=labels[2])
+    axs[0, 0].set(xlabel='Generations', ylabel=labels[2])
+    axs[0, 0].legend(loc=0) 
+    ax_twin = axs[0, 0].twinx()
+    ax_twin.plot(range(len(df_data_generations))[::n_th], df_data_generations["f_2"][::n_th], c='b', label=labels[3])
+    ax_twin.set(ylabel=labels[3])
+    ax_twin.legend(loc=0) 
+    
+    
+    # Mutation plots
+    if type_mut == 'line':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        for mut_nr in range(3,len(df_mut_smooth.columns)): # 3 accomodates for the added columns for the read in df
+            axs[1, 0].plot(range(len(df_mut_smooth))[::n_th], df_mut_smooth[df_mut_smooth.columns[mut_nr]][::n_th], label=df_mut_smooth.columns[mut_nr])
+    
+    elif type_mut == 'stacked':
+        mut_names = df_mut_ratios.columns[3:]
+        spread_mutation_values = [df_mut_ratios[y] for y in mut_names]
+        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values[::n_th], labels=mut_names, linewidth=0)
+    
+    elif type_mut == 'stacked_smooth':
+        df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
+        mut_names = df_mut_smooth.columns[3:]
+        spread_mutation_values = [df_mut_smooth[y] for y in mut_names]
+        axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values[::n_th], labels=mut_names, linewidth=0)
+    else:
+        print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
+    
+    axs[1, 0].set_title('Averaged mutation ratios over all iterations')
+    axs[1, 0].set(xlabel='Total iterations', ylabel='Mutation ratio')
+    axs[1, 0].legend(loc='upper left') 
+    
+    axs[0, 1].plot(range(len(df_data_generations))[::n_th], df_data_generations["HV"], c='r', label='HV obtained')
+    axs[0, 1].set_title('Average HV over all iterations')
+    axs[0, 1].set(xlabel='Total iterations', ylabel='HV [%]')
+    axs[0, 1].legend(loc=0)
+    if validation_line:
+        axs[0, 1].plot(range(len(df_data_generations)), np.ones(len(df_data_generations))*validation_line,\
+                        c='black', label='Benchmark')
+            
+    axs[1, 1].scatter(initial_set[labels[0]], initial_set[labels[1]], s=10, marker="o", label='Last initial set')
+    axs[1, 1].scatter(df_non_dominated_set[labels[0]], df_non_dominated_set[labels[1]], s=10, marker="o", label='Non-dom set obtained')
+    if isinstance(validation_data, pd.DataFrame):        
+        for approach_name in validation_data.Approach.unique():
+            df_temp = validation_data[validation_data["Approach"]==approach_name]
+            axs[1, 1].scatter(df_temp.iloc[:,0], df_temp.iloc[:,1], s=10, marker="o", label=approach_name)
+            
+    axs[1, 1].set_title('Overall non-dominated set obtained over all runs')
+    axs[1, 1].set(xlabel=labels[2], ylabel=labels[3])
+    axs[1, 1].legend(loc=0)
+    try:
+        plt.ioff()
+        plt.savefig(path_results / ("Averaged_summary_"+ type_mut +".pdf"), bbox_inches='tight')
+        plt.close()
+    except:
+        pass    
 
 def save_results_combined_fig(initial_set, df_overall_pareto_set, validation_data, name_input_data, Decisions, path_results, labels):
     '''labels = ["f_1", "f_2", "f1_AETT", "f2_TBR"] # names labels for the visualisations format'''
@@ -903,11 +974,31 @@ def save_mutation_ratios_plot(df_mut_ratios, path, file_name):
     #fig.set_figwidth(20)
     ax = fig.add_subplot(111)
     
-    for mut_nr in range(2,len(df_mut_ratios.columns)): # 2 is to avoid first two columns
-        ax.plot(df_mut_ratios["Generation"], df_mut_ratios[df_mut_ratios.columns[mut_nr]], label=df_mut_ratios.columns[mut_nr])
-    ax.set_title('Mutation ratios over all generations')
-    ax.set(xlabel='Generations', ylabel='Mutation ratio')
-    ax.legend(loc=0) 
+    if "Generation" in df_mut_ratios.columns:
+        counter_name = "Generation"
+    elif "Total_iterations" in df_mut_ratios.columns:
+        counter_name = "Total_iterations"
+        if len(df_mut_ratios) < 1000:
+            n_th = 1
+        elif len(df_mut_ratios) < 10000:
+            n_th = 10
+        else:
+            n_th = 100
+    else:
+        print("Counter name undefined")
+    
+    if counter_name == "Generation":
+        for mut_nr in range(2,len(df_mut_ratios.columns)): # 2 is to avoid first two columns
+            ax.plot(df_mut_ratios[counter_name], df_mut_ratios[df_mut_ratios.columns[mut_nr]], label=df_mut_ratios.columns[mut_nr])
+        ax.set_title('Mutation ratios over all generations')
+        ax.set(xlabel='Generations', ylabel='Mutation ratio')
+        ax.legend(loc=0) 
+    else:
+        for mut_nr in range(2,len(df_mut_ratios.columns)): # 2 is to avoid first two columns
+            ax.plot(df_mut_ratios[counter_name][::n_th], df_mut_ratios[df_mut_ratios.columns[mut_nr]][::n_th], label=df_mut_ratios.columns[mut_nr])
+        ax.set_title('Mutation ratios over all generations')
+        ax.set(xlabel=counter_name, ylabel='Mutation ratio')
+        ax.legend(loc=0) 
     
     try:
         plt.ioff()
@@ -924,11 +1015,29 @@ def save_obj_performances_plot(df_data, path, file_name):
         #fig.set_figheight(15)
         #fig.set_figwidth(20)
         ax = fig.add_subplot(111)
+
+        if "Generation" in df_data.columns:
+            counter_name = "Generation"
+        else:
+            counter_name = "Total_iterations"
+            if len(df_data) < 1000:
+                n_th = 1
+            elif len(df_data) < 10000:
+                n_th = 10
+            else:
+                n_th = 100
+
         
-        ax.plot(df_data["Generation"], df_data[df_data.columns[col_nr]], label=df_data.columns[col_nr])
-        ax.set_title(f'{df_data.columns[col_nr]} over all generations')
-        ax.set(xlabel='Generations', ylabel=df_data.columns[col_nr])
-        ax.legend(loc=0) 
+        if counter_name == "Generation":
+            ax.plot(df_data[counter_name], df_data[df_data.columns[col_nr]], label=df_data.columns[col_nr])
+            ax.set_title(f'{df_data.columns[col_nr]} over all generations')
+            ax.set(xlabel=counter_name, ylabel=df_data.columns[col_nr])
+            ax.legend(loc=0) 
+        else:
+            ax.plot(range(len(df_data))[::n_th], df_data[df_data.columns[col_nr]][::n_th], label=df_data.columns[col_nr])
+            ax.set_title(f'{df_data.columns[col_nr]} over all iterations')
+            ax.set(xlabel=counter_name, ylabel=df_data.columns[col_nr])
+            ax.legend(loc=0) 
         
         try:
             plt.ioff()

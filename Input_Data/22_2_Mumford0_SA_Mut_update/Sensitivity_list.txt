@@ -1,0 +1,4 @@
+[["Decisions", "mut_update_func", 
+    "AMALGAM",
+    "AMALGAM_every_n",
+    "Counts_normal"]]

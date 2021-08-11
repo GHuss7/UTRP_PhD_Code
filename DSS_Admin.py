@@ -1046,6 +1046,18 @@ def get_mutations_summary(df_mut_temp, nr_mutations, gen_nr):
     
     return df_mut_summary
 
+def sum_row_Inc_over_succ(row):
+    if row.Mut_successful + row.Mut_repaired == 0:
+        return 0
+    else:
+        return row.Included_new_gen/(row.Mut_successful + row.Mut_repaired)
+
+def sum_row_Inc_over_Tot(row):
+    if row.Total == 0:
+        return 0
+    else:
+        return row.Included_new_gen/(row.Total)
+
 def get_mutations_summary_ld(df_mut_temp, nr_mutations, gen_nr):
     df_mut_summary = pd.DataFrame(columns=(["Generation", "Mut_nr","Total", "Mut_successful", "Mut_repaired", "Included_new_gen"]))
     for mut_nr in range(nr_mutations+1):
@@ -1055,22 +1067,10 @@ def get_mutations_summary_ld(df_mut_temp, nr_mutations, gen_nr):
         tot_mut = len(df_mut_only)
         summary = df_mut_only.to_numpy().sum(axis=0)
         df_mut_summary.loc[mut_nr] = [gen_nr, mut_nr, tot_mut, summary[1], summary[2], df_mut_success["Included_new_gen"].sum()] 
-            
-    def sum_row_Inc_over_succ(row):
-        if row.Mut_successful + row.Mut_repaired == 0:
-            return 0
-        else:
-            return row.Included_new_gen/(row.Mut_successful + row.Mut_repaired)
-    
+              
     row_func_1 = lambda row: sum_row_Inc_over_succ(row)
-            
+
     df_mut_summary["Inc_over_succ"] = df_mut_summary.apply(row_func_1, axis=1)
-    
-    def sum_row_Inc_over_Tot(row):
-        if row.Total == 0:
-            return 0
-        else:
-            return row.Included_new_gen/(row.Total)
     
     row_func_2 = lambda row: sum_row_Inc_over_Tot(row)
             
@@ -1087,25 +1087,11 @@ def get_mutations_summary_ld_for_SA(df_mut_temp, nr_mutations, iter_nr):
         tot_mut = len(df_mut_only)
         summary = df_mut_only.to_numpy().sum(axis=0)
         df_mut_summary.loc[mut_nr] = [iter_nr, mut_nr, tot_mut, summary[1], summary[2], df_mut_success["Acceptance"].sum()] 
-            
-    def sum_row_Inc_over_succ(row):
-        if row.Mut_successful + row.Mut_repaired == 0:
-            return 0
-        else:
-            return row.Included_new_gen/(row.Mut_successful + row.Mut_repaired)
-    
+                
     row_func_1 = lambda row: sum_row_Inc_over_succ(row)
-            
     df_mut_summary["Inc_over_succ"] = df_mut_summary.apply(row_func_1, axis=1)
-    
-    def sum_row_Inc_over_Tot(row):
-        if row.Total == 0:
-            return 0
-        else:
-            return row.Included_new_gen/(row.Total)
-    
+        
     row_func_2 = lambda row: sum_row_Inc_over_Tot(row)
-            
     df_mut_summary["Inc_over_Tot"] = df_mut_summary.apply(row_func_2, axis=1)
     
     return df_mut_summary.to_dict(orient="records")

@@ -1,7 +1,7 @@
 {
     "method": "SA",
     "max_iterations_t": 100,
-    "max_total_iterations": 200,
+    "max_total_iterations": 4000,
     "max_epochs": 4000,
     "min_accepts": 25,
     "max_attempts": 50,

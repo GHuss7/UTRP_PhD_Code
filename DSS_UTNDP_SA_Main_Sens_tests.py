@@ -67,7 +67,7 @@ name_input_data = ["Mandl_UTRP", #0
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
-test_counters = [] # empty list means all, filled in values means only those tests
+test_counters = [0] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
 if True:
@@ -753,6 +753,21 @@ def main(UTNDP_problem_1):
                         stats['Termination'] = 'Non-improving_HV'
                         print(f'Run terminated by non-improving HV after Iter {total_iterations} [Iter comp:{iter_compare} | HV diff: {HV_diff:.6f}')
                         break
+                    
+                if epoch == 4 or epoch == 30:
+                    # Calculate time projections for runs
+                    start_time_run = stats['begin_time'] # TIMING FUNCTION # stats_overall['execution_start_time']
+                    end_time = datetime.datetime.now() # TIMING FUNCTION
+            
+                    # Determine and print projections
+                    diff = end_time - start_time_run
+                    diff_sec = float(str(diff.seconds)+"."+str(diff.microseconds))
+                    tot_iter = UTNDP_problem_1.problem_SA_parameters.max_total_iterations*UTNDP_problem_1.problem_SA_parameters.number_of_runs
+                    completed_iter =  (run_nr)*UTNDP_problem_1.problem_SA_parameters.max_total_iterations + total_iterations
+                    avg_time = diff_sec/(total_iterations)
+                    ga.time_projection_intermediate(avg_time, tot_iter, completed_iter,
+                                                    t_now=datetime.datetime.now(),
+                                                    print_iter_info=True) # prints the time projection of the algorithm
                 
             del f_cur, f_new, accepts, attempts, SA_Temp, epoch, poor_epoch, iteration_t, counter_archive
         

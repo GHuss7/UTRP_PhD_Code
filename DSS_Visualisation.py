@@ -885,7 +885,7 @@ def save_final_avgd_results_analysis_SA(initial_set, df_non_dominated_set, valid
     elif type_mut == 'stacked_smooth':
         df_mut_smooth = ga.exp_smooth_df(df_mut_ratios, alpha=0.1, beta=0.1)
         mut_names = df_mut_smooth.columns[3:]
-        spread_mutation_values = [df_mut_smooth[y] for y in mut_names]
+        spread_mutation_values = [df_mut_smooth[y][::n_th] for y in mut_names]
         axs[1, 0].stackplot(range(len(df_mut_ratios))[::n_th], spread_mutation_values, labels=mut_names, linewidth=0)
     else:
         print(f"Error: {type_mut} is not a valid option for argument 'type_mut'")
@@ -894,7 +894,7 @@ def save_final_avgd_results_analysis_SA(initial_set, df_non_dominated_set, valid
     axs[1, 0].set(xlabel='Total iterations', ylabel='Mutation ratio')
     axs[1, 0].legend(loc='upper left') 
     
-    axs[0, 1].plot(range(len(df_data_generations))[::n_th], df_data_generations["HV"], c='r', label='HV obtained')
+    axs[0, 1].plot(range(len(df_data_generations))[::n_th], df_data_generations["HV"][::n_th], c='r', label='HV obtained')
     axs[0, 1].set_title('Average HV over all iterations')
     axs[0, 1].set(xlabel='Total iterations', ylabel='HV [%]')
     axs[0, 1].legend(loc=0)

@@ -645,7 +645,7 @@ def generate_feasible_solution_smart(pop, main_problem):
         return pop.variables
 
 
-def generate_initial_route_sets(main_problem, printing=True):
+def generate_initial_route_sets(main_problem, printing=True, pareto_efficient=True):
     '''Generate initial route sets for input as initial solutions'''
     if printing:
         print("Started initial route set generation"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")") 
@@ -653,15 +653,16 @@ def generate_initial_route_sets(main_problem, printing=True):
     for i in range(main_problem.problem_SA_parameters.number_of_initial_solutions):
         routes_R_initial_set.append(gc.Routes.return_feasible_route_robust(main_problem))
     if printing:
-        print("Initial route set generated"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")   
+        print(f"Initial route set generated [size: {len(routes_R_initial_set)}]"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")")   
     
-    df_routes_R_initial_set =  pd.DataFrame(columns=["f1_ATT","f2_TRT","Routes"])   
+    df_routes_R_initial_set =  pd.DataFrame(columns=["f_1","f_2","Routes"])   
     for i in range(len(routes_R_initial_set)):
         f_new = ev.evalObjs(routes_R_initial_set[i], main_problem.problem_data.mx_dist, main_problem.problem_data.mx_demand, main_problem.problem_inputs.__dict__)
         df_routes_R_initial_set.loc[i] = [f_new[0], f_new[1], convert_routes_list2str(routes_R_initial_set[i])]
     
     if printing: print("Started Pareto generation"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")") 
-    df_routes_R_initial_set = df_routes_R_initial_set[is_pareto_efficient(df_routes_R_initial_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
+    if pareto_efficient:
+        df_routes_R_initial_set = df_routes_R_initial_set[is_pareto_efficient(df_routes_R_initial_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
     if printing: print("Ended Pareto generation"+"("+datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")+")") 
     
     routes_R_initial_set = list()

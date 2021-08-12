@@ -67,7 +67,7 @@ name_input_data = ["Mandl_UTRP", #0
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
-test_counters = [0] # empty list means all, filled in values means only those tests
+test_counters = [] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters
 if True:

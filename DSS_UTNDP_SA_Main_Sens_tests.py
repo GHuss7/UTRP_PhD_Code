@@ -465,14 +465,14 @@ def main(UTNDP_problem_1):
     # %% Simulated Annealing: Initial solutions
     '''Initial solutions'''
     
-    if Decisions["Choice_import_saved_set"]: # Make true to import a set that is saved
+    if Decisions["Choice_import_saved_set"] or Decisions["Load_supplementing_pop"]: # Make true to import a set that is saved
         # df_routes_R_initial_set = pd.read_csv(Decisions["Set_name"]) 
         # df_routes_R_initial_set = df_routes_R_initial_set.drop(df_routes_R_initial_set.columns[0], axis=1)
     
         # routes_R_initial_set = list()
         # for i in range(len(df_routes_R_initial_set)):
         #     routes_R_initial_set.append(gf.convert_routes_str2list(df_routes_R_initial_set.iloc[i,2]))
-        
+    
         # Set the correct path for the input data to be loaded  
         pop_to_load_name = "Pop_init_"+route_gen_func_name+"_"+str(Decisions["Pop_size_to_create"])+".pickle"              
         path_input_to_pop = "./Input_Data/"+name_input_data+"/Populations/"+pop_to_load_name

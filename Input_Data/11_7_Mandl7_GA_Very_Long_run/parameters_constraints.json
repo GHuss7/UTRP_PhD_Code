@@ -1,0 +1,10 @@
+{
+    "con_r": 7,
+    "con_minNodes": 2,
+    "con_maxNodes": 8,
+    "con_N_nodes": 15,
+    "con_fleet_size": 40,
+    "con_vehicle_capacity": 20,
+    "con_lower_bound": 0,
+    "con_upper_bound": 1
+}

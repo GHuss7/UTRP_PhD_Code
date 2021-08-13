@@ -604,7 +604,7 @@ def main(UTNDP_problem_1):
                             
             f_cur = fn_obj_2(routes_R, UTNDP_problem_1)
             df_archive.loc[0] = [f_cur[0], f_cur[1], gf.convert_routes_list2str(routes_R)]
-            HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
+            HV = gf_p.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
             # df_SA_analysis.loc[0] = [f_cur[0], f_cur[1], HV,\
             #                    SA_Temp, epoch, 0, 0, 0, gf.convert_routes_list2str(routes_R), 0]
             
@@ -659,7 +659,7 @@ def main(UTNDP_problem_1):
 
                     # Evaluate objective function of new solution
                     f_new = fn_obj_2(routes_R_new, UTNDP_problem_1)
-                    HV = gf.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
+                    HV = gf_p.norm_and_calc_2d_hv(df_archive.iloc[:,0:2], max_objs, min_objs)
                     
                     ld_SA_analysis = ga.add_UTRP_SA_data_ld(f_new[0], f_new[1], HV, SA_Temp, epoch, 
                                                             iteration_t, accepts, poor_epoch, gf.convert_routes_list2str(routes_R), 
@@ -669,7 +669,7 @@ def main(UTNDP_problem_1):
                 
                     '''Test solution acceptance and add to archive if accepted and non-dominated'''
                     mut_output['Acceptance'] = -1 # set default acceptance value
-                    prob_to_accept = gf.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp)
+                    prob_to_accept = gf_p.prob_accept_neighbour(df_archive, f_cur, f_new, SA_Temp)
                     prob_acceptance_list.append(prob_to_accept)
                     if random.uniform(0,1) < prob_to_accept: # probability to accept neighbour solution as current solution
                         routes_R = routes_R_new
@@ -852,8 +852,8 @@ def main(UTNDP_problem_1):
         stats_overall['total_duration'] = stats_overall['execution_end_time']-stats_overall['execution_start_time']
         stats_overall['execution_start_time'] = stats_overall['execution_start_time'].strftime("%m/%d/%Y, %H:%M:%S")
         stats_overall['execution_end_time'] = stats_overall['execution_end_time'].strftime("%m/%d/%Y, %H:%M:%S")
-        stats_overall['HV initial set'] = gf.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
-        stats_overall['HV obtained'] = gf.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
+        stats_overall['HV initial set'] = gf_p.norm_and_calc_2d_hv(df_routes_R_initial_set.iloc[:,0:2], max_objs, min_objs)
+        stats_overall['HV obtained'] = gf_p.norm_and_calc_2d_hv(df_overall_pareto_set.iloc[:,0:2], max_objs, min_objs)
   
         # df_durations.loc[len(df_durations)] = ["Average", df_durations["Duration"].mean()]
         df_durations.to_csv(path_results / "Run_durations.csv")

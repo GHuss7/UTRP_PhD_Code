@@ -1,0 +1,15 @@
+{
+    "total_demand": 7755.0,
+    "n": 15,
+    "wt": 0,
+    "tp": 5,
+    "ref_point_max_f1_ATT": 15,
+    "ref_point_min_f1_ATT": 10,
+    "ref_point_max_f2_TRT": 224,
+    "ref_point_min_f2_TRT": 63,
+    "walkFactor": 3,
+    "boardingTime": 0.1,
+    "alightingTime": 0.1,
+    "large_dist": 10000,
+    "alpha_const_inter": 0.5
+}

@@ -117,6 +117,10 @@ name_input_data = ["Mandl_UTRP", #0
                     '11_3_Mumford1_GA_Very_Long_run', #51
                     '11_4_Mumford2_GA_Very_Long_run', #52
                     '11_5_Mumford3_GA_Very_Long_run', #53
+                    '11_6_Mandl4_GA_Very_Long_run', #54
+                    '11_7_Mandl7_GA_Very_Long_run', #55
+                    '11_8_Mandl8_GA_Very_Long_run', #56
+
 
 
 

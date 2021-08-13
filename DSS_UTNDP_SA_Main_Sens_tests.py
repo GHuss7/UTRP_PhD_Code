@@ -62,7 +62,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_22_1_Mandl6_SA_Mut_tests',
                    
                    
-                   ][11]   # set the name of the input data
+                   ][-1]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -352,8 +352,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-# if True:
-def main(UTNDP_problem_1):
+if True:
+# def main(UTNDP_problem_1):
 
     # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions
@@ -581,6 +581,10 @@ def main(UTNDP_problem_1):
                 routes_R = random.choice(routes_R_initial_set)
             
             '''Initiate algorithm'''
+            # Reset the mutation ratios
+            UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
+
+            
             epoch = 1 # Initialise the epoch counter
             total_iterations = 0 
             poor_epoch = 0 # Initialise the number of epochs without an accepted solution
@@ -713,13 +717,13 @@ def main(UTNDP_problem_1):
                             # Update old entry
                             ld_mut_summary_temp[df_mut_temp["Mut_nr"][0]]["Total"] -= 1
                             if df_mut_temp["Acceptance"][0] == 1:
-                                ld_mut_summary_temp[df_mut_temp["Mut_nr"][0]]["Mut_successful"] -= 1
+                                ld_mut_summary_temp[df_mut_temp["Mut_nr"][0]]["Inc_over_Tot"] -= 1
                             
                             # Update new entry
                             last_index = len(df_mut_temp)-1
                             ld_mut_summary_temp[df_mut_temp["Mut_nr"][last_index]]["Total"] += 1
                             if df_mut_temp["Acceptance"][last_index] == 1:
-                                ld_mut_summary_temp[df_mut_temp["Mut_nr"][last_index]]["Mut_successful"] += 1
+                                ld_mut_summary_temp[df_mut_temp["Mut_nr"][last_index]]["Inc_over_Tot"] += 1
                         
                         ld_mut_summary.extend(ld_mut_summary_temp)
 
@@ -891,8 +895,8 @@ def main(UTNDP_problem_1):
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''
 
-# if False:
-if __name__ == "__main__":
+if False:
+# if __name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()

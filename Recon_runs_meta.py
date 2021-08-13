@@ -19,6 +19,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 all_result_folders = os.listdir(dir_path)
 
 dir_prefix = "C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/Results"
+if not os.path.exists(dir_prefix):
+    dir_prefix = "C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/Results"
+assert os.path.exists(dir_prefix)
 
 # Set folders to do the operation on:
 apply_list = [
@@ -29,6 +32,8 @@ apply_list = [
                 #"Results_9_5_Mumford3_GA_Mut_prob/9_5_Mumford3_GA_Mut_prob_20210727_225424 GA_mutation_probability_0.95",
                 #"Results_9_5_Mumford3_GA_Mut_prob/9_5_Mumford3_GA_Mut_prob_20210728_083726 GA_mutation_probability_1",
                 #"Results_10_3_Mumford1_GA_Long_run/10_3_Mumford1_GA_Long_run_20210731_170218 GA_Long_run",
+                #"Results_10_4_Mumford2_GA_Long_run/10_4_Mumford2_GA_Long_run_20210730_171515 GA_Long_run",
+                #"Results_10_5_Mumford3_GA_Long_run/10_5_Mumford3_GA_Long_run_20210730_172027 GA_Long_run"
             ]
 
 # Ensure the directory is set to the file location

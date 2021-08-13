@@ -19,6 +19,9 @@ import argparse
 
 # %% Import personal functions
 path_DSS_Main_folder = "C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/Documents/GitHub/DSS_Main_Laptop"
+if not os.path.exists(path_DSS_Main_folder):
+    path_DSS_Main_folder = "C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/DSS Main"
+assert os.path.exists(path_DSS_Main_folder)
 #os.chdir(path_DSS_Main_folder)
 #print(os.getcwd())
 import DSS_Admin as ga

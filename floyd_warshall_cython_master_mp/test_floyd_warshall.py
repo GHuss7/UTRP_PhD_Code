@@ -98,11 +98,12 @@ def test_floyd_warshall_speed():
 
     prev_res = None
     print('')
-    for (name, func) in [#('Python+NumPy', floyd_warshall_numpy), 
+    for (name, func) in [#('Naive', floyd_warshall_naive),
+                         ('Python+NumPy', floyd_warshall_numpy), 
                          ('Cython', floyd_warshall.floyd_warshall_single_core), 
                          ('Cython multicore', floyd_warshall.floyd_warshall_parallelized),
                          ('Cython mutlicore no bounds checking', floyd_warshall.floyd_warshall_parallelized_nbc)]:
-        print ('%20s: ' % name),
+        print (f"{name}"),
         with Timer():
             result = func(M)
         if not (prev_res == result).all():

@@ -22,5 +22,5 @@
     	"MSC_add_terminal",
         "MSC_del_terminal"
     ],
-    "mut_update_func": "Counts_normal"
+    "mut_update_func": "AMALGAM"
 }

@@ -352,8 +352,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-if True:
-# def main(UTNDP_problem_1):
+# if True:
+def main(UTNDP_problem_1):
 
     # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions
@@ -895,8 +895,8 @@ if True:
 # %% Sensitivity analysis
 ''' Sensitivity analysis tests'''
 
-if False:
-# if __name__ == "__main__":
+# if False:
+if __name__ == "__main__":
     
     if Decisions["Choice_conduct_sensitivity_analysis"]:
         start = time.perf_counter()

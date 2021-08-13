@@ -127,7 +127,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][52]   # set the name of the input data
+                   ][54]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -498,8 +498,11 @@ def main(UTNDP_problem_1):
     '''Load validation data'''
     if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
         validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
-        stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
-                                                               UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+        if len(validation_data[validation_data["Approach"]=="John (2016)"]) != 0:
+            stats_overall['HV Benchmark'] = gf_p.norm_and_calc_2d_hv(validation_data[validation_data["Approach"]=="John (2016)"].iloc[:,0:2], 
+                                                                 UTNDP_problem_1.max_objs, UTNDP_problem_1.min_objs)
+        else:
+            stats_overall['HV Benchmark'] = 0    
     else:
         validation_data = False
         stats_overall['HV Benchmark'] = 0

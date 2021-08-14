@@ -1096,6 +1096,41 @@ def get_mutations_summary_ld_for_SA(df_mut_temp, nr_mutations, iter_nr):
     
     return df_mut_summary.to_dict(orient="records")
 
+def update_mutations_summary_ld_for_SA(df_mut_temp, ld_mut_summary_temp):                     
+    # Update old entry
+    old_mut_nr = df_mut_temp["Mut_nr"][0]
+    ld_mut_summary_temp[old_mut_nr]["Total"] -= 1
+    ld_mut_summary_temp[old_mut_nr]["Mut_successful"] -= df_mut_temp["Mut_successful"][0]
+    ld_mut_summary_temp[old_mut_nr]["Mut_repaired"] -= df_mut_temp["Mut_repaired"][0]
+
+    if df_mut_temp["Acceptance"][0] == 1:
+        ld_mut_summary_temp[old_mut_nr]["Included_new_gen"] -= 1
+    
+    if ld_mut_summary_temp[old_mut_nr]["Mut_successful"] == 0:
+        ld_mut_summary_temp[old_mut_nr]["Inc_over_succ"] = 0
+    else:
+        ld_mut_summary_temp[old_mut_nr]["Inc_over_succ"] = ld_mut_summary_temp[old_mut_nr]["Included_new_gen"] / ld_mut_summary_temp[old_mut_nr]["Mut_successful"]
+    
+    if ld_mut_summary_temp[old_mut_nr]["Total"] == 0:
+        ld_mut_summary_temp[old_mut_nr]["Inc_over_Tot"] = 0
+    else:
+        ld_mut_summary_temp[old_mut_nr]["Inc_over_Tot"] = ld_mut_summary_temp[old_mut_nr]["Included_new_gen"] / ld_mut_summary_temp[old_mut_nr]["Total"]
+
+    # Update new entry
+    last_index = len(df_mut_temp)-1
+    new_mut_nr = df_mut_temp["Mut_nr"][last_index] # get mut nr from newest mut
+    ld_mut_summary_temp[new_mut_nr]["Total"] += 1
+    ld_mut_summary_temp[new_mut_nr]["Mut_successful"] += df_mut_temp["Mut_successful"][last_index]
+    ld_mut_summary_temp[new_mut_nr]["Mut_repaired"] += df_mut_temp["Mut_repaired"][last_index]
+
+    if df_mut_temp["Acceptance"][last_index] == 1:
+        ld_mut_summary_temp[new_mut_nr]["Included_new_gen"] += 1
+
+    if ld_mut_summary_temp[new_mut_nr]["Mut_successful"] == 0:
+        ld_mut_summary_temp[new_mut_nr]["Inc_over_succ"] = 0
+    else:
+        ld_mut_summary_temp[new_mut_nr]["Inc_over_succ"] = ld_mut_summary_temp[new_mut_nr]["Included_new_gen"] / ld_mut_summary_temp[new_mut_nr]["Mut_successful"]
+    ld_mut_summary_temp[new_mut_nr]["Inc_over_Tot"] = ld_mut_summary_temp[new_mut_nr]["Included_new_gen"] / ld_mut_summary_temp[new_mut_nr]["Total"]
 
 # %% Mutation ratio update functions
 

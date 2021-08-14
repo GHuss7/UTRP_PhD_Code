@@ -62,7 +62,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_22_1_Mandl6_SA_Mut_tests',
                    
                    
-                   ][-1]   # set the name of the input data
+                   ][11]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -90,7 +90,7 @@ else:
     "Log_prints_every" : 20, # every n generations a log should be printed
     "CSV_prints_every" : 100, # every n generations a csv should be printed
     "PDF_prints_every" : 20, # every n generations a csv should be printed
-    "Load_supplementing_pop" : True,
+    "Load_supplementing_pop" : False,
     "Obj_func_disruption" : False,
     "Update_mutation_ratios" : True,
     
@@ -108,7 +108,7 @@ else:
                          "Grow_one_terminal_cb",
                          "Grow_one_path_random_cb",
                          "Grow_routes_random_cb"],
-    "mut_update_func" : ["AMALGAM", "AMALGAM_every_n", "Counts_normal"][2]
+    "mut_update_func" : ["AMALGAM", "AMALGAM_every_n", "Counts_normal"][0]
     }
 
 
@@ -714,20 +714,10 @@ def main(UTNDP_problem_1):
                             ld_mut_summary_temp = ga.get_mutations_summary_ld_for_SA(df_mut_temp, len(UTNDP_problem_1.mutation_functions), total_iterations)
                             ld_mut_summary_temp_init = True
                         else:
-                            # Update old entry
-                            ld_mut_summary_temp[df_mut_temp["Mut_nr"][0]]["Total"] -= 1
-                            if df_mut_temp["Acceptance"][0] == 1:
-                                ld_mut_summary_temp[df_mut_temp["Mut_nr"][0]]["Inc_over_Tot"] -= 1
-                            
-                            # Update new entry
-                            last_index = len(df_mut_temp)-1
-                            ld_mut_summary_temp[df_mut_temp["Mut_nr"][last_index]]["Total"] += 1
-                            if df_mut_temp["Acceptance"][last_index] == 1:
-                                ld_mut_summary_temp[df_mut_temp["Mut_nr"][last_index]]["Inc_over_Tot"] += 1
-                        
+                            ga.update_mutations_summary_ld_for_SA(df_mut_temp, ld_mut_summary_temp) # fast update
+
                         ld_mut_summary.extend(ld_mut_summary_temp)
 
-                        
                         # Update mutation ratios
                         if Decisions["Update_mutation_ratios"]:
                             

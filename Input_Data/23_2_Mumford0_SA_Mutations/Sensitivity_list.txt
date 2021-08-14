@@ -1,4 +1,13 @@
-[["Decisions", "mut_update_func", 
-    "AMALGAM",
-    "AMALGAM_every_n",
-    "Counts_normal"]]
+[
+    ["Decisions", "mutation_funcs", 
+	["MSC_add_terminal", "MSC_del_terminal"],
+    	["Add_vertex", "Delete_vertex"],
+	["Trim_one_terminal_cb", "Grow_one_terminal_cb"],
+	["Insert_inside_vertex", "Delete_inside_vertex"],
+	["Add_vertex", "Delete_vertex", "Insert_inside_vertex", "Delete_inside_vertex"],
+	["Add_vertex", "Delete_vertex", "Intertwine_two"],	
+	["Add_vertex", "Delete_vertex", "Insert_inside_vertex", "Delete_inside_vertex","Intertwine_two", "Invert_path_vertices"],	
+	["MSC_add_terminal", "MSC_del_terminal", "Insert_inside_vertex", "Delete_inside_vertex","Intertwine_two", "Invert_path_vertices"],	
+	["Add_vertex", "Delete_vertex", "Insert_inside_vertex", "Delete_inside_vertex","Intertwine_two", "Invert_path_vertices", "Replace_inside_vertex", "Donate_between_routes", "Merge_terminals"]
+    ]
+]

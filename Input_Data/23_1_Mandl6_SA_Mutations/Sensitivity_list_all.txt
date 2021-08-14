@@ -1,0 +1,30 @@
+[
+    [
+    "Decisions", "mutation_funcs",
+    	["Intertwine_two"],
+        ["Add_vertex"],
+        ["Delete_vertex"],
+
+        ["Invert_path_vertices"],
+        ["Insert_inside_vertex"],
+	["Delete_inside_vertex"],
+
+        ["Relocate_inside_vertex"],
+        ["Replace_inside_vertex"],
+        ["Donate_between_routes"],
+        ["Swap_between_routes"],
+
+	["Merge_terminals"],
+	["Repl_low_dem_route"],
+	["Rem_low_dem_terminal"],
+	["Rem_lrg_cost_terminal"],
+	["Repl_subsets"],
+
+        ["Trim_one_terminal_cb"],
+	["Trim_one_path_random_cb"],
+	["Trim_routes_random_cb"],
+        ["Grow_one_terminal_cb"],
+        ["Grow_one_path_random_cb"],
+        ["Grow_routes_random_cb"]
+    ]
+]

@@ -57,12 +57,16 @@ name_input_data = ["Mandl_UTRP", #0
                     '22_1_Mandl6_SA_Mut_update', #14
                     '22_2_Mumford0_SA_Mut_update', #15
                     '22_3_Mumford1_SA_Mut_update', #16
+                    '23_1_Mandl6_SA_Mutations', #17
+                    '23_2_Mumford0_SA_Mutations', #18
+                    '23_3_Mumford1_SA_Mutations', #19
+
 
                    '0_21_1_Mandl6_SA_Init_sol_test',
                    '0_22_1_Mandl6_SA_Mut_tests',
                    
                    
-                   ][11]   # set the name of the input data
+                   ][17]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -370,6 +374,7 @@ def main(UTNDP_problem_1):
     UTNDP_problem_1.mutation_functions = mut_functions
     UTNDP_problem_1.mutation_names = mut_names
     UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
+    UTNDP_problem_1.mutation_ratio_counts = [round(x*100,0) for  x in UTNDP_problem_1.mutation_ratio]
     
     """ Keep track of the stats """
     stats_overall = {

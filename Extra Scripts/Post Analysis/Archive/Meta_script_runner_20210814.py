@@ -37,28 +37,11 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
      # 'Results_6_1_Mandl6_GA_Mut_threshold',
      # 'Results_6_2_Mumford0_GA_Mut_threshold',
      # 'Results_6_3_Mumford1_GA_Mut_threshold',
-     # 'Results_7_1_Mandl6_GA_Pop_size',
-     # 'Results_7_2_Mumford0_GA_Pop_size',
-     # 'Results_7_3_Mumford1_GA_Pop_size',
-     # 'Results_7_4_Mumford2_GA_Pop_size',
-     # 'Results_7_5_Mumford3_GA_Pop_size',
-     # 'Results_8_1_Mandl6_GA_Crossover_prob', #34
-    # 'Results_8_2_Mumford0_GA_Crossover_prob', #35
-    # 'Results_8_3_Mumford1_GA_Crossover_prob', #36
-    # 'Results_8_4_Mumford2_GA_Crossover_prob', #37
-    # 'Results_8_5_Mumford3_GA_Crossover_prob', #38
-    # 'Results_9_1_Mandl6_GA_Mut_prob', #39
-    # 'Results_9_2_Mumford0_GA_Mut_prob', #40
-    # 'Results_9_3_Mumford1_GA_Mut_prob', #41
-    # 'Results_9_4_Mumford2_GA_Mut_prob', #42
-    # 'Results_9_5_Mumford3_GA_Mut_prob', #43
-    'Results_21_1_Mandl6_SA_Initial_solutions', #11
-    'Results_21_2_Mumford0_SA_Initial_solutions', #12
-    'Results_21_3_Mumford1_SA_Initial_solutions', #13
-    'Results_22_1_Mandl6_SA_Mut_update', #14
-    'Results_22_2_Mumford0_SA_Mut_update', #15
-    'Results_22_3_Mumford1_SA_Mut_update', #16
-
+     'Results_7_1_Mandl6_GA_Pop_size',
+     'Results_7_2_Mumford0_GA_Pop_size',
+     'Results_7_3_Mumford1_GA_Pop_size',
+     'Results_7_4_Mumford2_GA_Pop_size',
+     'Results_7_5_Mumford3_GA_Pop_size',
 
      ]
 

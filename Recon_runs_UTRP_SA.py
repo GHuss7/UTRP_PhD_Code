@@ -82,8 +82,8 @@ os.chdir(dir_path)
 
 '''Load the initial set'''
 print("Loading the initial route set")
-df_pop_generations = pd.read_csv(dir_path+"/Run_1/Pop_generations.csv")
-initial_set = df_pop_generations.iloc[0:parameters_GA['population_size'],:] # load initial set
+df_pop_generations = pd.read_csv(dir_path+"/Routes_initial_set.csv")
+initial_set = df_pop_generations # load initial set
 
 # Get details of runs
 def count_Run_folders(path_to_folder):
@@ -106,7 +106,7 @@ UTNDP_problem_1 = gc.UTNDP_problem()
 UTNDP_problem_1.problem_data = gc.Problem_data(mx_dist, mx_demand, mx_coords)
 UTNDP_problem_1.problem_constraints = gc.Problem_constraints(parameters_constraints)
 UTNDP_problem_1.problem_inputs = gc.Problem_inputs(parameters_input)
-UTNDP_problem_1.problem_GA_parameters = gc.Problem_GA_inputs(parameters_GA)
+UTNDP_problem_1.problem_SA_parameters = gc.Problem_metaheuristic_inputs(parameters_SA_routes)
 UTNDP_problem_1.Decisions = Decisions
 
 # Set the labels for graphs
@@ -162,7 +162,7 @@ try:
         for key, val in {**stats_overall,
                             **parameters_input, 
                             **parameters_constraints, 
-                            **parameters_GA}.items():
+                            **parameters_SA_routes}.items():
             w.writerow([key, val])
         del key, val
 
@@ -170,7 +170,7 @@ except PermissionError: pass
 
 for _ in range(5):
     try:
-        ga.get_sens_tests_stats_from_model_runs(path_results, nr_of_runs) # prints the runs summary
+        #ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results)
         gv.save_all_mutation_stats_and_plots(path_results) # gets and prints the mutation stats
         gv.save_all_obj_stats_and_plots(path_results) # gets and prints the objective performance stats
         #gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
@@ -187,16 +187,16 @@ for _ in range(5):
         #                                    path_results, labels,
         #                                    stats_overall['HV Benchmark'], 'stacked')
         
-        gv.save_final_avgd_results_analysis(initial_set, df_overall_pareto_set, validation_data, 
-                                            pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
-                                            pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
-                                            name_input_data, 
-                                            path_results, labels,
-                                            stats_overall['HV Benchmark'], 'stacked_smooth')
+        gv.save_final_avgd_results_analysis_SA(initial_set, df_overall_pareto_set, validation_data, 
+                                    pd.read_csv((path_results/'Performance/Avg_obj_performances.csv')), 
+                                    pd.read_csv((path_results/'Mutations/Avg_mut_ratios.csv')), # can use 'Smoothed_avg_mut_ratios.csv' for a double smooth visualisation
+                                    name_input_data, 
+                                    path_results, labels,
+                                    stats_overall['HV Benchmark'], 'stacked_smooth')
         
         print("Printing extreme solutions")
         gf.print_extreme_solutions(df_overall_pareto_set, stats_overall['HV obtained'], stats_overall['HV Benchmark'], name_input_data, UTNDP_problem_1, path_results)
-        ga.get_sens_tests_stats_from_UTRP_GA_runs(path_results) 
+        ga.get_sens_tests_stats_from_UTRP_SA_runs(path_results) 
         
         break
     except PermissionError:

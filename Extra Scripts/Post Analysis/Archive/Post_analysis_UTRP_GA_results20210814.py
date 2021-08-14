@@ -28,8 +28,8 @@ print(arg_dir)
 dir_path = arg_dir
 os.chdir(dir_path)
 
-spl_word = 'SA_' # initializing split word 
-prefix_for_each_csv_file = f"UTRP_{spl_word}_Summary"
+prefix_for_each_csv_file = "UTRP_GA_Summary"
+spl_word = 'GA_' # initializing split word 
 
 '''State the dictionaries for boxplots''' 
 title = {
@@ -49,12 +49,7 @@ title = {
 'Update_mut_ratio' : 'Updating the mutation ratio',
 'Mut_threshold' : 'Mutation threshold',
 'Repairs' : 'Repair strategy used',
-'repair_func' : 'Repair strategy used',   
-
-# SA Parameters
-'Mut_update' : 'Updating the mutation ratio',
-'Choice_import_saved_set' : 'Import saved solutions'
-
+'repair_func' : 'Repair strategy used',                             
 }
 
 file_suffix = { #NB! Suffix may not have any spaces!
@@ -74,12 +69,7 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'Update_mut_ratio' : 'update_mut_ratio' ,
 'Mut_threshold' : 'mut_threshold',
 'Repairs' : 'repairs',
-'repair_func' : 'repairs',   
-
-# SA Parameters
-
-'Mut_update' : 'update_mut_ratio',
-'Choice_import_saved_set' : 'initial_solutions'
+'repair_func' : 'repairs',                                 
 }
 
 def count_Run_folders(path_to_folder):
@@ -105,8 +95,7 @@ for results_folder_name in result_entries:
     if os.path.isdir(path_to_main_folder / results_folder_name):
   
         """Get the substrings"""
-        test_string = results_folder_name  # initializing string
-
+        test_string = results_folder_name  # initializing string 
         res = test_string.partition(spl_word)[2] # partitions the string in three
 
         value = re.split("_", res)[-1] # gets the last number
@@ -159,13 +148,11 @@ all_in_one_df = pd.DataFrame(columns = named_cols)
 if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
         results_dataframe.columns = named_cols
-        
         if parameter in ['Mut_threshold','Mut_prob','Crossover_prob']:
             results_dataframe.value = results_dataframe.value.astype(float)
         elif parameter in ['Repairs', 'repair_func']:
             pass
         else:
-            print(f"\n\nParameter not in list: {parameter}\n\n")
             results_dataframe.value = results_dataframe.value.astype(int)
         results_dataframe = results_dataframe.sort_values(by='value', ascending=True)
         results_dataframe.to_csv(path_to_main_folder / f"{prefix_for_each_csv_file}_{parameter}.csv")
@@ -200,8 +187,8 @@ def outlier_logic(outlier_entry, row_i):
             temp_str = "\n".join([temp_str, f'({row_i+1},{round(float(_),5)})']) # f'({row_i+1},{_})'
         return temp_str
 
-#spl_word = 'SA_' # initializing split word 
-#prefix_for_each_csv_file = f"UTRP_{spl_word}Outliers_Summary"
+prefix_for_each_csv_file = "UTRP_GA_Outliers_Summary"
+spl_word = 'GA_' # initializing split word 
 
 
 path_to_main_folder = Path(os.getcwd())
@@ -346,11 +333,10 @@ with open('box_plots.tex','w') as file:
     file.write(f'\n\\section{{{title_str}}}\n')
     file.write(box_plot_str)
     #file.write('\n\section{Legend}\n')
-    if df_results_read["parameter"].iloc[0] not in ['population_size', 'crossover_probability', 'mutation_probability']:
-        try:
-            file.write(legend_table_str)
-        except NameError as err:
-            print(f"{err}: name 'legend_table_str' is not defined")
+    try:
+        file.write(legend_table_str)
+    except NameError as err:
+        print(f"{err}: name 'legend_table_str' is not defined")
     if False:
         for i in range(2,len(sensitivity_list[0])):
             legend_str = f'{i-2}\t{sensitivity_list[0][i][0]}'.replace('_',' ')

@@ -66,7 +66,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_22_1_Mandl6_SA_Mut_tests',
                    
                    
-                   ][17]   # set the name of the input data
+                   ][-2]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -635,6 +635,8 @@ def main(UTNDP_problem_1):
              
             
             while poor_epoch <= UTNDP_problem_1.problem_SA_parameters.max_poor_epochs and total_iterations <= UTNDP_problem_1.problem_SA_parameters.max_total_iterations and epoch <= UTNDP_problem_1.problem_SA_parameters.max_epochs:
+                '''################################## RUN EPOCHS #########################################'''
+                stats["begin_time_epoch"] = datetime.datetime.now() # save the begin time of the epoch
                 accepts = 0 # Initialise the accepts
                 iteration_t = 1 # Initialise the number of iterations 
                 poor_epoch_flag = True # sets the poor epoch flag, and lowered when solution added to the archive
@@ -753,7 +755,17 @@ def main(UTNDP_problem_1):
                 if poor_epoch_flag:
                     poor_epoch = poor_epoch + 1 # update number of epochs without an accepted solution
                 
-                print(f'Epoch:{epoch} \tTemp:{round(SA_Temp,4)} \tHV:{round(HV, 4)} [{stats_overall["HV Benchmark"]:.4f}] \tAccepts:{accepts} \tAttempts:{attempts} \tPoor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \tTotal_i:{total_iterations}[{iteration_t}] \t P_accept:{round(sum(prob_acceptance_list)/len(prob_acceptance_list),4)}')
+                stats["end_time_epoch"] = datetime.datetime.now() # save the end time of the epoch
+                
+                print(f'Epoch:{epoch} \t\
+Temp:{round(SA_Temp,4)} \t\
+HV:{round(HV, 4)} [{stats_overall["HV Benchmark"]:.4f}] \t\
+Accepts:{accepts} \t\
+Attempts:{attempts} \t\
+Poor_epoch:{poor_epoch}/{UTNDP_problem_1.problem_SA_parameters.max_poor_epochs} \t\
+Total_i:{total_iterations}[{iteration_t}] \t\
+P_accept:{round(sum(prob_acceptance_list)/len(prob_acceptance_list),4)}\t\
+Dur: {ga.print_timedelta_duration(stats["end_time_epoch"] - stats["begin_time_epoch"])}')
     
                 '''Update parameters'''
                 SA_Temp = UTNDP_problem_1.problem_SA_parameters.Cooling_rate*SA_Temp # update temperature based on cooling schedule
@@ -954,7 +966,7 @@ if __name__ == "__main__":
         
         finish = time.perf_counter()
         
-        print(f'Finished in {round(finish-start, 6)} second(s)')
+        print(f'Finished in {round(finish-start, 6)} second(s) at {datetime.datetime.now().strftime("%m/%d/%Y, %H:%M:%S")}')
         
     else:
         #pass

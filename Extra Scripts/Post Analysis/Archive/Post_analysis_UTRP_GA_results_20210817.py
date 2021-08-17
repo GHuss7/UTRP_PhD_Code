@@ -18,26 +18,18 @@ parser = argparse.ArgumentParser()
 
 #-dir DIRECTORY
 parser.add_argument("-dir", "--directory", dest = "dir", default = os.path.dirname(os.path.realpath(__file__)), help="Directory", type=str)
-parser.add_argument("-mt", "--meta_type", dest = "meta_type", default = 'GA', help="Metaheuristic type", type=str)
 
 args = parser.parse_args()
 arg_dir = args.dir
+
 print(arg_dir)
-
-
 
 # Ensure the directory is set to the file location
 dir_path = arg_dir
 os.chdir(dir_path)
 
-meta_type = args.meta_type
-#meta_type = 'SA'
-if meta_type == 'GA': meta_full = 'NSGAII'
-else: meta_full = 'DBMOSA'
-if meta_type == 'GA': spl_word = 'GA_' # initializing split word 
-else: spl_word = 'SA_' 
-
-prefix_for_each_csv_file = f"UTRP_{spl_word}Summary"
+spl_word = 'SA_' # initializing split word 
+prefix_for_each_csv_file = f"UTRP_{spl_word}_Summary"
 
 '''State the dictionaries for boxplots''' 
 title = {
@@ -209,7 +201,7 @@ def outlier_logic(outlier_entry, row_i):
         return temp_str
 
 #spl_word = 'SA_' # initializing split word 
-prefix_for_each_csv_file = f"UTRP_{spl_word}Outliers_Summary"
+#prefix_for_each_csv_file = f"UTRP_{spl_word}Outliers_Summary"
 
 
 path_to_main_folder = Path(os.getcwd())
@@ -230,10 +222,10 @@ for file_name in result_entries:
         x_tick_labels_str = ",".join([str(x) for x in df_results_read["value"]])
         
         """Add the prerequisites""" 
-        temp_str = (f'% ######################## UTRP {meta_type} {title[df_results_read["parameter"].iloc[0]]} ######################## {nl}' \
+        temp_str = (f'% ######################## UTRP GA {title[df_results_read["parameter"].iloc[0]]} ######################## {nl}' \
             f'\\begin{{figure}} {nl}' \
          	f'\\centering {nl}' \
-         	f'\\tikzsetnextfilename{{UTRP_{meta_full}_BP_{file_suffix[df_results_read["parameter"].iloc[0]]}}} {nl}' \
+         	f'\\tikzsetnextfilename{{UTRP_NSGAII_BP_{file_suffix[df_results_read["parameter"].iloc[0]]}}} {nl}' \
          	f'\\begin{{tikzpicture}} {nl}' \
           	f'\\begin{{axis}}[ {nl}' \
           	f'title={{{title[df_results_read["parameter"].iloc[0]]}}}, {nl}' \
@@ -251,7 +243,7 @@ for file_name in result_entries:
         """Add each plot"""
         for row_i in range(len(df_results_read)):
             temp_str = (f'% ############## {df_results_read["parameter"].iloc[row_i]}={df_results_read["value"].iloc[row_i]} ################## {nl}' \
-            f'\\addplot[boxplot, mark=asterisk, {nl}' \
+            f'\\addplot[boxplot, mark=*, {nl}' \
             f'boxplot prepared={"{"} {nl}' \
 			f'lower whisker={round(df_results_read["min"].iloc[row_i],5)}, {nl}' \
 			f'upper whisker={round(df_results_read["max"].iloc[row_i],5)}, {nl}' \
@@ -261,7 +253,7 @@ for file_name in result_entries:
 			f'average={round(df_results_read["mean"].iloc[row_i],5)}{"}"}, {nl}' \
     		f'color = blue, solid, area legend] {nl}' \
     		f'coordinates {{{outlier_logic(df_results_read["outliers"].iloc[row_i], row_i)}}}; {nl}'\
-            f'\\addplot[only marks,mark=*,color = blue]coordinates{{({row_i+1},{round(float(df_results_read["HV_overall"].iloc[row_i]),5)})}}; {nl}')
+            f'\\addplot[only marks,mark=asterisk,color = blue]coordinates{{({row_i+1},{round(float(df_results_read["HV_overall"].iloc[row_i]),5)})}}; {nl}')
                 
             box_plot_str = "\n".join([box_plot_str, temp_str])
                 
@@ -368,7 +360,7 @@ with open('box_plots.tex','w') as file:
         #print('Could not write sensitivity list to .tex file')
     file.write('\n\\end{document}\n')
 
-x = subprocess.call('pdflatex box_plots.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shell-escape
+x = subprocess.call('pdflatex box_plots.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shel-escape
 if x != 0:
 	print('Exit-code not 0, check result!')
 else:

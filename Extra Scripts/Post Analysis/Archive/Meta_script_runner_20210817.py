@@ -58,10 +58,6 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
     'Results_22_1_Mandl6_SA_Mut_update', #14
     'Results_22_2_Mumford0_SA_Mut_update', #15
     'Results_22_3_Mumford1_SA_Mut_update', #16
-    #'Results_23_1_Mandl6_SA_Mutations', #17
-    #'Results_23_2_Mumford0_SA_Mutations', #17
-    #'Results_23_3_Mumford1_SA_Mutations', #18
-
 
 
      ]
@@ -76,17 +72,9 @@ for apply_folder in apply_list:
     os.chdir(dir_path) # ensures the results folder' script is used
     
     # Take note: This runs the script in the folder itself
-    # x = subprocess.call(f"python {dir_path}\Post_analysis_UTRP_GA_results.py -dir '{current_wd}'")
-    
-    if apply_folder.find('_GA_') != -1:
-        meta_type = 'GA'
-    elif apply_folder.find('_SA_') != -1:
-        meta_type = 'SA'
-    else:
-        print("ERROR! Not SA or GA folder")
-
-    command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}"'
-    x = subprocess.call(command_str)
+    # x = subprocess.call(f"python {dir_path}\Post_analysis_UTRP_GA_results.py -dir '{current_wd}'") # -interaction nonstopmode -shel-escape
+    command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}"'
+    x = subprocess.call(command_str) # -interaction nonstopmode -shel-escape
 
     if x != 0:
         print(f'Exit-code not 0, check result! [{apply_folder}]')

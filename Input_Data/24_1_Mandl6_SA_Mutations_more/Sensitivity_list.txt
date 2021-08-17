@@ -2,6 +2,7 @@
     ["Decisions", "mutation_funcs", 
 	["Add_vertex", "Delete_vertex", "Insert_inside_vertex", "Delete_inside_vertex","Intertwine_two", "Invert_path_vertices"],
 	["MSC_add_terminal", "MSC_del_terminal", "Insert_inside_vertex", "Delete_inside_vertex","Intertwine_two", "Invert_path_vertices"],
+	["Trim_one_terminal_cb", "Grow_one_terminal_cb", "Insert_inside_vertex", "Delete_inside_vertex","Intertwine_two", "Invert_path_vertices"],
 
 	["Intertwine_two", "Add_vertex", "Delete_vertex", "Invert_path_vertices", "Insert_inside_vertex", "Delete_inside_vertex", "Replace_inside_vertex", "Donate_between_routes"],
 	["Intertwine_two", "MSC_add_terminal", "MSC_del_terminal", "Invert_path_vertices", "Insert_inside_vertex", "Delete_inside_vertex", "Replace_inside_vertex", "Donate_between_routes"],

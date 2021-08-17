@@ -60,6 +60,10 @@ name_input_data = ["Mandl_UTRP", #0
                     '23_1_Mandl6_SA_Mutations', #17
                     '23_2_Mumford0_SA_Mutations', #18
                     '23_3_Mumford1_SA_Mutations', #19
+                    '24_1_Mandl6_SA_Mutations_more', #20
+                    '24_2_Mumford0_SA_Mutations_more', #21
+                    '24_3_Mumford1_SA_Mutations_more', #22
+
 
 
                    '0_21_1_Mandl6_SA_Init_sol_test',

@@ -1,4 +1,3 @@
-#%%
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul 30 11:48:53 2020
@@ -11,7 +10,6 @@ import re
 import string
 import json
 from pathlib import Path
-import subprocess
 
 import argparse
 
@@ -33,17 +31,11 @@ dir_path = arg_dir
 os.chdir(dir_path)
 
 meta_type = args.meta_type
-meta_type = 'SA'
+#meta_type = 'SA'
 if meta_type == 'GA': meta_full = 'NSGAII'
 else: meta_full = 'DBMOSA'
 if meta_type == 'GA': spl_word = 'GA_' # initializing split word 
 else: spl_word = 'SA_' 
-if meta_type == 'GA': counter_type = 'Generations'
-else: counter_type = 'Total_iterations'
-if meta_type == 'GA': counter_xlabel = 'Generations'
-else: counter_xlabel = 'Total iterations'
-if meta_type == 'GA': counter_ylabel = 'Mutation ratios'
-else: counter_ylabel = 'Perturbation ratios'
 
 prefix_for_each_csv_file = f"UTRP_{spl_word}Summary"
 
@@ -69,13 +61,7 @@ title = {
 
 # SA Parameters
 'Mut_update' : 'Updating the mutation ratio',
-'Choice_import_saved_set' : 'Import saved solutions',
-'B_Mutations_AMALGAM' : 'Mutation operators applied',
-'Mutations_AMALGAM' : 'Mutation operators applied',
-'Mutations_AMALGAM_every_n' : 'Mutation operators applied',
-'Mutations_Counts_normal' : 'Mutation operators applied',
-'Mutations_more' : 'Mutation operators applied'
-
+'Choice_import_saved_set' : 'Import saved solutions'
 
 }
 
@@ -101,12 +87,7 @@ file_suffix = { #NB! Suffix may not have any spaces!
 # SA Parameters
 
 'Mut_update' : 'update_mut_ratio',
-'Choice_import_saved_set' : 'initial_solutions',
-'B_Mutations_AMALGAM' : 'mutation_funcs_Best_comp',
-'Mutations_AMALGAM' : 'mutation_funcs_AMAL',
-'Mutations_AMALGAM_every_n' : 'mutation_funcs_AMAL_every_n',
-'Mutations_Counts_normal' : 'mutation_funcs_Counts_normal',
-'Mutations_more' : 'mutation_funcs_more'
+'Choice_import_saved_set' : 'initial_solutions'
 }
 
 def count_Run_folders(path_to_folder):
@@ -126,90 +107,7 @@ result_entries = os.listdir(path_to_main_folder)
 df_list_of_ST_results_HV = []
 df_list_of_ST_results_Iterations = []
 parameters_list = []
-nl = '\n' # define new line character
 
-#%%
-def get_stacked_area_str(df_smooth_mut_ratios):
-    if len(df_smooth_mut_ratios) < 400:
-        n_th = 1
-    elif len(df_smooth_mut_ratios) < 4000:
-        n_th = 10
-    else:
-        n_th = 100
-    
-    preamble_stacked_area = r"""\documentclass[crop=false]{standalone}
-%https://tex.stackexchange.com/questions/288373/how-to-draw-stacked-area-chart
-\usepackage{pgfplots}
-\usepgfplotslibrary{dateplot}
-\pgfplotsset{compat=1.12}
-\usetikzlibrary{fillbetween}
-\usetikzlibrary{external}
-\tikzexternalize[prefix=savedfigures/]""" + nl + nl
-
-    doc_start = r"\begin{document}"+ nl +\
-	f"\\tikzsetnextfilename{{{'Stacked_area_mut'}}}"+ nl +\
-    r"""\begin{tikzpicture}[]
-    \begin{axis}[
-    legend style={at={(1.1,1)},anchor=north west}, %(<x>,<y>)
-    %date coordinates in=x,
-    table/col sep=comma,
-    xticklabel style={rotate=90, anchor=near xticklabel},
-    ymin=0,
-    ymax=1,
-    %max space between ticks=20,
-    stack plots=y,%
-    area style,"""+\
-    f"""each nth point={n_th}, filter discard warning=false, unbounded coords=discard,
-    xmin={0},
-    xmax={len(df_smooth_mut_ratios)},
-    xlabel = {counter_xlabel},
-    ylabel = {counter_ylabel}
-    ]""" + nl + nl
-
-    doc_end = r"""    \end{axis}
-    \end{tikzpicture}
-\end{document}"""
-
-    # Each entry part
-    colours_stacked_area = ['blue', 'red', 'yellow', 'darkgray', 'green', 'magenta', 'cyan', 'orange', 'violet', 'lightgray', 'teal', 'pink', 'lime', 'black']
-    doc_data_entries =""
-    col_names = df_smooth_mut_ratios.columns
-    for data_entries_i in range(2, len(col_names)):
-        colour_entry = colours_stacked_area[data_entries_i-2]
-        entry_name = col_names[data_entries_i]
-        entry_str = f'''\\addplot [draw={colour_entry}, fill={colour_entry}!30!white] table [mark=none, x={counter_type},y={entry_name}
-] {{Smoothed_Mutation_Ratios_for_Tikz.csv}}
-    \closedcycle;
-    \\addlegendentry{{{entry_name.replace("_", " ")}}};'''
-        doc_data_entries = doc_data_entries + entry_str + nl + nl
-
-    full_doc = preamble_stacked_area + doc_start + doc_data_entries + doc_end
-
-    return full_doc
-
-# %% Stacked mutation ratios
-""" Creates the mutation ratio TikZ stacked area chart"""
-for results_folder_name in result_entries:  
-    working_folder = f"{path_to_main_folder / results_folder_name}/Mutations"
-    if os.path.exists(f"{working_folder}/Smoothed_avg_mut_ratios.csv"):
-        df_smooth_mut_ratios = pd.read_csv(f"{working_folder}/Smoothed_avg_mut_ratios.csv")
-        df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
-        df_smooth_mut_ratios.rename(columns={'Unnamed: 0': counter_type}, inplace=True)
-        df_smooth_mut_ratios.to_csv(f'{working_folder}/Smoothed_Mutation_Ratios_for_Tikz.csv', index=False)
-        stacked_area_doc = get_stacked_area_str(df_smooth_mut_ratios)
-
-        os.chdir(working_folder)
-        with open('stacked_area_plot.tex','w') as file:
-            file.write(stacked_area_doc)
-        x = subprocess.call('pdflatex stacked_area_plot.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shell-escape
-        if x != 0:
-            print(f'Exit-code not 0, check result! [{results_folder_name}]')
-        else:
-            print(f"Success! Stacked Area [{results_folder_name}]")
-        os.chdir(path_to_main_folder)
-
-
-#%% Capture and save all data
 """ Captures and saves all the data """
 for results_folder_name in result_entries:  
     if os.path.isdir(path_to_main_folder / results_folder_name):
@@ -318,7 +216,7 @@ path_to_main_folder = Path(os.getcwd())
 result_entries = os.listdir(path_to_main_folder)
          
 parameters_list = []
-
+nl = '\n'
 
 box_plot_str = str()
 

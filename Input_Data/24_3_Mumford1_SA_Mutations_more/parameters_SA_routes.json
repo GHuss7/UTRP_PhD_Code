@@ -14,7 +14,7 @@
     "number_of_initial_solutions": 10,
     "Feasibility_repair_attempts": 10,
     "number_of_runs": 10,
-    "iter_compare_HV": 4000,
+    "iter_compare_HV": 8000,
     "HV_improvement_th": 0.00005,
     "mutation_threshold": 0.03,
     "mutation_update_interval": 200

@@ -22,15 +22,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-dir", "--directory", dest = "dir", default = os.path.dirname(os.path.realpath(__file__)), help="Directory", type=str)
 parser.add_argument("-mt", "--meta_type", dest = "meta_type", default = 'GA', help="Metaheuristic type", type=str)
 parser.add_argument("-sc", "--stacked_chart", dest = "stacked_chart", default = False, help="Stacked chart print", type=bool)
-
+parser.add_argument("-pp", "--parameter_pos", dest = "parameter_pos", default = 0, help="Parameter position", type=int)
 
 args = parser.parse_args()
 arg_dir = args.dir
 print(arg_dir)
 
 arg_sc = args.stacked_chart # get the argument for printing stacked charts which takes very long
-
-
+arg_pp = args.parameter_pos # get the argument for the parameter position
+arg_pp = 1
 
 # Ensure the directory is set to the file location
 dir_path = arg_dir
@@ -243,6 +243,10 @@ for results_folder_name in result_entries:
         value = re.split("_", res)[-1] # gets the last number
         parameter_name = re.split("_[0-9]", res)[0] # gets the parameter name
 
+        if arg_pp:
+            res_2 = res.partition(spl_word)[2] # partitions the string in three
+            value = re.split("_", res_2)[-1] # gets the last number
+            parameter_name = re.split("_[0-9]", res_2)[0] # gets the parameter name
 
         """Capture all the results into dataframes"""
         if parameter_name in parameters_list:

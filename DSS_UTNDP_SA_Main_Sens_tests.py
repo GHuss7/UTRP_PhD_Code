@@ -77,7 +77,7 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_21_1_Mandl6_SA_Init_sol_test', #-2
                    '0_22_1_Mandl6_SA_Mut_tests', #-1
-                   ][-2]   # set the name of the input data
+                   ][30]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience

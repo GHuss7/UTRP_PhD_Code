@@ -68,15 +68,15 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_21_1_Mandl6_SA_Init_sol_test', #-5
                    '0_22_1_Mandl6_SA_Mut_tests', #-4
-                   '33_1_Mandl6__ALL_param', #-3
-                   '33_2_Mumford0__ALL_param', #-2
-                   '33_3_Mumford1__ALL_param', #-1
+                   '33_1_Mandl6_SA_ALL_param', #-3
+                   '33_2_Mumford0_SA_ALL_param', #-2
+                   '33_3_Mumford1_SA_ALL_param', #-1
 
-                   ][-3]   # set the name of the input data
+                   ][-2]   # set the name of the input data
 
 # Set test paramaters
-sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
-sens_to = (sens_from + 1) if False else -1
+sens_from = 4 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
+sens_to = (sens_from + 4) if True else -1
 test_counters = [] # empty list means all, filled in values means only those tests
 
 # %% Set input parameters

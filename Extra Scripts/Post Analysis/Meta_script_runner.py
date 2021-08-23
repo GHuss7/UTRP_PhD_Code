@@ -13,7 +13,14 @@ from pathlib import Path
 import subprocess
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+file_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = file_path
+dir_path = "C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/Results"
+if not os.path.exists(dir_path):
+    dir_path = "C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/Results"
+    assert os.path.exists(dir_path)
+
+stacked_chart_bool = False
 
 # Get all the results folders:
 all_result_folders = os.listdir(dir_path)
@@ -79,10 +86,10 @@ mergedObject = PdfFileMerger() # create the object
 for apply_folder in apply_list: 
     current_wd = dir_path+'\\'+apply_folder # This directs the script to run in the relevant folders
     #os.chdir(current_wd)
-    os.chdir(dir_path) # ensures the results folder' script is used
+    os.chdir(file_path) # ensures the results folder' script is used
     
     # Take note: This runs the script in the folder itself
-    # x = subprocess.call(f"python {dir_path}\Post_analysis_UTRP_GA_results.py -dir '{current_wd}'")
+    # x = subprocess.call(f"python {file_path}\Post_analysis_UTRP_GA_results.py -dir '{current_wd}'")
     
     if apply_folder.find('_GA_') != -1:
         meta_type = 'GA'
@@ -93,7 +100,7 @@ for apply_folder in apply_list:
         print(f"ERROR! Not SA or GA folder! Setting to {meta_type}")
         
 
-    command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}"'
+    command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}" -sc {stacked_chart_bool}'
     x = subprocess.call(command_str)
 
     if x != 0:

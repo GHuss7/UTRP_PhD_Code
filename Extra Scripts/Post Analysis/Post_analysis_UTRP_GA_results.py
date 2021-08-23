@@ -21,10 +21,14 @@ parser = argparse.ArgumentParser()
 #-dir DIRECTORY
 parser.add_argument("-dir", "--directory", dest = "dir", default = os.path.dirname(os.path.realpath(__file__)), help="Directory", type=str)
 parser.add_argument("-mt", "--meta_type", dest = "meta_type", default = 'GA', help="Metaheuristic type", type=str)
+parser.add_argument("-sc", "--stacked_chart", dest = "stacked_chart", default = False, help="Stacked chart print", type=bool)
+
 
 args = parser.parse_args()
 arg_dir = args.dir
 print(arg_dir)
+
+arg_sc = args.stacked_chart # get the argument for printing stacked charts which takes very long
 
 
 

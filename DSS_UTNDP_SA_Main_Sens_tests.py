@@ -77,12 +77,27 @@ name_input_data = ["Mandl_UTRP", #0
 
                    '0_21_1_Mandl6_SA_Init_sol_test', #-2
                    '0_22_1_Mandl6_SA_Mut_tests', #-1
-                   ][30]   # set the name of the input data
+                   ][-2]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
 sens_to = (sens_from + 1) if False else -1
 test_counters = [] # empty list means all, filled in values means only those tests
+
+run_numbers_to_compute = [False, # 0
+                          list(range(0,10)), # 1
+                          list(range(10,20)), # 2
+                          list(range(20,30)), #3 
+                          list(range(0,5)), # 4
+                          list(range(5,10)), # 5
+                          list(range(10,15)), # 6
+                          list(range(15,20)), # 7
+                          list(range(20,25)), # 8
+                          list(range(25,30))][-1] 
+
+if run_numbers_to_compute:
+    print("Hello")
+    print(f"{run_numbers_to_compute}")
 
 # %% Set input parameters
 if True:
@@ -574,8 +589,11 @@ def main(UTNDP_problem_1):
         
     # %% Simulated Annealing Algorithm for each of the initial route sets #########################
     '''Simulated Annealing Algorithm for each of the initial route sets'''
-    run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # default values
-    
+    if not run_numbers_to_compute:
+        run_nr_counter = range(UTNDP_problem_1.problem_SA_parameters.number_of_runs) # default values
+    else:
+        run_nr_counter = run_numbers_to_compute
+        
     if Decisions["Choice_normal_run"]:
         run_nr_counter = range(len(routes_R_initial_set)) # sets the tests ito for loops to run
         UTNDP_problem_1.add_text = f"Normal_run_{UTNDP_problem_1.problem_SA_parameters.number_of_runs}_routes_{len(df_routes_R_initial_set)}"

@@ -78,8 +78,16 @@ title = {
 'Mutations_AMALGAM' : 'Mutation operators applied',
 'Mutations_AMALGAM_every_n' : 'Mutation operators applied',
 'Mutations_Counts_normal' : 'Mutation operators applied',
-'Mutations_more' : 'Mutation operators applied'
+'Mutations_more' : 'Mutation operators applied',
 
+'max_iterations_t' : 'Max iterations per epoch',               
+'min_accepts' : 'Minimum accepts',                        
+'max_attempts' : 'Maximum attempts',                       
+'max_reheating_times' : 'Maximum reheating times',              
+'max_poor_epochs' : 'Maximum poor epochs',
+'Cooling_rate' : 'Cooling rate',                  
+'Temp' : 'Starting temperature',               
+'Reheating_rate' : 'Reheating rate'
 
 }
 
@@ -110,7 +118,16 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'Mutations_AMALGAM' : 'mutation_funcs_AMAL',
 'Mutations_AMALGAM_every_n' : 'mutation_funcs_AMAL_every_n',
 'Mutations_Counts_normal' : 'mutation_funcs_Counts_normal',
-'Mutations_more' : 'mutation_funcs_more'
+'Mutations_more' : 'mutation_funcs_more',
+
+'max_iterations_t' : 'max_iterations_per_epoch',               
+'min_accepts' : 'min_accepts',                        
+'max_attempts' : 'max_attempts',                       
+'max_reheating_times' : 'max_reheating_times',              
+'max_poor_epochs' : 'max_poor_epochs',
+'Cooling_rate' : 'cooling_rate',                  
+'Temp' : 'initial_temp',               
+'Reheating_rate' : 'reheating_rate' 
 }
 
 def count_Run_folders(path_to_folder):
@@ -274,7 +291,17 @@ if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
         results_dataframe.columns = named_cols
         
-        if parameter in ['Mut_threshold','Mut_prob','Crossover_prob']:
+        if parameter in ['Mut_threshold',
+                         'Mut_prob',
+                         'Crossover_prob',
+                         'max_iterations_t',
+                         'min_accepts',
+                         'max_attempts',
+                         'max_reheating_times',
+                         'max_poor_epochs',
+                         'Cooling_rate',
+                         'Temp',
+                         'Reheating_rate']:
             results_dataframe.value = results_dataframe.value.astype(float)
         elif parameter in ['Repairs', 'repair_func']:
             pass

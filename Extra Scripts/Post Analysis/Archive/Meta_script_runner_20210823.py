@@ -52,22 +52,16 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
     # 'Results_9_3_Mumford1_GA_Mut_prob', #41
     # 'Results_9_4_Mumford2_GA_Mut_prob', #42
     # 'Results_9_5_Mumford3_GA_Mut_prob', #43
-    # 'Results_21_1_Mandl6_SA_Initial_solutions', #11
-    # 'Results_21_2_Mumford0_SA_Initial_solutions', #12
-    # 'Results_21_3_Mumford1_SA_Initial_solutions', #13
-    # 'Results_22_1_Mandl6_SA_Mut_update', #14
-    # 'Results_22_2_Mumford0_SA_Mut_update', #15
-    # 'Results_22_3_Mumford1_SA_Mut_update', #16
-    # 'Results_23_1_Mandl6_SA_Mutations', #17
-    # 'Results_23_2_Mumford0_SA_Mutations', #18
-    # 'Results_23_3_Mumford1_SA_Mutations', #19
-    # 'Results_24_1_Mandl6_SA_Mutations_more', #20
-    # 'Results_24_2_Mumford0_SA_Mutations_more', #21
-    # 'Results_24_3_Mumford1_SA_Mutations_more', #22
+    'Results_21_1_Mandl6_SA_Initial_solutions', #11
+    'Results_21_2_Mumford0_SA_Initial_solutions', #12
+    'Results_21_3_Mumford1_SA_Initial_solutions', #13
+    'Results_22_1_Mandl6_SA_Mut_update', #14
+    'Results_22_2_Mumford0_SA_Mut_update', #15
+    'Results_22_3_Mumford1_SA_Mut_update', #16
+    #'Results_23_1_Mandl6_SA_Mutations', #17
+    #'Results_23_2_Mumford0_SA_Mutations', #17
+    #'Results_23_3_Mumford1_SA_Mutations', #18
 
-    'Results_33_1_Mandl6_SA_ALL_param', #47
-    'Results_33_2_Mumford0_SA_ALL_param', #48
-    'Results_33_3_Mumford1_SA_ALL_param', #49
 
 
      ]
@@ -89,9 +83,7 @@ for apply_folder in apply_list:
     elif apply_folder.find('_SA_') != -1:
         meta_type = 'SA'
     else:
-        meta_type = 'SA'
-        print(f"ERROR! Not SA or GA folder! Setting to {meta_type}")
-        
+        print("ERROR! Not SA or GA folder")
 
     command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}"'
     x = subprocess.call(command_str)

@@ -33,7 +33,7 @@ dir_path = arg_dir
 os.chdir(dir_path)
 
 meta_type = args.meta_type
-#meta_type = 'SA'
+meta_type = 'SA'
 if meta_type == 'GA': meta_full = 'NSGAII'
 else: meta_full = 'DBMOSA'
 if meta_type == 'GA': spl_word = 'GA_' # initializing split word 
@@ -42,8 +42,8 @@ if meta_type == 'GA': counter_type = 'Generations'
 else: counter_type = 'Total_iterations'
 if meta_type == 'GA': counter_xlabel = 'Generations'
 else: counter_xlabel = 'Total iterations'
-if meta_type == 'GA': counter_ylabel = 'Mutation ratio'
-else: counter_ylabel = 'Perturbation ratio'
+if meta_type == 'GA': counter_ylabel = 'Mutation ratios'
+else: counter_ylabel = 'Perturbation ratios'
 
 prefix_for_each_csv_file = f"UTRP_{spl_word}Summary"
 

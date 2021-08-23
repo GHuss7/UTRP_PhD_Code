@@ -30,13 +30,20 @@ print(arg_dir)
 
 arg_sc = args.stacked_chart # get the argument for printing stacked charts which takes very long
 arg_pp = args.parameter_pos # get the argument for the parameter position
-arg_pp = 1
 
 # Ensure the directory is set to the file location
 dir_path = arg_dir
 os.chdir(dir_path)
 
-meta_type = args.meta_type
+# Determines what type of algorithm is used
+if os.path.basename(dir_path).find('_GA_') != -1:
+    meta_type = 'GA'
+elif os.path.basename(dir_path).find('_SA_') != -1:
+    meta_type = 'SA'
+else:
+    meta_type = 'SA'
+    print(f"ERROR! Not SA or GA folder! Setting to {meta_type}")
+
 #meta_type = 'SA'
 if meta_type == 'GA': meta_full = 'NSGAII'
 else: meta_full = 'DBMOSA'
@@ -209,25 +216,26 @@ def get_stacked_area_str(df_smooth_mut_ratios):
     return full_doc
 
 # %% Stacked mutation ratios
-""" Creates the mutation ratio TikZ stacked area chart"""
-for results_folder_name in result_entries:  
-    working_folder = f"{path_to_main_folder / results_folder_name}/Mutations"
-    if os.path.exists(f"{working_folder}/Smoothed_avg_mut_ratios.csv"):
-        df_smooth_mut_ratios = pd.read_csv(f"{working_folder}/Smoothed_avg_mut_ratios.csv")
-        df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
-        df_smooth_mut_ratios.rename(columns={'Unnamed: 0': counter_type}, inplace=True)
-        df_smooth_mut_ratios.to_csv(f'{working_folder}/Smoothed_Mutation_Ratios_for_Tikz.csv', index=False)
-        stacked_area_doc = get_stacked_area_str(df_smooth_mut_ratios)
-
-        os.chdir(working_folder)
-        with open('stacked_area_plot.tex','w') as file:
-            file.write(stacked_area_doc)
-        x = subprocess.call('pdflatex stacked_area_plot.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shell-escape
-        if x != 0:
-            print(f'Exit-code not 0, check result! [{results_folder_name}]')
-        else:
-            print(f"Success! Stacked Area [{results_folder_name}]")
-        os.chdir(path_to_main_folder)
+if arg_sc:
+    """ Creates the mutation ratio TikZ stacked area chart"""
+    for results_folder_name in result_entries:  
+        working_folder = f"{path_to_main_folder / results_folder_name}/Mutations"
+        if os.path.exists(f"{working_folder}/Smoothed_avg_mut_ratios.csv"):
+            df_smooth_mut_ratios = pd.read_csv(f"{working_folder}/Smoothed_avg_mut_ratios.csv")
+            df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
+            df_smooth_mut_ratios.rename(columns={'Unnamed: 0': counter_type}, inplace=True)
+            df_smooth_mut_ratios.to_csv(f'{working_folder}/Smoothed_Mutation_Ratios_for_Tikz.csv', index=False)
+            stacked_area_doc = get_stacked_area_str(df_smooth_mut_ratios)
+    
+            os.chdir(working_folder)
+            with open('stacked_area_plot.tex','w') as file:
+                file.write(stacked_area_doc)
+            x = subprocess.call('pdflatex stacked_area_plot.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shell-escape
+            if x != 0:
+                print(f'Exit-code not 0, check result! [{results_folder_name}]')
+            else:
+                print(f"Success! Stacked Area [{results_folder_name}]")
+            os.chdir(path_to_main_folder)
 
 
 #%% Capture and save all data

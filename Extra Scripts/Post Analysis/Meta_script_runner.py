@@ -21,6 +21,7 @@ if not os.path.exists(dir_path):
     assert os.path.exists(dir_path)
 
 stacked_chart_bool = False
+parameter_pos = 0
 
 # Get all the results folders:
 all_result_folders = os.listdir(dir_path)
@@ -100,12 +101,21 @@ for apply_folder in apply_list:
         print(f"ERROR! Not SA or GA folder! Setting to {meta_type}")
         
 
-    command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}" -sc {stacked_chart_bool}'
+    command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}" -sc {str(stacked_chart_bool)} -pp {str(parameter_pos)}'
     x = subprocess.call(command_str)
 
     if x != 0:
         print(f'Exit-code not 0, check result! [{apply_folder}]')
-        
+        print('Trying parameter name in next position:')
+        command_str = f'python Post_analysis_UTRP_GA_results.py -dir "{current_wd}" -mt "{meta_type}" -sc {str(stacked_chart_bool)} -pp 1'
+        y = subprocess.call(command_str)
+        if y != 0:
+            print(f'Exit-code not 0, check result! [{apply_folder}] with second parameter try')
+        else:
+        	#os.system('start box_plots.pdf')+
+            print(f"Success! [{apply_folder}] with second parameter try")
+            os.chdir(current_wd)
+            mergedObject.append(PdfFileReader('box_plots.pdf', 'rb'))
     else:
     	#os.system('start box_plots.pdf')+
         print(f"Success! [{apply_folder}]")

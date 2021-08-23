@@ -75,8 +75,11 @@ name_input_data = ["Mandl_UTRP", #0
 
 
 
-                   '0_21_1_Mandl6_SA_Init_sol_test', #-2
-                   '0_22_1_Mandl6_SA_Mut_tests', #-1
+                   '0_21_1_Mandl6_SA_Init_sol_test', #-4
+                   '0_22_1_Mandl6_SA_Mut_tests', #-3
+                   '0_34_4_Mumford2_SA_Long_run', #-2
+                   '0_34_5_Mumford3_SA_Long_run' #-1
+                   
                    ][-2]   # set the name of the input data
 
 # Set test paramaters

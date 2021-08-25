@@ -2,7 +2,7 @@
     "Choice_generate_initial_set": true,
     "Choice_first_init_set_only" : false,
     "Choice_print_results": true,
-    "Choice_conduct_sensitivity_analysis": true,
+    "Choice_conduct_sensitivity_analysis": false,
     "Choice_import_dictionaries": true,
     "Choice_relative_results_referencing": false,
     "Choice_init_temp_with_trial_runs": false,

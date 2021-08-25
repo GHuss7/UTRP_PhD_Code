@@ -1,0 +1,32 @@
+{
+    "Choice_generate_initial_set": true,
+    "Choice_first_init_set_only" : false,
+    "Choice_print_results": true,
+    "Choice_conduct_sensitivity_analysis": false,
+    "Choice_import_dictionaries": true,
+    "Choice_relative_results_referencing": false,
+    "Choice_init_temp_with_trial_runs": false,
+    "Choice_normal_run": false,
+    "Choice_import_saved_set": true,
+    "Set_name": "Overall_Pareto_set_for_case_study_GA.csv",
+    "Additional_text": "Tests",
+    "Pop_size_to_create": 2000,
+    "Log_prints_every" : 20,
+    "CSV_prints_every" : 100,
+    "PDF_prints_every" : 20,
+    "Load_supplementing_pop": true,
+    "Obj_func_disruption": true,
+    "Update_mutation_ratios": true,
+    "route_gen_func": "KSP_unseen_robust_prob",
+    "mutation_funcs": [
+	"Intertwine_two",
+	"Add_vertex",
+	"Delete_vertex",
+	"Invert_path_vertices",
+	"Insert_inside_vertex",
+	"Delete_inside_vertex",
+	"Replace_inside_vertex",
+	"Donate_between_routes"
+    ],
+    "mut_update_func": "Counts_normal"
+}

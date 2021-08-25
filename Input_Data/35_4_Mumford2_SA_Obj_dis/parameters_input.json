@@ -1,0 +1,13 @@
+{"total_demand": 2423950.0, 
+"n": 110, 
+"wt": 0, 
+"tp": 5, 
+"ref_point_max_f1_ATT": 45, 
+"ref_point_min_f1_ATT": 22, 
+"ref_point_max_f2_TRT": 6000, 
+"ref_point_min_f2_TRT": 864, 
+"walkFactor": 3, 
+"boardingTime": 0, 
+"alightingTime": 0, 
+"large_dist": 10000, 
+"alpha_const_inter": 0.5}

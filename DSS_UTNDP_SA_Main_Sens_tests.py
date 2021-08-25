@@ -71,16 +71,19 @@ name_input_data = ["Mandl_UTRP", #0
                     '34_3_Mumford1_SA_Long_run', #28
                     '34_4_Mumford2_SA_Long_run', #29
                     '34_5_Mumford3_SA_Long_run', #30
-
-
-
+                    
+                    '35_1_Mandl6_SA_Obj_dis', #31
+                    '35_2_Mumford0_SA_Obj_dis', #32
+                    '35_3_Mumford1_SA_Obj_dis', #33
+                    '35_4_Mumford2_SA_Obj_dis', #34
+                    '35_5_Mumford3_SA_Obj_dis', #35
 
                    '0_21_1_Mandl6_SA_Init_sol_test', #-4
                    '0_22_1_Mandl6_SA_Mut_tests', #-3
                    '0_34_4_Mumford2_SA_Long_run', #-2
                    '0_34_5_Mumford3_SA_Long_run' #-1
                    
-                   ][30]   # set the name of the input data
+                   ][31]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -96,7 +99,7 @@ run_numbers_to_compute = [False, # 0
                           list(range(10,15)), # 6
                           list(range(15,20)), # 7
                           list(range(20,25)), # 8
-                          list(range(25,30))][5] 
+                          list(range(25,30))][0] 
 
 if run_numbers_to_compute:
     print("Hello")

@@ -19,6 +19,9 @@ import argparse
 
 # %% Import personal functions
 path_DSS_Main_folder = "C:/Users/gunth/OneDrive - Stellenbosch University/Academics 2019 MEng/Documents/GitHub/DSS_Main_Laptop"
+if not os.path.exists(path_DSS_Main_folder):
+    path_DSS_Main_folder = "C:/Users/17832020/OneDrive - Stellenbosch University/Academics 2019 MEng/DSS/DSS Main"
+assert os.path.exists(path_DSS_Main_folder)
 #os.chdir(path_DSS_Main_folder)
 #print(os.getcwd())
 import DSS_Admin as ga
@@ -37,6 +40,25 @@ input_data_names = ['21_1_Mandl6_SA_Initial_solutions', #11
                     '22_1_Mandl6_SA_Mut_update', #14
                     '22_2_Mumford0_SA_Mut_update', #15
                     '22_3_Mumford1_SA_Mut_update', #16
+                    '23_1_Mandl6_SA_Mutations', #17
+                    '23_2_Mumford0_SA_Mutations', #18
+                    '23_3_Mumford1_SA_Mutations', #19
+                    '24_1_Mandl6_SA_Mutations_more', #20
+                    '24_2_Mumford0_SA_Mutations_more', #21
+                    '24_3_Mumford1_SA_Mutations_more', #22
+                    '33_1_Mandl6_SA_ALL_param', #23
+                    '33_2_Mumford0_SA_ALL_param', #24
+                    '33_3_Mumford1_SA_ALL_param', #25
+                    '34_1_Mandl6_SA_Long_run', #26
+                    '34_2_Mumford0_SA_Long_run', #27
+                    '34_3_Mumford1_SA_Long_run', #28
+                    '34_4_Mumford2_SA_Long_run', #29
+                    '34_5_Mumford3_SA_Long_run', #30
+                    '35_1_Mandl6_SA_Obj_dis', #31
+                    '35_2_Mumford0_SA_Obj_dis', #32
+                    '35_3_Mumford1_SA_Obj_dis', #33
+                    '35_4_Mumford2_SA_Obj_dis', #34
+                    '35_5_Mumford3_SA_Obj_dis', #35
                     ]
 
 # Arguments from command line

@@ -121,13 +121,16 @@ name_input_data = ["Mandl_UTRP", #0
                     '11_7_Mandl7_GA_Very_Long_run', #55
                     '11_8_Mandl8_GA_Very_Long_run', #56
 
-
-
+                    '12_1_Mandl6_GA_Obj_dis', #57
+                    '12_2_Mumford0_GA_Obj_dis', #58
+                    '12_3_Mumford1_GA_Obj_dis', #59
+                    '12_4_Mumford2_GA_Obj_dis', #60
+                    '12_5_Mumford3_GA_Obj_dis', #61
 
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][54]   # set the name of the input data
+                   ][57]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience

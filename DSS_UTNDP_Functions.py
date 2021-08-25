@@ -130,6 +130,22 @@ def read_problem_data_to_matrices(problem_name):
     
     return mx_dist, mx_demand, mx_coords
 
+def read_problem_data_to_matrices_direct(problem_name):
+    # A function to read in and format the relevant data into matrices
+    mx_dist = pd.read_csv("./Input_Data/"+problem_name+"/Distance_Matrix.csv") 
+    mx_dist = format_mx_dist(mx_dist)
+    mx_dist = mx_dist.values
+
+
+    mx_demand = pd.read_csv("./Input_Data/"+problem_name+"/OD_Demand_Matrix.csv") 
+    mx_demand = format_mx_dist(mx_demand)
+    mx_demand = mx_demand.values
+
+    mx_coords = pd.read_csv("./Input_Data/"+problem_name+"/Node_Coords.csv")
+    mx_coords = format_mx_coords(mx_coords)
+    
+    return mx_dist, mx_demand, mx_coords
+
 
     
 # %% Graph-based functions

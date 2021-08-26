@@ -384,15 +384,16 @@ UTNDP_problem_1.mutation_ratio = [1/len(mut_functions) for _ in mut_functions]
 # Add route compare component
 if os.path.exists("./Input_Data/"+name_input_data+"/Route_compare.txt"):
     route_file = open("./Input_Data/"+name_input_data+"/Route_compare.txt","r")
-    route_compare = route_file.read()
-    UTNDP_problem_1.route_compare = gf.convert_routes_str2list(route_compare)
+    route_compare_str = route_file.read()
+    route_compare = gf.convert_routes_str2list(route_compare_str)
+    UTNDP_problem_1.route_compare = copy.deepcopy(route_compare)
 else:
     route_compare = gc.Routes.return_feasible_route_robust(UTNDP_problem_1)
     route_file = open("./Input_Data/"+name_input_data+"/Route_compare.txt","w")
     route_file.write(gf.convert_routes_list2str(route_compare))
     route_file.close()
-    UTNDP_problem_1.route_compare = route_compare
-del route_file, route_compare
+    UTNDP_problem_1.route_compare = copy.deepcopy(route_compare)
+del route_file
 
 #if True:
 def main(UTNDP_problem_1):
@@ -619,7 +620,7 @@ def main(UTNDP_problem_1):
         
         # If disruption obj function employed, seed the solution
         if Decisions["Obj_func_disruption"]:
-            pop_1.insert_solution_into_pop([UTNDP_problem_1.route_compare], 
+            pop_1.insert_solution_into_pop([copy.deepcopy(route_compare)], 
                                            UTNDP_problem_1, fn_obj=fn_obj_2, obj_values=False)
         
 

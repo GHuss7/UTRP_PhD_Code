@@ -104,8 +104,11 @@ os.chdir(dir_path)
 
 '''Load the initial set'''
 print("Loading the initial route set")
-df_pop_generations = pd.read_csv(dir_path+"/Routes_initial_set.csv")
-initial_set = df_pop_generations # load initial set
+try:
+    df_pop_generations = pd.read_csv(dir_path+"/Routes_initial_set.csv")
+    initial_set = df_pop_generations # load initial set
+except:
+    print("No initial set found in the form: Routes_initial_set.csv")
 
 # Get details of runs
 def count_Run_folders(path_to_folder):
@@ -139,8 +142,9 @@ labels = ["f_1", "f_2", "f1_ATT", "f2_TRT"]
 
 for _ in range(5):
     try:
-        df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs_2(path_results, parameters_input, "Non_dominated_set.csv").iloc[:,1:]
-        df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set[["f_1","f_2"]].values, True)] # reduce the pareto front from the total archive
+        '''Save the summarised results'''
+        df_overall_pareto_set = ga.group_pareto_fronts_from_model_runs(path_results, UTNDP_problem_1.problem_inputs.__dict__).iloc[:,1:]
+        df_overall_pareto_set = df_overall_pareto_set[gf.is_pareto_efficient(df_overall_pareto_set.iloc[:,0:2].values, True)] # reduce the pareto front from the total archive
         df_overall_pareto_set = df_overall_pareto_set.sort_values(by='f_1', ascending=True) # sort
         df_overall_pareto_set.to_csv(path_results / "Overall_Pareto_set.csv")   # save the csv file
         break

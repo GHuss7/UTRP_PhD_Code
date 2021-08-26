@@ -126,6 +126,13 @@ name_input_data = ["Mandl_UTRP", #0
                     '12_3_Mumford1_GA_Obj_dis', #59
                     '12_4_Mumford2_GA_Obj_dis', #60
                     '12_5_Mumford3_GA_Obj_dis', #61
+                    
+                    '13_1_Mandl6_GA_Stat_long_run', #62
+                    '13_2_Mumford0_GA_Stat_long_run', #63
+                    '13_3_Mumford1_GA_Stat_long_run', #64
+                    '13_4_Mumford2_GA_Stat_long_run', #65
+                    '13_5_Mumford3_GA_Stat_long_run', #66
+
 
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'

@@ -1,0 +1,31 @@
+{
+    "Choice_print_results": true,
+    "Choice_import_dictionaries": true,
+    "Choice_relative_results_referencing": false,
+    "Choice_print_full_data_for_analysis": true,
+    "Pop_size_to_create": 2000,
+    "Log_prints_every": 20,
+    "CSV_prints_every": 200,
+    "PDF_prints_every": 200,
+    "Measure_APD": false,
+    "Additional_text": "Tests",
+    "Choice_conduct_sensitivity_analysis": false,
+    "Load_supplementing_pop": true,
+    "Obj_func_disruption": false,
+    "Update_mutation_ratios": false,
+    "Repair_multiple" : false,
+    "route_gen_func": "KSP_unseen_robust_prob",
+    "crossover_func": "Mumford_replace_subsets",
+    "mutation_funcs": [
+	"Intertwine_two",
+	"Add_vertex",
+	"Delete_vertex",
+	"Invert_path_vertices",
+	"Insert_inside_vertex",
+	"Delete_inside_vertex",
+	"Replace_inside_vertex",
+	"Donate_between_routes",
+	"Trim_one_terminal_cb",
+	"Grow_one_terminal_cb"
+    ]
+}

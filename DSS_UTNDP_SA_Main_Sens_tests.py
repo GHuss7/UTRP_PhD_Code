@@ -77,6 +77,13 @@ name_input_data = ["Mandl_UTRP", #0
                     '35_3_Mumford1_SA_Obj_dis', #33
                     '35_4_Mumford2_SA_Obj_dis', #34
                     '35_5_Mumford3_SA_Obj_dis', #35
+                    
+                    '36_1_Mandl6_SA_Stat_long_run', #36
+                    '36_2_Mumford0_SA_Stat_long_run', #37
+                    '36_3_Mumford1_SA_Stat_long_run', #38
+                    '36_4_Mumford2_SA_Stat_long_run', #39
+                    '36_5_Mumford3_SA_Stat_long_run', #40
+
 
                    '0_21_1_Mandl6_SA_Init_sol_test', #-4
                    '0_22_1_Mandl6_SA_Mut_tests', #-3

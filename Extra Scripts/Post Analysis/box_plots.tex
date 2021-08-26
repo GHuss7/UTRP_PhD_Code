@@ -1,0 +1,51 @@
+\documentclass[crop=false]{standalone}
+%\documentclass{standalone}
+\usepackage{tikz} % To generate the plot from csv
+\usepackage{pgfplots}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage[section]{placeins} % getting figures below sections
+\usepackage{blindtext}
+\usepackage{siunitx}
+\usepgfplotslibrary{units} % Allows to enter the units nicely
+\usetikzlibrary{external} %https://tex.stackexchange.com/questions/1460/script-to-automate-externalizing-tikz-graphics
+\tikzexternalize[prefix=savedfigures/]
+
+\pgfplotsset{compat=newest} % Allows to place the legend below plot
+\usepackage{pgfplotstable}
+\usepgfplotslibrary{statistics}
+
+% #################### Function definition for box plots read table ##################\
+\makeatletter
+\pgfplotsset{
+	boxplot prepared from table/.code={
+		\def\tikz@plot@handler{\pgfplotsplothandlerboxplotprepared}%
+		\pgfplotsset{
+			/pgfplots/boxplot prepared from table/.cd,
+			#1,
+		}
+	},
+	/pgfplots/boxplot prepared from table/.cd,
+	table/.code={\pgfplotstablecopy{#1}\to\boxplot@datatable},
+	row/.initial=0,
+	make style readable from table/.style={
+		#1/.code={
+			\pgfplotstablegetelem{\pgfkeysvalueof{/pgfplots/boxplot prepared from table/row}}{##1}\of\boxplot@datatable
+			\pgfplotsset{boxplot/#1/.expand once={\pgfplotsretval}}
+		}
+	},
+	make style readable from table=lower whisker,
+	make style readable from table=upper whisker,
+	make style readable from table=lower quartile,
+	make style readable from table=upper quartile,
+	make style readable from table=median,
+	make style readable from table=average,
+	make style readable from table=lower notch,
+	make style readable from table=upper notch
+}
+\makeatother
+\begin{document}
+
+\section{Archive}

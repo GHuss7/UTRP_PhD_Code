@@ -90,7 +90,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_34_4_Mumford2_SA_Long_run', #-2
                    '0_34_5_Mumford3_SA_Long_run' #-1
                    
-                   ][31]   # set the name of the input data
+                   ][26]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -780,15 +780,15 @@ def main(UTNDP_problem_1):
         
                                 ld_mut_summary.extend(ld_mut_summary_temp)
                                     
-                                    if Decisions["mut_update_func"] == "AMALGAM":
+                                if Decisions["mut_update_func"] == "AMALGAM":
+                                    df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
+                                    gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
+                                
+                                elif Decisions["mut_update_func"] == "AMALGAM_every_n":
+                                    if total_iterations % mut_update_interval == 0:
                                         df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
                                         gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
-                                    
-                                    elif Decisions["mut_update_func"] == "AMALGAM_every_n":
-                                        if total_iterations % mut_update_interval == 0:
-                                            df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
-                                            gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
-                                                        
+                                                    
                     
                     ld_mut_ratios.extend([{k:v for (k,v) in zip(["Total_iterations"]+UTNDP_problem_1.mutation_names,[total_iterations]+list(UTNDP_problem_1.mutation_ratio))}])
                     #df_mut_ratios.loc[total_iterations] = [total_iterations]+list(UTNDP_problem_1.mutation_ratio)

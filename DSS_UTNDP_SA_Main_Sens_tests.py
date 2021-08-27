@@ -754,8 +754,11 @@ def main(UTNDP_problem_1):
                     '''Mutation evaluation'''
                     ld_mut.append(mut_output)
                     mut_update_interval = UTNDP_problem_1.problem_SA_parameters.mutation_update_interval
-                    if total_iterations>=mut_update_interval:
-                        ld_mut_temp = ld_mut[-mut_update_interval:]
+                    if (total_iterations>=mut_update_interval) or (Decisions["mut_update_func"] == "Counts_normal"):
+                        if total_iterations<mut_update_interval:
+                            ld_mut_temp = ld_mut[-total_iterations:]
+                        else:
+                            ld_mut_temp = ld_mut[-mut_update_interval:]
                         df_mut_temp = pd.DataFrame.from_dict(ld_mut_temp)
                         df_mut_temp.drop(['Route'], axis='columns', inplace=True)
                         

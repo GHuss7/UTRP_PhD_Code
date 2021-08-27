@@ -35,7 +35,10 @@ apply_list = [
                 #"Results_10_4_Mumford2_GA_Long_run/10_4_Mumford2_GA_Long_run_20210730_171515 GA_Long_run",
                 #"Results_10_5_Mumford3_GA_Long_run/10_5_Mumford3_GA_Long_run_20210730_172027 GA_Long_run",
                 #"Results_34_3_Mumford1_SA_Long_run/34_3_Mumford1_SA_Long_run_20210823_203242 SA_Long_run",
-                "Results_34_3_Mumford1_SA_Long_run/34_3_Mumford1_SA_Long_run_20210823_203242 SA_Long_run_b"
+                #"Results_34_3_Mumford1_SA_Long_run/34_3_Mumford1_SA_Long_run_20210823_203242 SA_Long_run_b",
+                #"Results_34_4_Mumford2_SA_Long_run/34_4_Mumford2_SA_Long_run_20210823_201311 SA_Long_run",
+                #"Results_34_5_Mumford3_SA_Long_run/34_5_Mumford3_SA_Long_run_20210823_202542 SA_Long_run"
+                
             ]
 
 # Ensure the directory is set to the file location

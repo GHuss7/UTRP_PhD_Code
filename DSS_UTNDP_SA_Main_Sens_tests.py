@@ -751,46 +751,45 @@ def main(UTNDP_problem_1):
                     
                     iteration_t = iteration_t + 1
                     
-                    '''Mutation evaluation'''
-                    ld_mut.append(mut_output)
-                    mut_update_interval = UTNDP_problem_1.problem_SA_parameters.mutation_update_interval
-                    if (total_iterations>=mut_update_interval) or (Decisions["mut_update_func"] == "Counts_normal"):
-                        if total_iterations<mut_update_interval:
-                            ld_mut_temp = ld_mut[-total_iterations:]
-                        else:
-                            ld_mut_temp = ld_mut[-mut_update_interval:]
-                        df_mut_temp = pd.DataFrame.from_dict(ld_mut_temp)
-                        df_mut_temp.drop(['Route'], axis='columns', inplace=True)
-                        
-                        if not ld_mut_summary_temp_init:
-                            ld_mut_summary_temp = ga.get_mutations_summary_ld_for_SA(df_mut_temp, len(UTNDP_problem_1.mutation_functions), total_iterations)
-                            ld_mut_summary_temp_init = True
-                        else:
-                            ga.update_mutations_summary_ld_for_SA(df_mut_temp, ld_mut_summary_temp) # fast update
 
-                        ld_mut_summary.extend(ld_mut_summary_temp)
-
-                        # Update mutation ratios
-                        if Decisions["Update_mutation_ratios"]:
-                            
-                            if Decisions["mut_update_func"] == "AMALGAM":
-                                df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
-                                gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
-                            
-                            elif Decisions["mut_update_func"] == "AMALGAM_every_n":
-                                if total_iterations % mut_update_interval == 0:
-                                    df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
-                                    gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
-                            
-                            elif Decisions["mut_update_func"] == "Counts_normal":
-                                if mut_output['Acceptance'] == -1:
-                                    if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] > 1:
-                                        UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] -= 1
-                                elif mut_output['Acceptance'] == 1:
-                                    if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] < 100:
-                                        UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] += 1
-                                        UTNDP_problem_1.mutation_ratio = UTNDP_problem_1.mutation_ratio_counts / np.sum(UTNDP_problem_1.mutation_ratio_counts)    
+                    # Update mutation ratios
+                    if Decisions["Update_mutation_ratios"]:
+                        if Decisions["mut_update_func"] == "Counts_normal":
+                            if mut_output['Acceptance'] == -1:
+                                if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] > 1:
+                                    UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] -= 1
+                            elif mut_output['Acceptance'] == 1:
+                                if UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] < 100:
+                                    UTNDP_problem_1.mutation_ratio_counts[mut_output['Mut_nr']-1] += 1
+                                    UTNDP_problem_1.mutation_ratio = UTNDP_problem_1.mutation_ratio_counts / np.sum(UTNDP_problem_1.mutation_ratio_counts)    
+                      
+                        else:
+                            '''Mutation evaluation'''
+                            ld_mut.append(mut_output)
+                            mut_update_interval = UTNDP_problem_1.problem_SA_parameters.mutation_update_interval
+                            if (total_iterations>=mut_update_interval):
+                                ld_mut_temp = ld_mut[-mut_update_interval:]
+                                df_mut_temp = pd.DataFrame.from_dict(ld_mut_temp)
+                                df_mut_temp.drop(['Route'], axis='columns', inplace=True)
+                                
+                                if not ld_mut_summary_temp_init:
+                                    ld_mut_summary_temp = ga.get_mutations_summary_ld_for_SA(df_mut_temp, len(UTNDP_problem_1.mutation_functions), total_iterations)
+                                    ld_mut_summary_temp_init = True
+                                else:
+                                    ga.update_mutations_summary_ld_for_SA(df_mut_temp, ld_mut_summary_temp) # fast update
+        
+                                ld_mut_summary.extend(ld_mut_summary_temp)
                                     
+                                    if Decisions["mut_update_func"] == "AMALGAM":
+                                        df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
+                                        gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
+                                    
+                                    elif Decisions["mut_update_func"] == "AMALGAM_every_n":
+                                        if total_iterations % mut_update_interval == 0:
+                                            df_mut_summary = pd.DataFrame.from_dict(ld_mut_summary[-len(UTNDP_problem_1.mutation_functions):]) # get only last mutations
+                                            gf_p.update_mutation_ratio_amalgam_for_SA(df_mut_summary, UTNDP_problem_1)
+                                                        
+                    
                     ld_mut_ratios.extend([{k:v for (k,v) in zip(["Total_iterations"]+UTNDP_problem_1.mutation_names,[total_iterations]+list(UTNDP_problem_1.mutation_ratio))}])
                     #df_mut_ratios.loc[total_iterations] = [total_iterations]+list(UTNDP_problem_1.mutation_ratio)
 

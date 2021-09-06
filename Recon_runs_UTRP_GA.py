@@ -54,6 +54,26 @@ input_data_names = ['7_1_Mandl6_GA_Pop_size', #29
                     '10_3_Mumford1_GA_Long_run', #46
                     '10_4_Mumford2_GA_Long_run', #47
                     '10_5_Mumford3_GA_Long_run', #48
+                    '11_1_Mandl6_GA_Very_Long_run', #49
+                    '11_2_Mumford0_GA_Very_Long_run', #50
+                    '11_3_Mumford1_GA_Very_Long_run', #51
+                    '11_4_Mumford2_GA_Very_Long_run', #52
+                    '11_5_Mumford3_GA_Very_Long_run', #53
+                    '11_6_Mandl4_GA_Very_Long_run', #54
+                    '11_7_Mandl7_GA_Very_Long_run', #55
+                    '11_8_Mandl8_GA_Very_Long_run', #56
+                    
+                    '12_1_Mandl6_GA_Obj_dis', #57
+                    '12_2_Mumford0_GA_Obj_dis', #58
+                    '12_3_Mumford1_GA_Obj_dis', #59
+                    '12_4_Mumford2_GA_Obj_dis', #60
+                    '12_5_Mumford3_GA_Obj_dis', #61
+                    
+                    '13_1_Mandl6_GA_Stat_long_run', #62
+                    '13_2_Mumford0_GA_Stat_long_run', #63
+                    '13_3_Mumford1_GA_Stat_long_run', #64
+                    '13_4_Mumford2_GA_Stat_long_run', #65
+                    '13_5_Mumford3_GA_Stat_long_run', #66
                     ]
 
 # Arguments from command line

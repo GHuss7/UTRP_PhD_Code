@@ -61,12 +61,12 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
     # 'Results_9_4_Mumford2_GA_Mut_prob', #42
     # 'Results_9_5_Mumford3_GA_Mut_prob', #43
     
-    #'Results_10_1_Mandl6_GA_Long_run', #44
-    #'Results_10_2_Mumford0_GA_Long_run', #45
-    #'Results_10_3_Mumford1_GA_Long_run', #46
-    #'Results_10_4_Mumford2_GA_Long_run', #47
-    #'Results_10_5_Mumford3_GA_Long_run', #48
-
+    # 'Results_10_1_Mandl6_GA_Long_run', #44
+    # 'Results_10_2_Mumford0_GA_Long_run', #45
+    # 'Results_10_3_Mumford1_GA_Long_run', #46
+    # 'Results_10_4_Mumford2_GA_Long_run', #47
+    # 'Results_10_5_Mumford3_GA_Long_run', #48
+    
     # 'Results_11_1_Mandl6_GA_Very_Long_run', #49
     # 'Results_11_2_Mumford0_GA_Very_Long_run', #50
     # 'Results_11_3_Mumford1_GA_Very_Long_run', #51
@@ -75,17 +75,17 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
     # 'Results_11_6_Mandl4_GA_Very_Long_run', #54
     # 'Results_11_7_Mandl7_GA_Very_Long_run', #55
     # 'Results_11_8_Mandl8_GA_Very_Long_run', #56
-
-    #'Results_12_1_Mandl6_GA_Obj_dis', #57
-    'Results_12_2_Mumford0_GA_Obj_dis', #58
-    #'Results_12_3_Mumford1_GA_Obj_dis', #59
-    #'Results_12_4_Mumford2_GA_Obj_dis', #60
-    #'Results_12_5_Mumford3_GA_Obj_dis', #61
-
-    #'Results_13_1_Mandl6_GA_Stat_long_run', #62
-    #'Results_13_2_Mumford0_GA_Stat_long_run', #63
-    #'Results_13_3_Mumford1_GA_Stat_long_run', #64
-    #'Results_13_4_Mumford2_GA_Stat_long_run', #65
+    
+    # 'Results_12_1_Mandl6_GA_Obj_dis', #57
+    # 'Results_12_2_Mumford0_GA_Obj_dis', #58
+    # 'Results_12_3_Mumford1_GA_Obj_dis', #59
+    # 'Results_12_4_Mumford2_GA_Obj_dis', #60
+    # 'Results_12_5_Mumford3_GA_Obj_dis', #61
+    
+    'Results_13_1_Mandl6_GA_Stat_long_run', #62
+    'Results_13_2_Mumford0_GA_Stat_long_run', #63
+    'Results_13_3_Mumford1_GA_Stat_long_run', #64
+    'Results_13_4_Mumford2_GA_Stat_long_run', #65
     #'Results_13_5_Mumford3_GA_Stat_long_run', #66
 
     # 'Results_21_1_Mandl6_SA_Initial_solutions', #11
@@ -101,9 +101,33 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
     # 'Results_24_2_Mumford0_SA_Mutations_more', #21
     # 'Results_24_3_Mumford1_SA_Mutations_more', #22
 
-    #'Results_33_1_Mandl6_SA_ALL_param', #47
-    #'Results_33_2_Mumford0_SA_ALL_param', #48
-    #'Results_33_3_Mumford1_SA_ALL_param', #49
+    # 'Results_33_1_Mandl6_SA_ALL_param', #47
+    # 'Results_33_2_Mumford0_SA_ALL_param', #48
+    # 'Results_33_3_Mumford1_SA_ALL_param', #49
+
+    # 'Results_34_1_Mandl6_SA_Long_run', #26
+    # 'Results_34_2_Mumford0_SA_Long_run', #27
+    # 'Results_34_3_Mumford1_SA_Long_run', #28
+    # 'Results_34_4_Mumford2_SA_Long_run', #29
+    # 'Results_34_5_Mumford3_SA_Long_run', #30
+    
+    # 'Results_35_1_Mandl6_SA_Obj_dis', #31
+    # 'Results_35_2_Mumford0_SA_Obj_dis', #32
+    # 'Results_35_3_Mumford1_SA_Obj_dis', #33
+    # 'Results_35_4_Mumford2_SA_Obj_dis', #34
+    # 'Results_35_5_Mumford3_SA_Obj_dis', #35
+    
+    # 'Results_36_1_Mandl6_SA_Stat_long_run', #36
+    # 'Results_36_2_Mumford0_SA_Stat_long_run', #37
+    # 'Results_36_3_Mumford1_SA_Stat_long_run', #38
+    # 'Results_36_4_Mumford2_SA_Stat_long_run', #39
+    # 'Results_36_5_Mumford3_SA_Stat_long_run', #40
+    
+    # 'Results_37_1_Mandl6_SA_Post_opt', #41
+    # 'Results_37_2_Mumford0_SA_Post_opt', #42
+    # 'Results_37_3_Mumford1_SA_Post_opt', #43
+    # 'Results_37_4_Mumford2_SA_Post_opt', #44
+    # 'Results_37_5_Mumford3_SA_Post_opt', #45
 
      ]
 

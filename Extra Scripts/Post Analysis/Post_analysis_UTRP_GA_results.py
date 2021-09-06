@@ -94,8 +94,10 @@ title = {
 'max_poor_epochs' : 'Maximum poor epochs',
 'Cooling_rate' : 'Cooling rate',                  
 'Temp' : 'Starting temperature',               
-'Reheating_rate' : 'Reheating rate'
+'Reheating_rate' : 'Reheating rate',
 
+# Generic
+'Long_run' : 'Long run'
 }
 
 file_suffix = { #NB! Suffix may not have any spaces!
@@ -134,7 +136,10 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'max_poor_epochs' : 'max_poor_epochs',
 'Cooling_rate' : 'cooling_rate',                  
 'Temp' : 'initial_temp',               
-'Reheating_rate' : 'reheating_rate' 
+'Reheating_rate' : 'reheating_rate',
+
+# Generic
+'Long_run' : 'long_run'
 }
 
 def count_Run_folders(path_to_folder):
@@ -162,8 +167,10 @@ def get_stacked_area_str(df_smooth_mut_ratios):
         n_th = 1
     elif len(df_smooth_mut_ratios) < 4000:
         n_th = 10
-    else:
+    elif len(df_smooth_mut_ratios) < 30000:
         n_th = 100
+    else:
+        n_th = 1000
     
     preamble_stacked_area = r"""\documentclass[crop=false]{standalone}
 %https://tex.stackexchange.com/questions/288373/how-to-draw-stacked-area-chart
@@ -184,6 +191,7 @@ def get_stacked_area_str(df_smooth_mut_ratios):
     xticklabel style={rotate=90, anchor=near xticklabel},
     ymin=0,
     ymax=1,
+    %restrict y to domain=0:1,
     %max space between ticks=20,
     stack plots=y,%
     area style,"""+\
@@ -222,7 +230,15 @@ if arg_sc:
         working_folder = f"{path_to_main_folder / results_folder_name}/Mutations"
         if os.path.exists(f"{working_folder}/Smoothed_avg_mut_ratios.csv"):
             df_smooth_mut_ratios = pd.read_csv(f"{working_folder}/Smoothed_avg_mut_ratios.csv")
-            df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
+            try:
+                df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
+            except KeyError as error:
+                print(f"Could not drop columns=['Total_iterations'] (ERROR: {error})\n TRYING Drop Generation")
+                try:
+                    df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Generation'])
+                except KeyError as error:
+                    print(f"Could not drop columns=['Generation'] (ERROR: {error}). Try something else...")
+
             df_smooth_mut_ratios.rename(columns={'Unnamed: 0': counter_type}, inplace=True)
             df_smooth_mut_ratios.to_csv(f'{working_folder}/Smoothed_Mutation_Ratios_for_Tikz.csv', index=False)
             stacked_area_doc = get_stacked_area_str(df_smooth_mut_ratios)
@@ -315,7 +331,7 @@ if True:
                          'Temp',
                          'Reheating_rate']:
             results_dataframe.value = results_dataframe.value.astype(float)
-        elif parameter in ['Repairs', 'repair_func']:
+        elif parameter in ['Repairs', 'repair_func', 'Long_run']:
             pass
         else:
             print(f"\n\nParameter not in list: {parameter}\n\n")

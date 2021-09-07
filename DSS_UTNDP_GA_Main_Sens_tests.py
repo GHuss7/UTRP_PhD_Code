@@ -132,6 +132,13 @@ name_input_data = ["Mandl_UTRP", #0
                     '13_3_Mumford1_GA_Stat_long_run', #64
                     '13_4_Mumford2_GA_Stat_long_run', #65
                     '13_5_Mumford3_GA_Stat_long_run', #66
+                    
+                    '14_1_Mandl6_GA_All_mut_dynamic', #67
+                    '14_2_Mumford0_GA_All_mut_dynamic', #68
+                    '14_3_Mumford1_GA_All_mut_dynamic', #69
+                    '14_4_Mumford2_GA_All_mut_dynamic', #70
+                    '14_5_Mumford3_GA_All_mut_dynamic', #71
+
 
 
                    '0_0_Mandl6_GA_Tester',

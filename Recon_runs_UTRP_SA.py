@@ -59,6 +59,17 @@ input_data_names = ['21_1_Mandl6_SA_Initial_solutions', #11
                     '35_3_Mumford1_SA_Obj_dis', #33
                     '35_4_Mumford2_SA_Obj_dis', #34
                     '35_5_Mumford3_SA_Obj_dis', #35
+                    '36_1_Mandl6_SA_Stat_long_run', #36
+                    '36_2_Mumford0_SA_Stat_long_run', #37
+                    '36_3_Mumford1_SA_Stat_long_run', #38
+                    '36_4_Mumford2_SA_Stat_long_run', #39
+                    '36_5_Mumford3_SA_Stat_long_run', #40
+                    '37_1_Mandl6_SA_Post_opt', #41
+                    '37_2_Mumford0_SA_Post_opt', #42
+                    '37_3_Mumford1_SA_Post_opt', #43
+                    '37_4_Mumford2_SA_Post_opt', #44
+                    '37_5_Mumford3_SA_Post_opt', #45
+
                     ]
 
 # Arguments from command line

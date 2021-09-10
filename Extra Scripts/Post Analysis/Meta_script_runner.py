@@ -105,11 +105,11 @@ apply_list = [#'Results_1_1_Mandl6_GA_Initial_solutions',
     # 'Results_33_2_Mumford0_SA_ALL_param', #48
     # 'Results_33_3_Mumford1_SA_ALL_param', #49
 
-    # 'Results_34_1_Mandl6_SA_Long_run', #26
-    # 'Results_34_2_Mumford0_SA_Long_run', #27
-    # 'Results_34_3_Mumford1_SA_Long_run', #28
-    # 'Results_34_4_Mumford2_SA_Long_run', #29
-    # 'Results_34_5_Mumford3_SA_Long_run', #30
+    'Results_34_1_Mandl6_SA_Long_run', #26
+    'Results_34_2_Mumford0_SA_Long_run', #27
+    'Results_34_3_Mumford1_SA_Long_run', #28
+    'Results_34_4_Mumford2_SA_Long_run', #29
+    'Results_34_5_Mumford3_SA_Long_run', #30
     
     # 'Results_35_1_Mandl6_SA_Obj_dis', #31
     # 'Results_35_2_Mumford0_SA_Obj_dis', #32

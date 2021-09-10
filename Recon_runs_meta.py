@@ -38,8 +38,20 @@ apply_list = [
                 #"Results_34_3_Mumford1_SA_Long_run/34_3_Mumford1_SA_Long_run_20210823_203242 SA_Long_run_b",
                 #"Results_34_4_Mumford2_SA_Long_run/34_4_Mumford2_SA_Long_run_20210823_201311 SA_Long_run",
                 #"Results_34_5_Mumford3_SA_Long_run/34_5_Mumford3_SA_Long_run_20210823_202542 SA_Long_run",
-                #"Results_13_4_Mumford2_GA_Stat_long_run/13_4_Mumford2_GA_Stat_long_run_20210830_090142 GA_Long_run"    
-                "Results_13_5_Mumford3_GA_Stat_long_run/13_5_Mumford3_GA_Stat_long_run_20210828_130929 GA_Long_run"
+                #"Results_13_4_Mumford2_GA_Stat_long_run/13_4_Mumford2_GA_Stat_long_run_20210830_090142 GA_Long_run",    
+                #"Results_13_5_Mumford3_GA_Stat_long_run/13_5_Mumford3_GA_Stat_long_run_20210828_130929 GA_Long_run",
+                # "Results_36_2_Mumford0_SA_Stat_long_run/36_2_Mumford0_SA_Stat_long_run_20210909_113541 SA_Long_run",
+                # "Results_36_3_Mumford1_SA_Stat_long_run/36_3_Mumford1_SA_Stat_long_run_20210908_102907 SA_Long_run",
+                # "Results_36_3_Mumford1_SA_Stat_long_run/36_3_Mumford1_SA_Stat_long_run_20210908_102907 SA_Long_run",
+                # "Results_36_4_Mumford2_SA_Stat_long_run/36_4_Mumford2_SA_Stat_long_run_20210906_133333 SA_Long_run",
+                # "Results_36_5_Mumford3_SA_Stat_long_run/36_5_Mumford3_SA_Stat_long_run_20210907_134955 SA_Long_run"
+                # "Results_34_4_Mumford2_SA_Long_run/34_4_Mumford2_SA_Long_run_20210827_141018 SA_Long_run",
+                # "Results_34_5_Mumford3_SA_Long_run/34_5_Mumford3_SA_Long_run_20210827_140244 SA_Long_run",
+                # "Results_11_4_Mumford2_GA_Very_Long_run/11_4_Mumford2_GA_Very_Long_run_20210810_170343 GA_Long_run",
+                # "Results_11_5_Mumford3_GA_Very_Long_run/11_5_Mumford3_GA_Very_Long_run_20210810_170554 GA_Long_run",
+                # "Results_11_1_Mandl6_GA_Very_Long_run/10_1_Mandl6_GA_Long_run_20210730_171420 GA_Long_run",
+                # "Results_11_2_Mumford0_GA_Very_Long_run/10_2_Mumford0_GA_Long_run_20210730_171433 GA_Long_run",
+                # "Results_11_3_Mumford1_GA_Very_Long_run/10_3_Mumford1_GA_Long_run_20210731_170218 GA_Long_run",
             ]
 
 # Ensure the directory is set to the file location

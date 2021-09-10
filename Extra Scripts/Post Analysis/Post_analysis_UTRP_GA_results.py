@@ -182,6 +182,7 @@ def get_stacked_area_str(df_smooth_mut_ratios):
 \tikzexternalize[prefix=savedfigures/]""" + nl + nl
 
     doc_start = r"\begin{document}"+ nl +\
+    r"\pgfkeys{/pgf/number format/.cd,1000 sep={\,}}"+ nl +\
 	f"\\tikzsetnextfilename{{{'Stacked_area_mut'}}}"+ nl +\
     r"""\begin{tikzpicture}[]
     \begin{axis}[
@@ -511,6 +512,7 @@ except:
 with open('box_plots.tex','w') as file:
     file.write(preamble)
     file.write('\n\\begin{document}\n')
+    file.write(r'\pgfkeys{/pgf/number format/.cd,1000 sep={\,}}'+'\n')
     title_str = result_entries[0].split(' ')[0].replace('_',' ')
     file.write(f'\n\\section{{{title_str}}}\n')
     file.write(box_plot_str)

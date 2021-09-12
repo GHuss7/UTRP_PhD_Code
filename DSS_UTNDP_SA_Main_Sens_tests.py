@@ -83,6 +83,13 @@ name_input_data = ["Mandl_UTRP", #0
                     '36_3_Mumford1_SA_Stat_long_run', #38
                     '36_4_Mumford2_SA_Stat_long_run', #39
                     '36_5_Mumford3_SA_Stat_long_run', #40
+                    
+                    '37_1_Mandl6_SA_Post_opt', #41
+                    '37_2_Mumford0_SA_Post_opt', #42
+                    '37_3_Mumford1_SA_Post_opt', #43
+                    '37_4_Mumford2_SA_Post_opt', #44
+                    '37_5_Mumford3_SA_Post_opt', #45
+
 
 
                    '0_21_1_Mandl6_SA_Init_sol_test', #-4
@@ -90,7 +97,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_34_4_Mumford2_SA_Long_run', #-2
                    '0_34_5_Mumford3_SA_Long_run' #-1
                    
-                   ][36]   # set the name of the input data
+                   ][41]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -395,8 +402,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-# if True:
-def main(UTNDP_problem_1):
+if True:
+# def main(UTNDP_problem_1):
 
     # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions
@@ -553,15 +560,6 @@ def main(UTNDP_problem_1):
         else:
             pop_1 = pop_loaded
             
-        if Decisions["Set_name"] == "Overall_Pareto_set_GA.csv":
-            pop_temp_df = pd.read_csv(f"Input_Data/{name_input_data}/{Decisions['Set_name']}")
-            pop_temp = gc.PopulationRoutes(UTNDP_problem_1)
-            pop_temp.variables_str = pop_temp_df["R_x"]
-            pop_temp.variables = pop_temp_df["R_x"]
-            for sol_i in range(len(pop_temp.variables_str)):
-                pop_temp.variables[sol_i] = gf.convert_routes_str2list(pop_temp.variables_str[sol_i])
-            pop_temp.objectives = pop_temp_df[["f_1","f_2"]]
-            
                     
         if Decisions["Obj_func_disruption"]:
             print("Recalculating objectives for initial solutions")
@@ -580,6 +578,18 @@ def main(UTNDP_problem_1):
         gf.keep_individuals(pop_1, survivor_indices)
         pop_1.population_size = pop_size
         
+        if Decisions["Set_name"] == "Overall_Pareto_set_GA.csv":
+            pop_temp_df = pd.read_csv(f"Input_Data/{name_input_data}/{Decisions['Set_name']}")
+            pop_temp = {}
+            pop_temp["variables_str"] = list(copy.deepcopy(pop_temp_df["R_x"]))
+            pop_temp["variables"] = list(copy.deepcopy(pop_temp_df["R_x"]))
+            for sol_i in range(len(pop_temp["variables_str"])):
+                pop_temp["variables"][sol_i] = gf.convert_routes_str2list(pop_temp["variables_str"][sol_i])
+            pop_temp["objectives"] = copy.deepcopy(pop_temp_df[["f_1","f_2"]].values)
+           
+            pop_1.load_population_from_csv(UTNDP_problem_1, fn_obj_2, pop_temp_df, UTNDP_problem_1.problem_SA_parameters.number_of_initial_solutions)
+            pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
+
         routes_R_initial_set = pop_1.variables # create the list
         
         # create the dataframe

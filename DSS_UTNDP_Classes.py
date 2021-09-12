@@ -637,20 +637,28 @@ class PopulationRoutes(Routes):
                 self.rank[i] = k
                 self.crowding_dist[i] = crowding_of_front[j]
                 
-    def load_population_from_csv(self, main_problem, fn_obj, pop_choices):
-        t_now = datetime.now() # TIMING FUNCTION
-        st = [] # List for starting times
-        ft = [] # List for finishing times
-        average_at = 5 # TIMING FUNCTION
+    def load_population_from_csv(self, main_problem, fn_obj, pop_df, num_sols):
         
-        # Loads the population if it exists
-
-        choice_indices = np.linspace(0,len(pop_choices.variables)-1, self.population_size,dtype=int)
+        pop_temp = {}
+        pop_temp["variables_str"] = list(copy.deepcopy(pop_df["R_x"]))
+        pop_temp["variables"] = list(copy.deepcopy(pop_df["R_x"]))
+        for sol_i in range(len(pop_temp["variables_str"])):
+            pop_temp["variables"][sol_i] = gf.convert_routes_str2list(pop_temp["variables_str"][sol_i])
+        pop_temp["objectives"] = copy.deepcopy(pop_df[["f_1","f_2"]].values)
+                
+        choice_indices = np.linspace(0,len(pop_temp["variables"])-1, num_sols, dtype=int)
+        print(len(pop_temp["variables"])-1)
+        
+        print(choice_indices)
         
         for i, j in enumerate(choice_indices):
-            self.variables[i] = pop_choices.variables[j]
-            self.variables_str[i] = pop_choices.variables_str[j]
-            self.objectives[i,] = pop_choices.objectives[j,]
+            self.variables[i] = pop_temp["variables"][j]
+            self.variables_str[i] = pop_temp["variables_str"][j]
+            #self.objectives[i,] = (pop_temp["objectives"][j,0], pop_temp["objectives"][j,1])
+            self.objectives[i,] = fn_obj(self.variables[i], main_problem)
+        # self.variables = pop_temp["variables"]
+        # self.variables_str = pop_temp["variables_str"]
+        # self.objectives = pop_temp["objectives"]
 
         # get the objective space values and objects
         # F = pop.get("F").astype(np.float, copy=False)

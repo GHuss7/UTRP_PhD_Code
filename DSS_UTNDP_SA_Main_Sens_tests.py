@@ -554,7 +554,13 @@ def main(UTNDP_problem_1):
             pop_1 = pop_loaded
             
         if Decisions["Set_name"] == "Overall_Pareto_set_GA.csv":
-            pop_temp = pd.read_csv(f"Input_Data/{name_input_data}/Overall_Pareto_set_GA.csv")
+            pop_temp_df = pd.read_csv(f"Input_Data/{name_input_data}/{Decisions['Set_name']}")
+            pop_temp = gc.PopulationRoutes(UTNDP_problem_1)
+            pop_temp.variables_str = pop_temp_df["R_x"]
+            pop_temp.variables = pop_temp_df["R_x"]
+            for sol_i in range(len(pop_temp.variables_str)):
+                pop_temp.variables[sol_i] = gf.convert_routes_str2list(pop_temp.variables_str[sol_i])
+            pop_temp.objectives = pop_temp_df[["f_1","f_2"]]
             
                     
         if Decisions["Obj_func_disruption"]:

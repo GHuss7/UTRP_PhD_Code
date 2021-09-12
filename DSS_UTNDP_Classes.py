@@ -635,7 +635,39 @@ class PopulationRoutes(Routes):
             # save rank and crowding in the individual class
             for j, i in enumerate(front):
                 self.rank[i] = k
-                self.crowding_dist[i] = crowding_of_front[j]     
+                self.crowding_dist[i] = crowding_of_front[j]
+                
+    def load_population_from_csv(self, main_problem, fn_obj, pop_choices):
+        t_now = datetime.now() # TIMING FUNCTION
+        st = [] # List for starting times
+        ft = [] # List for finishing times
+        average_at = 5 # TIMING FUNCTION
+        
+        # Loads the population if it exists
+
+        choice_indices = np.linspace(0,len(pop_choices.variables)-1, self.population_size,dtype=int)
+        
+        for i, j in enumerate(choice_indices):
+            self.variables[i] = pop_choices.variables[j]
+            self.variables_str[i] = pop_choices.variables_str[j]
+            self.objectives[i,] = pop_choices.objectives[j,]
+
+        # get the objective space values and objects
+        # F = pop.get("F").astype(np.float, copy=False)
+        F = self.objectives
+        
+            # do the non-dominated sorting until splitting front
+        fronts = NonDominated_Sorting().do(F)
+
+        for k, front in enumerate(fronts):
+    
+            # calculate the crowding distance of the front
+            crowding_of_front = gf.calc_crowding_distance(F[front, :])
+    
+            # save rank and crowding in the individual class
+            for j, i in enumerate(front):
+                self.rank[i] = k
+                self.crowding_dist[i] = crowding_of_front[j]    
 
                
     def generate_good_initial_population(self, main_problem, fn_obj):

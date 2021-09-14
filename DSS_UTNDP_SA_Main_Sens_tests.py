@@ -578,6 +578,7 @@ if True:
         gf.keep_individuals(pop_1, survivor_indices)
         pop_1.population_size = pop_size
         
+        # %% Import saved route set from csv file
         if Decisions["Set_name"] == "Overall_Pareto_set_GA.csv":
             pop_temp_df = pd.read_csv(f"Input_Data/{name_input_data}/{Decisions['Set_name']}")
             pop_temp = {}
@@ -587,6 +588,7 @@ if True:
                 pop_temp["variables"][sol_i] = gf.convert_routes_str2list(pop_temp["variables_str"][sol_i])
             pop_temp["objectives"] = copy.deepcopy(pop_temp_df[["f_1","f_2"]].values)
            
+            pop_1 = copy.deepcopy(pop_1)
             pop_1.load_population_from_csv(UTNDP_problem_1, fn_obj_2, pop_temp_df, UTNDP_problem_1.problem_SA_parameters.number_of_initial_solutions)
             pop_1.objs_norm = ga.normalise_data_UTRP(pop_1.objectives, UTNDP_problem_1)
 
@@ -716,7 +718,6 @@ if True:
                             # mut_output = gf_p.mutate_overall_routes_all_smart_SA(routes_R_new, UTNDP_problem_1)
                             # mut_output['Mut_repaired'] = 1
                             # routes_R_new = mut_output['Route']
-                            
                             routes_R_new = gf.repair_add_missing_from_terminal_multiple(routes_R_new, UTNDP_problem_1)
                             mut_output['Route'] = routes_R_new
                             mut_output['Mut_repaired'] = 1

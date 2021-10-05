@@ -21,29 +21,18 @@ parser = argparse.ArgumentParser()
 #-dir DIRECTORY
 parser.add_argument("-dir", "--directory", dest = "dir", default = os.path.dirname(os.path.realpath(__file__)), help="Directory", type=str)
 parser.add_argument("-mt", "--meta_type", dest = "meta_type", default = 'GA', help="Metaheuristic type", type=str)
-parser.add_argument("-sc", "--stacked_chart", dest = "stacked_chart", default = False, help="Stacked chart print", type=bool)
-parser.add_argument("-pp", "--parameter_pos", dest = "parameter_pos", default = 0, help="Parameter position", type=int)
 
 args = parser.parse_args()
 arg_dir = args.dir
 print(arg_dir)
 
-arg_sc = args.stacked_chart # get the argument for printing stacked charts which takes very long
-arg_pp = args.parameter_pos # get the argument for the parameter position
+
 
 # Ensure the directory is set to the file location
 dir_path = arg_dir
 os.chdir(dir_path)
 
-# Determines what type of algorithm is used
-if os.path.basename(dir_path).find('_GA_') != -1:
-    meta_type = 'GA'
-elif os.path.basename(dir_path).find('_SA_') != -1:
-    meta_type = 'SA'
-else:
-    meta_type = 'SA'
-    print(f"ERROR! Not SA or GA folder! Setting to {meta_type}")
-
+meta_type = args.meta_type
 #meta_type = 'SA'
 if meta_type == 'GA': meta_full = 'NSGAII'
 else: meta_full = 'DBMOSA'
@@ -53,8 +42,8 @@ if meta_type == 'GA': counter_type = 'Generations'
 else: counter_type = 'Total_iterations'
 if meta_type == 'GA': counter_xlabel = 'Generations'
 else: counter_xlabel = 'Total iterations'
-if meta_type == 'GA': counter_ylabel = 'Selection probability'
-else: counter_ylabel = 'Selection probability'
+if meta_type == 'GA': counter_ylabel = 'Mutation ratio'
+else: counter_ylabel = 'Perturbation ratio'
 
 prefix_for_each_csv_file = f"UTRP_{spl_word}Summary"
 
@@ -85,19 +74,9 @@ title = {
 'Mutations_AMALGAM' : 'Mutation operators applied',
 'Mutations_AMALGAM_every_n' : 'Mutation operators applied',
 'Mutations_Counts_normal' : 'Mutation operators applied',
-'Mutations_more' : 'Mutation operators applied',
+'Mutations_more' : 'Mutation operators applied'
 
-'max_iterations_t' : 'Max iterations per epoch',               
-'min_accepts' : 'Minimum accepts',                        
-'max_attempts' : 'Maximum attempts',                       
-'max_reheating_times' : 'Maximum reheating times',              
-'max_poor_epochs' : 'Maximum poor epochs',
-'Cooling_rate' : 'Cooling rate',                  
-'Temp' : 'Starting temperature',               
-'Reheating_rate' : 'Reheating rate',
 
-# Generic
-'Long_run' : 'Long run'
 }
 
 file_suffix = { #NB! Suffix may not have any spaces!
@@ -127,19 +106,7 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'Mutations_AMALGAM' : 'mutation_funcs_AMAL',
 'Mutations_AMALGAM_every_n' : 'mutation_funcs_AMAL_every_n',
 'Mutations_Counts_normal' : 'mutation_funcs_Counts_normal',
-'Mutations_more' : 'mutation_funcs_more',
-
-'max_iterations_t' : 'max_iterations_per_epoch',               
-'min_accepts' : 'min_accepts',                        
-'max_attempts' : 'max_attempts',                       
-'max_reheating_times' : 'max_reheating_times',              
-'max_poor_epochs' : 'max_poor_epochs',
-'Cooling_rate' : 'cooling_rate',                  
-'Temp' : 'initial_temp',               
-'Reheating_rate' : 'reheating_rate',
-
-# Generic
-'Long_run' : 'long_run'
+'Mutations_more' : 'mutation_funcs_more'
 }
 
 def count_Run_folders(path_to_folder):
@@ -167,10 +134,8 @@ def get_stacked_area_str(df_smooth_mut_ratios):
         n_th = 1
     elif len(df_smooth_mut_ratios) < 4000:
         n_th = 10
-    elif len(df_smooth_mut_ratios) < 30000:
-        n_th = 100
     else:
-        n_th = 1000
+        n_th = 100
     
     preamble_stacked_area = r"""\documentclass[crop=false]{standalone}
 %https://tex.stackexchange.com/questions/288373/how-to-draw-stacked-area-chart
@@ -182,7 +147,6 @@ def get_stacked_area_str(df_smooth_mut_ratios):
 \tikzexternalize[prefix=savedfigures/]""" + nl + nl
 
     doc_start = r"\begin{document}"+ nl +\
-    r"\pgfkeys{/pgf/number format/.cd,1000 sep={\,}}"+ nl +\
 	f"\\tikzsetnextfilename{{{'Stacked_area_mut'}}}"+ nl +\
     r"""\begin{tikzpicture}[]
     \begin{axis}[
@@ -192,7 +156,6 @@ def get_stacked_area_str(df_smooth_mut_ratios):
     xticklabel style={rotate=90, anchor=near xticklabel},
     ymin=0,
     ymax=1,
-    %restrict y to domain=0:1,
     %max space between ticks=20,
     stack plots=y,%
     area style,"""+\
@@ -225,34 +188,25 @@ def get_stacked_area_str(df_smooth_mut_ratios):
     return full_doc
 
 # %% Stacked mutation ratios
-if arg_sc:
-    """ Creates the mutation ratio TikZ stacked area chart"""
-    for results_folder_name in result_entries:  
-        working_folder = f"{path_to_main_folder / results_folder_name}/Mutations"
-        if os.path.exists(f"{working_folder}/Smoothed_avg_mut_ratios.csv"):
-            df_smooth_mut_ratios = pd.read_csv(f"{working_folder}/Smoothed_avg_mut_ratios.csv")
-            try:
-                df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
-            except KeyError as error:
-                print(f"Could not drop columns=['Total_iterations'] (ERROR: {error})\n TRYING Drop Generation")
-                try:
-                    df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Generation'])
-                except KeyError as error:
-                    print(f"Could not drop columns=['Generation'] (ERROR: {error}). Try something else...")
+""" Creates the mutation ratio TikZ stacked area chart"""
+for results_folder_name in result_entries:  
+    working_folder = f"{path_to_main_folder / results_folder_name}/Mutations"
+    if os.path.exists(f"{working_folder}/Smoothed_avg_mut_ratios.csv"):
+        df_smooth_mut_ratios = pd.read_csv(f"{working_folder}/Smoothed_avg_mut_ratios.csv")
+        df_smooth_mut_ratios = df_smooth_mut_ratios.drop(columns=['Total_iterations'])
+        df_smooth_mut_ratios.rename(columns={'Unnamed: 0': counter_type}, inplace=True)
+        df_smooth_mut_ratios.to_csv(f'{working_folder}/Smoothed_Mutation_Ratios_for_Tikz.csv', index=False)
+        stacked_area_doc = get_stacked_area_str(df_smooth_mut_ratios)
 
-            df_smooth_mut_ratios.rename(columns={'Unnamed: 0': counter_type}, inplace=True)
-            df_smooth_mut_ratios.to_csv(f'{working_folder}/Smoothed_Mutation_Ratios_for_Tikz.csv', index=False)
-            stacked_area_doc = get_stacked_area_str(df_smooth_mut_ratios)
-    
-            os.chdir(working_folder)
-            with open('stacked_area_plot.tex','w') as file:
-                file.write(stacked_area_doc)
-            x = subprocess.call('pdflatex stacked_area_plot.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shell-escape
-            if x != 0:
-                print(f'Exit-code not 0, check result! [{results_folder_name}]')
-            else:
-                print(f"Success! Stacked Area [{results_folder_name}]")
-            os.chdir(path_to_main_folder)
+        os.chdir(working_folder)
+        with open('stacked_area_plot.tex','w') as file:
+            file.write(stacked_area_doc)
+        x = subprocess.call('pdflatex stacked_area_plot.tex -interaction nonstopmode -shell-escape') # -interaction nonstopmode -shell-escape
+        if x != 0:
+            print(f'Exit-code not 0, check result! [{results_folder_name}]')
+        else:
+            print(f"Success! Stacked Area [{results_folder_name}]")
+        os.chdir(path_to_main_folder)
 
 
 #%% Capture and save all data
@@ -268,10 +222,6 @@ for results_folder_name in result_entries:
         value = re.split("_", res)[-1] # gets the last number
         parameter_name = re.split("_[0-9]", res)[0] # gets the parameter name
 
-        if arg_pp:
-            res_2 = res.partition(spl_word)[2] # partitions the string in three
-            value = re.split("_", res_2)[-1] # gets the last number
-            parameter_name = re.split("_[0-9]", res_2)[0] # gets the parameter name
 
         """Capture all the results into dataframes"""
         if parameter_name in parameters_list:
@@ -320,19 +270,9 @@ if True:
     for parameter, results_dataframe in zip(parameters_list, df_list_of_ST_results_HV):
         results_dataframe.columns = named_cols
         
-        if parameter in ['Mut_threshold',
-                         'Mut_prob',
-                         'Crossover_prob',
-                         'max_iterations_t',
-                         'min_accepts',
-                         'max_attempts',
-                         'max_reheating_times',
-                         'max_poor_epochs',
-                         'Cooling_rate',
-                         'Temp',
-                         'Reheating_rate']:
+        if parameter in ['Mut_threshold','Mut_prob','Crossover_prob']:
             results_dataframe.value = results_dataframe.value.astype(float)
-        elif parameter in ['Repairs', 'repair_func', 'Long_run']:
+        elif parameter in ['Repairs', 'repair_func']:
             pass
         else:
             print(f"\n\nParameter not in list: {parameter}\n\n")
@@ -512,7 +452,6 @@ except:
 with open('box_plots.tex','w') as file:
     file.write(preamble)
     file.write('\n\\begin{document}\n')
-    file.write(r'\pgfkeys{/pgf/number format/.cd,1000 sep={\,}}'+'\n')
     title_str = result_entries[0].split(' ')[0].replace('_',' ')
     file.write(f'\n\\section{{{title_str}}}\n')
     file.write(box_plot_str)

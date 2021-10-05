@@ -91,6 +91,22 @@ class Timer(object):
         return self
     def __exit__(self, type, value, tb):
         self.stop()
+        
+class Timer_2(object):
+    def __init__(self, text = None):
+        self.start_clock = time.process_time() # time.process_time() #alternative
+        self.start_time = time.time()
+        if text != None:
+            print ('%s:' % text), 
+    def stop(self):
+        wall_time = time.time() - self.start_time
+        cpu_time = time.process_time() - self.start_clock
+        print(f'Wall time: {wall_time:.3f} seconds.  CPU time: {cpu_time:.3f} seconds.')
+        return self
+    def __enter__(self):
+        return self
+    def __exit__(self, type, value, tb):
+        self.stop()
 
 def test_floyd_warshall_speed():
     M = random((1500, 1500))
@@ -112,4 +128,35 @@ def test_floyd_warshall_speed():
         else:
             assert (prev_res == result).all()
 
-test_floyd_warshall_speed()
+# test_floyd_warshall_speed()
+
+import pandas as pd
+def test_floyd_warshall_speed_various():
+    results_df = pd.DataFrame(columns=["Vertices","Clock Time","CPU Time"])
+    
+    test_sizes = [#100,200,300,400,
+                  500,1000,2000,3000,
+                  #4000,5000
+                  ]
+    
+    for i in range(len(test_sizes)):
+        print(f"Testing: {test_sizes[i]} Vertices #######################################################")
+        for j in range(20):
+            M = random((test_sizes[i], test_sizes[i]))
+            fill_diagonal(M, 0)
+        
+            prev_res = None
+            print('')
+            for (name, func) in [('Cython mutlicore no bounds checking', floyd_warshall.floyd_warshall_parallelized_nbc)]:
+                #print (f"{name}"),
+                with Timer_2():
+                    result = func(M)
+                if not (prev_res == result).all():
+                #if prev_res == None:
+                    prev_res = result
+                else:
+                    assert (prev_res == result).all()
+                
+    return results_df
+
+test_floyd_warshall_speed_various()

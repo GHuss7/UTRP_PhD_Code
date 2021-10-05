@@ -97,7 +97,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_34_4_Mumford2_SA_Long_run', #-2
                    '0_34_5_Mumford3_SA_Long_run' #-1
                    
-                   ][41]   # set the name of the input data
+                   ][-4]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -113,7 +113,7 @@ run_numbers_to_compute = [False, # 0
                           list(range(10,15)), # 6
                           list(range(15,20)), # 7
                           list(range(20,25)), # 8
-                          list(range(25,30))][0] 
+                          list(range(25,30))][3] 
 
 if run_numbers_to_compute:
     print("Hello")
@@ -402,8 +402,8 @@ if Decisions["Choice_init_temp_with_trial_runs"]:
     UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate = gf.init_temp_trial_searches(UTNDP_problem_1, number_of_runs=1)
     parameters_SA_routes["Temp"], parameters_SA_routes["Cooling_rate"] = UTNDP_problem_1.problem_SA_parameters.Temp, UTNDP_problem_1.problem_SA_parameters.Cooling_rate
 
-if True:
-# def main(UTNDP_problem_1):
+# if True:
+def main(UTNDP_problem_1):
 
     # Reload the decisions and adjust appropriately
     Decisions = UTNDP_problem_1.Decisions # Load the decisions

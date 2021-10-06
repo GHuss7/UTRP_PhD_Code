@@ -31,7 +31,7 @@ import DSS_UTNDP_Classes as gc
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
-import DSS_K_Shortest_Paths as ksp
+# import DSS_K_Shortest_Paths as ksp
 
 # Input data names:
 input_data_names = ['7_1_Mandl6_GA_Pop_size', #29
@@ -114,12 +114,18 @@ os.chdir(path_DSS_Main_folder)
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
     validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
+else:
+    validation_data = False
 os.chdir(dir_path)
+
 
 '''Load the initial set'''
 print("Loading the initial route set")
-df_pop_generations = pd.read_csv(dir_path+"/Run_1/Pop_generations.csv")
-initial_set = df_pop_generations.iloc[0:parameters_GA['population_size'],:] # load initial set
+if os.path.exists(dir_path+"/Run_1/Pop_initial_set.csv"):
+    initial_set = pd.read_csv(dir_path+"/Run_1/Pop_initial_set.csv") # load initial set
+else:
+    df_pop_generations = pd.read_csv(dir_path+"/Run_1/Pop_generations.csv")
+    initial_set = df_pop_generations.iloc[0:parameters_GA['population_size'],:] # load initial set
 
 # Get details of runs
 def count_Run_folders(path_to_folder):

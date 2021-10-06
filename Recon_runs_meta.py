@@ -52,8 +52,9 @@ apply_list = [
                 # "Results_11_1_Mandl6_GA_Very_Long_run/10_1_Mandl6_GA_Long_run_20210730_171420 GA_Long_run",
                 # "Results_11_2_Mumford0_GA_Very_Long_run/10_2_Mumford0_GA_Long_run_20210730_171433 GA_Long_run",
                 # "Results_11_3_Mumford1_GA_Very_Long_run/10_3_Mumford1_GA_Long_run_20210731_170218 GA_Long_run",
-                "Results_37_4_Mumford2_SA_Post_opt/37_4_Mumford2_SA_Post_opt_20210914_121448 SA_T400000_E10000_R30",
-                "Results_37_5_Mumford3_SA_Post_opt/37_5_Mumford3_SA_Post_opt_20210914_120844 SA_T400000_E10000_R30"
+                # "Results_37_4_Mumford2_SA_Post_opt/37_4_Mumford2_SA_Post_opt_20210914_121448 SA_T400000_E10000_R30",
+                # "Results_37_5_Mumford3_SA_Post_opt/37_5_Mumford3_SA_Post_opt_20210914_120844 SA_T400000_E10000_R30"
+                "Results_35_4_Mumford2_SA_Obj_dis/35_4_Mumford2_SA_Obj_dis_20210826_115532 SA_Long_run",
             ]
 
 # Ensure the directory is set to the file location

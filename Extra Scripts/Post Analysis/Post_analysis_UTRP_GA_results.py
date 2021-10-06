@@ -97,7 +97,8 @@ title = {
 'Reheating_rate' : 'Reheating rate',
 
 # Generic
-'Long_run' : 'Long run'
+'Long_run' : 'Long run',
+'Post_opt' : 'Post optimisation' 
 }
 
 file_suffix = { #NB! Suffix may not have any spaces!
@@ -139,7 +140,8 @@ file_suffix = { #NB! Suffix may not have any spaces!
 'Reheating_rate' : 'reheating_rate',
 
 # Generic
-'Long_run' : 'long_run'
+'Long_run' : 'long_run',
+'Post_opt' : 'post_opt' 
 }
 
 def count_Run_folders(path_to_folder):
@@ -189,7 +191,7 @@ def get_stacked_area_str(df_smooth_mut_ratios):
     legend style={at={(1.1,1)},anchor=north west}, %(<x>,<y>)
     %date coordinates in=x,
     table/col sep=comma,
-    xticklabel style={rotate=90, anchor=near xticklabel},
+    %xticklabel style={rotate=90, anchor=near xticklabel},
     ymin=0,
     ymax=1,
     %restrict y to domain=0:1,
@@ -214,10 +216,39 @@ def get_stacked_area_str(df_smooth_mut_ratios):
     for data_entries_i in range(2, len(col_names)):
         colour_entry = colours_stacked_area[data_entries_i-2]
         entry_name = col_names[data_entries_i]
+        
+        mut_dict_conversion = {
+            "Intertwine_two" : "Exchange routes",
+            "Add_vertex" : "Add vertex",
+            "Delete_vertex" : "Delete vertex",
+            "Invert_path_vertices" : "Invert vertices",
+            "Insert_inside_vertex" : "Add inside vertex",
+            "Delete_inside_vertex" : "Delete inside vertex",
+            "Relocate_inside_vertex" : "Relocate vertex",
+            "Replace_inside_vertex" : "Replace vertex",
+            "Donate_between_routes" : "Donate vertex",
+            "Swap_between_routes" : "Swap between routes",
+            "Merge_terminals" : "Merge terminals",
+            "Repl_low_dem_route" : "Replace low demand route",
+            "Rem_low_dem_terminal" : "Remove low demand terminal",
+            "Rem_lrg_cost_terminal" : "Remove large cost terminal",
+            "Repl_subsets" : "Replace subsets",
+            "Trim_one_terminal_cb" : "Cost-based trim",
+            "Trim_one_path_random_cb" : "Random cost-based trim",
+            "Trim_routes_random_cb" : "Random all cost-based trim",
+            "Grow_one_terminal_cb" : "Cost-based grow",
+            "Grow_one_path_random_cb" : "Random cost-based grow",
+            "Grow_routes_random_cb" : "Random all cost-based grow"
+            }
+        try:
+            entry_name_final = mut_dict_conversion[entry_name]
+        except:
+            entry_name_final = entry_name
+        
         entry_str = f'''\\addplot [draw={colour_entry}, fill={colour_entry}!30!white] table [mark=none, x={counter_type},y={entry_name}
 ] {{Smoothed_Mutation_Ratios_for_Tikz.csv}}
     \closedcycle;
-    \\addlegendentry{{{entry_name.replace("_", " ")}}};'''
+    \\addlegendentry{{{entry_name_final.replace("_", " ")}}};'''
         doc_data_entries = doc_data_entries + entry_str + nl + nl
 
     full_doc = preamble_stacked_area + doc_start + doc_data_entries + doc_end
@@ -404,7 +435,8 @@ for file_name in result_entries:
           	f'xticklabels={{{x_tick_labels_str}}}, {nl}' \
           	f'x tick label style={{rotate=0, align=center}}, {nl}' \
           	f'xlabel={{{title[df_results_read["parameter"].iloc[0]]}}}, {nl}' \
-            f'y tick label style={{/pgf/number format/.cd,fixed,precision=3, zerofill}}, {nl}' \
+            f'% y tick label style={{/pgf/number format/.cd,fixed,precision=3, zerofill}}, {nl}' \
+            f'scaled y ticks={{base 10:2}}, {nl}' \
           	f'ylabel={{HV obtained [\\%]}}, {nl}' \
         	f'] {nl}') 
             

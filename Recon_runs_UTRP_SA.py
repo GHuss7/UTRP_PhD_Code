@@ -31,7 +31,7 @@ import DSS_UTNDP_Classes as gc
 import DSS_UTFSP_Functions as gf2
 import DSS_Visualisation as gv
 import EvaluateRouteSet as ev
-import DSS_K_Shortest_Paths as ksp
+# import DSS_K_Shortest_Paths as ksp
 
 # Input data names:
 input_data_names = ['21_1_Mandl6_SA_Initial_solutions', #11
@@ -111,6 +111,8 @@ os.chdir(path_DSS_Main_folder)
 mx_dist, mx_demand, mx_coords = gf.read_problem_data_to_matrices(name_input_data)
 if os.path.exists("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv"):
     validation_data = pd.read_csv("./Input_Data/"+name_input_data+"/Validation_Data/Results_data_headers_all.csv")
+else:
+    validation_data = False
 os.chdir(dir_path)
 
 '''Load the initial set'''

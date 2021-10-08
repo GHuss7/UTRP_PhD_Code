@@ -147,7 +147,7 @@ name_input_data = ["Mandl_UTRP", #0
                    '0_0_Mandl6_GA_Tester',
                    '0_5_Mumford3_GA_Time_tester'
                    
-                   ][-3]   # set the name of the input data
+                   ][44]   # set the name of the input data
 
 # Set test paramaters
 sens_from = 0 # sets the entire list that should be used as input. Lists by be broken down in smaller pieces for convenience
@@ -700,10 +700,10 @@ def main(UTNDP_problem_1):
             
             # Crossover
             # offspring_variables = gf.crossover_pop_routes_individuals_debug(pop_1, UTNDP_problem_1)
-            offspring_variables = gf.crossover_pop_routes_individuals_smart(pop_1, UTNDP_problem_1, crossover_func=crossover_funcs[crossover_func_name])
+            offspring_variables = gf_p.crossover_pop_routes_individuals_smart(pop_1, UTNDP_problem_1, crossover_func=crossover_funcs[crossover_func_name])
             
             # Mutation
-            ld_mut_temp = gf.mutate_route_population_detailed_ld(offspring_variables, UTNDP_problem_1)
+            ld_mut_temp = gf_p.mutate_route_population_detailed_ld(offspring_variables, UTNDP_problem_1)
             mutated_variables = [v['Route'] for v in ld_mut_temp]
             
             # Combine offspring with population
@@ -714,8 +714,8 @@ def main(UTNDP_problem_1):
             df_data_for_analysis = pd.DataFrame.from_dict(ld_data_for_analysis)
 
             # Determine non-dominated set
-            df_non_dominated_set = pd.concat([df_data_for_analysis[df_data_for_analysis['Generation']==i_gen],
-                                             df_non_dominated_set]) # adds the new gen to non-dom set and sifts it
+            # df_non_dominated_set = pd.concat([df_data_for_analysis[df_data_for_analysis['Generation']==i_gen],
+            #                                  df_non_dominated_set]) # adds the new gen to non-dom set and sifts it
             df_non_dominated_set = gf.create_non_dom_set_from_dataframe_fast(df_non_dominated_set, obj_1_name='f_1', obj_2_name='f_2')
                 
             # Get new generation

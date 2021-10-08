@@ -2904,8 +2904,8 @@ def crossover_pop_routes_individuals_smart(pop, main_problem, crossover_func=cro
     for i in range(0,int(main_problem.problem_GA_parameters.population_size)):
         
         if random.random() < main_problem.problem_GA_parameters.crossover_probability:
-            parent_A = pop.variables[selection[i,0]]
-            parent_B = pop.variables[selection[i,1]]
+            parent_A = lol_copy(pop.variables[selection[i,0]])
+            parent_B = lol_copy(pop.variables[selection[i,1]])
             counter = 0
         
             offspring_variables[i] = crossover_func(parent_A, parent_B, main_problem)
@@ -4717,7 +4717,8 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
     mut_nr = 0 # sets the mutation number to return, 0 is default with no mutation
     mut_successful = 0
     mut_repaired = 0
-    output_list = {"Route":routes_R, "Mut_nr":mut_nr,
+    copied_route_R = lol_copy(routes_R)
+    output_list = {"Route":copied_route_R, "Mut_nr":mut_nr,
                    "Mut_successful":mut_successful, "Mut_repaired":mut_repaired}
     
     p_rand = random.random() # generate random number
@@ -4729,7 +4730,7 @@ def mutate_overall_routes_all_smart(routes_R, main_problem):
             if p_rand < sum(mut_ratio[:mut_i+1]):
                 # mutate route set
                 output_list["Mut_nr"] = mut_i+1
-                candidate_routes_R = mut_functions[mut_i](routes_R, main_problem) 
+                candidate_routes_R = mut_functions[mut_i](copied_route_R, main_problem) 
                 
                 
                 if mut_functions[mut_i].__name__ == "no_mutation":

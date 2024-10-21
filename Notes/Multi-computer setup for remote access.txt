@@ -1,8 +1,6 @@
 Multi-computer setup for remote access:
 
 0.) Login to computer with the credentials:
-	Username: 17832020
-	PW: QWEqwe34
 
 1.) Make sure Spyder and Anaconda are installed
 	
@@ -35,7 +33,7 @@ Multi-computer setup for remote access:
 		https://download.anydesk.com/AnyDesk.exe?_ga=2.71072982.731962938.1625578358-554848214.1623830374
 
 	5.2) Open AnyDesk and set following settings:
-		- Set password for unattended access -> Enable unattended access -> Set password to "k6y31p9y"
+		- Set password for unattended access -> Enable unattended access -> Set password
 	
 	5.3) Take a photo of the AnyDesk address and send to Günther and type a message who's PC it is
 
